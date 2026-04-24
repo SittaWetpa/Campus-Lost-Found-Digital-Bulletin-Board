@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Anyone authenticated can read (profile avatars, item photos)
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+    }
+
+    // Avatars: only the owner may write their own
+    match /avatars/{userId} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Item photos: any authenticated user may write
+    match /items/{itemId}/{imageId} {
+      allow write: if request.auth != null;
+    }
+
+    // Found Report photos
+    match /requests/{requestId}/{imageId} {
+      allow write: if request.auth != null;
+    }
+  }
+}
