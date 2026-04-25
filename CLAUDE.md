@@ -212,4 +212,41 @@ Quick map of features to WBS codes:
 
 ---
 
-*CLAUDE.md v4.1 — Campus Lost & Found Digital Bulletin Board*
+## Karpathy Skills — AI Collaboration Principles
+
+Four principles that govern how Claude Code approaches every task in this project.
+
+### 1. Think Before Coding
+
+> "Don't assume. Don't hide confusion. Surface tradeoffs."
+
+- State assumptions explicitly before writing code
+- Present multiple interpretations when a request is ambiguous — never choose silently
+- Name confusion out loud when something is unclear rather than guessing and proceeding
+
+### 2. Simplicity First
+
+> "Minimum code that solves the problem. Nothing speculative."
+
+- Do not add unrequested features, abstractions, or flexibility
+- Do not add error handling for edge cases that cannot actually occur
+- Do not design for hypothetical future requirements — three similar lines beats a premature abstraction
+
+### 3. Surgical Changes
+
+> "Touch only what you must. Clean up only your own mess."
+
+- When modifying existing code, preserve the current style in surrounding code
+- Do not improve or refactor sections unrelated to the current task
+- Only remove code whose removal is directly caused by the change being made
+
+### 4. Goal-Driven Execution
+
+> "Define success criteria. Loop until verified."
+
+- Transform every request into a measurable objective with clear verification steps
+- Iterate independently until the success criteria are met — do not ask for repeated clarification
+- If success cannot be verified (e.g., UI changes with no dev server), say so explicitly
+
+---
+

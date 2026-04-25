@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campus_lost_found/config/router/app_router.dart';
 
-class CampusLostFoundApp extends StatelessWidget {
+class CampusLostFoundApp extends ConsumerWidget {
   const CampusLostFoundApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+    return MaterialApp.router(
       title: 'Campus Lost & Found',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Campus Lost & Found')),
-        body: const Center(child: Text('Firebase connected ✓')),
-      ),
+      routerConfig: router,
     );
   }
 }
