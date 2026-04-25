@@ -114,36 +114,49 @@ exports.verifyOtp = onCall(
         }
 
         const db = getFirestore();
-        const otpDoc = await db.collection("otp_verifications").doc(uid).get();
+        const otpRef = db.collection("otp_verifications").doc(uid);
+        const userRef = db.collection("users").doc(uid);
 
-        if (!otpDoc.exists) {
-            throw new HttpsError("not-found", "No OTP found. Please request a new one.");
+        let verificationResult = null;
+
+        try {
+            verificationResult = await db.runTransaction(async (tx) => {
+                const otpDoc = await tx.get(otpRef);
+
+                if (!otpDoc.exists) {
+                    throw new HttpsError("not-found", "No OTP found. Please request a new one.");
+                }
+
+                const data = otpDoc.data();
+
+                if (data.expiresAt.toDate() < new Date()) {
+                    tx.delete(otpRef);
+                    throw new HttpsError("deadline-exceeded", "OTP has expired. Please request a new one.");
+                }
+
+                if (data.code !== code) {
+                    const newAttempts = data.attempts + 1;
+                    if (newAttempts >= 5) {
+                        tx.delete(otpRef);
+                        throw new HttpsError("resource-exhausted", "No more attempts. Please request a new OTP.");
+                    }
+                    tx.update(otpRef, {attempts: newAttempts});
+                    const remaining = 5 - newAttempts;
+                    throw new HttpsError(
+                        "invalid-argument",
+                        `Incorrect code. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`,
+                    );
+                }
+
+                tx.delete(otpRef);
+                return {verified: true};
+            });
+        } catch (err) {
+            throw err;
         }
 
-        const data = otpDoc.data();
+        await userRef.update({emailVerified: true});
 
-        if (data.expiresAt.toDate() < new Date()) {
-            await otpDoc.ref.delete();
-            throw new HttpsError("deadline-exceeded", "OTP has expired. Please request a new one.");
-        }
-
-        if (data.code !== code) {
-            const newAttempts = data.attempts + 1;
-            if (newAttempts >= 5) {
-                await otpDoc.ref.delete();
-                throw new HttpsError("resource-exhausted", "No more attempts. Please request a new OTP.");
-            }
-            await otpDoc.ref.update({attempts: newAttempts});
-            const remaining = 5 - newAttempts;
-            throw new HttpsError(
-                "invalid-argument",
-                `Incorrect code. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`,
-            );
-        }
-
-        await db.collection("users").doc(uid).update({emailVerified: true});
-        await otpDoc.ref.delete();
-
-        return {verified: true};
+        return verificationResult;
     },
 );

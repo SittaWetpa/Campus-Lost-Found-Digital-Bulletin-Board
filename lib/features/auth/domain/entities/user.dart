@@ -7,7 +7,7 @@ class User {
   final String telephone;
   final String? avatarUrl;
   final bool emailVerified;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   const User({
     required this.uid,
@@ -18,6 +18,6 @@ class User {
     required this.telephone,
     this.avatarUrl,
     required this.emailVerified,
-    required this.createdAt,
+    this.createdAt,
   });
 }

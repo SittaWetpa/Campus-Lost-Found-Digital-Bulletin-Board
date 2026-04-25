@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/data/datasources/user_remote_datasource.dart';
 import 'package:campus_lost_found/features/auth/data/models/user_model.dart';
@@ -23,8 +24,10 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> createUserProfile(User user) async {
     try {
       await _datasource.createUser(UserModel.fromEntity(user));
-    } catch (e) {
-      throw ServerFailure(e.toString());
+    } on FirebaseException catch (_) {
+      throw const ServerFailure('A server error occurred. Please try again.');
+    } catch (_) {
+      throw const ServerFailure('An unexpected error occurred.');
     }
   }
 
@@ -32,8 +35,10 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> updateUserProfile(User user) async {
     try {
       await _datasource.updateUser(UserModel.fromEntity(user));
-    } catch (e) {
-      throw ServerFailure(e.toString());
+    } on FirebaseException catch (_) {
+      throw const ServerFailure('A server error occurred. Please try again.');
+    } catch (_) {
+      throw const ServerFailure('An unexpected error occurred.');
     }
   }
 }

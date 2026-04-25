@@ -10,7 +10,7 @@ class UserModel {
   final String telephone;
   final String? avatarUrl;
   final bool emailVerified;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   const UserModel({
     required this.uid,
@@ -21,7 +21,7 @@ class UserModel {
     required this.telephone,
     this.avatarUrl,
     required this.emailVerified,
-    required this.createdAt,
+    this.createdAt,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,7 +35,7 @@ class UserModel {
       telephone: data['telephone'] as String,
       avatarUrl: data['avatarUrl'] as String?,
       emailVerified: data['emailVerified'] as bool? ?? false,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -58,7 +58,6 @@ class UserModel {
         'studentId': studentId,
         'telephone': telephone,
         'avatarUrl': avatarUrl,
-        'createdAt': Timestamp.fromDate(createdAt),
       };
 
   User toEntity() => User(
