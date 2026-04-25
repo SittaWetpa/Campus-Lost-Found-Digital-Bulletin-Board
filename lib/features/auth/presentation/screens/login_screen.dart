@@ -90,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Email is required.';
                       }
-                      if (!value.trim().endsWith(AppConstants.emailDomain)) {
+                      if (!RegExp(r'^[^@]+@mail\.kmutt\.ac\.th$').hasMatch(value.trim())) {
                         return 'Only ${AppConstants.emailDomain} emails are allowed.';
                       }
                       return null;

@@ -32,6 +32,7 @@ class FirestoreUserDatasource implements UserRemoteDatasource {
     await _users.doc(model.uid).set({
       ...model.toFirestore(),
       'emailVerified': false,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
