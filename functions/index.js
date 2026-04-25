@@ -3,6 +3,7 @@ const {initializeApp} = require("firebase-admin/app");
 const {getFirestore} = require("firebase-admin/firestore");
 const {getAuth} = require("firebase-admin/auth");
 const {defineSecret} = require("firebase-functions/params");
+const {randomInt} = require("crypto");
 
 initializeApp();
 
@@ -67,9 +68,17 @@ exports.sendOtp = onCall(
         const userRecord = await getAuth().getUser(uid);
         const email = userRecord.email;
 
-        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const code = String(randomInt(100000, 1000000));
         const now = new Date();
         const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+        const existing = await db.collection("otp_verifications").doc(uid).get();
+        if (existing.exists) {
+            const ageSeconds = (Date.now() - existing.data().createdAt.toDate().getTime()) / 1000;
+            if (ageSeconds < 60) {
+                throw new HttpsError("resource-exhausted", "Please wait before requesting another OTP.");
+            }
+        }
 
         await db.collection("otp_verifications").doc(uid).set({
             code,

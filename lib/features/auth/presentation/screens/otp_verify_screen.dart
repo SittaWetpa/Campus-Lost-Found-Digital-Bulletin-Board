@@ -17,9 +17,14 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(otpNotifierProvider.notifier).sendOtp();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sendOtp());
+  }
+
+  Future<void> _sendOtp() async {
+    await ref.read(otpNotifierProvider.notifier).sendOtp();
+    if (mounted && !ref.read(otpNotifierProvider).hasError) {
+      setState(() => _otpSent = true);
+    }
   }
 
   @override
@@ -49,8 +54,6 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      } else if (previous?.isLoading == true && state is AsyncData) {
-        setState(() => _otpSent = true);
       }
     });
 
@@ -110,11 +113,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: otpState.isLoading
-                      ? null
-                      : () => ref
-                          .read(otpNotifierProvider.notifier)
-                          .sendOtp(),
+                  onPressed: otpState.isLoading ? null : _sendOtp,
                   child: const Text('Resend OTP'),
                 ),
               ],

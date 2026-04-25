@@ -58,7 +58,6 @@ class UserModel {
         'studentId': studentId,
         'telephone': telephone,
         'avatarUrl': avatarUrl,
-        'emailVerified': emailVerified,
         'createdAt': Timestamp.fromDate(createdAt),
       };
 

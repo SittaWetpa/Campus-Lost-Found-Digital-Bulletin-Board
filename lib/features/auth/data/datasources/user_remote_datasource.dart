@@ -29,7 +29,10 @@ class FirestoreUserDatasource implements UserRemoteDatasource {
 
   @override
   Future<void> createUser(UserModel model) async {
-    await _users.doc(model.uid).set(model.toFirestore());
+    await _users.doc(model.uid).set({
+      ...model.toFirestore(),
+      'emailVerified': false,
+    });
   }
 
   @override
