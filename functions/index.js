@@ -1,6 +1,7 @@
-const {onRequest} = require("firebase-functions/v2/https");
+const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
 const {initializeApp} = require("firebase-admin/app");
 const {getFirestore} = require("firebase-admin/firestore");
+const {getAuth} = require("firebase-admin/auth");
 const {defineSecret} = require("firebase-functions/params");
 
 initializeApp();
@@ -34,7 +35,7 @@ exports.items = onRequest(
             }
             if (keyword) {
                 q = q.where("title", ">=", keyword)
-                    .where("title", "<=", keyword + "");
+                    .where("title", "<=", keyword + "");
             }
 
             q = q.limit(max);
@@ -51,5 +52,89 @@ exports.items = onRequest(
             console.error(err);
             return res.status(500).json({error: "Internal server error"});
         }
+    },
+);
+
+exports.sendOtp = onCall(
+    {region: "asia-southeast1"},
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Authentication required.");
+        }
+        const uid = request.auth.uid;
+        const db = getFirestore();
+
+        const userRecord = await getAuth().getUser(uid);
+        const email = userRecord.email;
+
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+        await db.collection("otp_verifications").doc(uid).set({
+            code,
+            expiresAt,
+            attempts: 0,
+            createdAt: now,
+        });
+
+        await db.collection("mail").add({
+            to: [email],
+            message: {
+                subject: "Campus Lost & Found — Email Verification",
+                text: `Your verification code is: ${code}\n\nThis code expires in 10 minutes.`,
+                html: `<p>Your verification code is: <strong style="font-size:24px">${code}</strong></p><p>This code expires in 10 minutes. Do not share it with anyone.</p>`,
+            },
+        });
+
+        return {sent: true};
+    },
+);
+
+exports.verifyOtp = onCall(
+    {region: "asia-southeast1"},
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Authentication required.");
+        }
+        const uid = request.auth.uid;
+        const {code} = request.data;
+
+        if (!code || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+            throw new HttpsError("invalid-argument", "Invalid OTP format.");
+        }
+
+        const db = getFirestore();
+        const otpDoc = await db.collection("otp_verifications").doc(uid).get();
+
+        if (!otpDoc.exists) {
+            throw new HttpsError("not-found", "No OTP found. Please request a new one.");
+        }
+
+        const data = otpDoc.data();
+
+        if (data.expiresAt.toDate() < new Date()) {
+            await otpDoc.ref.delete();
+            throw new HttpsError("deadline-exceeded", "OTP has expired. Please request a new one.");
+        }
+
+        if (data.code !== code) {
+            const newAttempts = data.attempts + 1;
+            if (newAttempts >= 5) {
+                await otpDoc.ref.delete();
+                throw new HttpsError("resource-exhausted", "No more attempts. Please request a new OTP.");
+            }
+            await otpDoc.ref.update({attempts: newAttempts});
+            const remaining = 5 - newAttempts;
+            throw new HttpsError(
+                "invalid-argument",
+                `Incorrect code. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`,
+            );
+        }
+
+        await db.collection("users").doc(uid).update({emailVerified: true});
+        await otpDoc.ref.delete();
+
+        return {verified: true};
     },
 );

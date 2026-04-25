@@ -19,3 +19,7 @@ final class ServerFailure extends Failure {
 final class NetworkFailure extends Failure {
   const NetworkFailure() : super('No internet connection.');
 }
+
+final class OtpFailure extends Failure {
+  const OtpFailure(super.message);
+}

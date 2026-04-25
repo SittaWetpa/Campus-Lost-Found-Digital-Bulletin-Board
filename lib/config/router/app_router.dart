@@ -6,6 +6,7 @@ import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
+import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 
 part 'app_router.g.dart';
@@ -85,9 +86,7 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.otpVerify,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('OTP Verify — WBS 0.5')),
-        ),
+        builder: (context, state) => const OtpVerifyScreen(),
       ),
     ],
   );
