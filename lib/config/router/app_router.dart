@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
+import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 
 part 'app_router.g.dart';
@@ -15,27 +17,52 @@ abstract final class AppRoutes {
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
-  final listenable = ValueNotifier<AsyncValue<AuthUser?>>(const AsyncLoading());
+  final authListenable =
+      ValueNotifier<AsyncValue<AuthUser?>>(const AsyncLoading());
+  final userListenable =
+      ValueNotifier<AsyncValue<User?>>(const AsyncLoading());
 
   ref.listen(
     authStateProvider,
-    (_, value) => listenable.value = value,
+    (_, value) => authListenable.value = value,
     fireImmediately: true,
   );
-  ref.onDispose(listenable.dispose);
+  ref.listen(
+    currentUserProvider,
+    (_, value) => userListenable.value = value,
+    fireImmediately: true,
+  );
+  ref.onDispose(() {
+    authListenable.dispose();
+    userListenable.dispose();
+  });
 
   return GoRouter(
     initialLocation: AppRoutes.login,
-    refreshListenable: listenable,
+    refreshListenable: Listenable.merge([authListenable, userListenable]),
     redirect: (context, state) {
-      final authValue = listenable.value;
+      final authValue = authListenable.value;
       if (authValue.isLoading) return null;
 
       final isLoggedIn = authValue.valueOrNull != null;
       final goingToLogin = state.matchedLocation == AppRoutes.login;
+      final goingToOtp = state.matchedLocation == AppRoutes.otpVerify;
 
-      if (!isLoggedIn && !goingToLogin) return AppRoutes.login;
-      if (isLoggedIn && goingToLogin) return AppRoutes.feed;
+      if (!isLoggedIn) {
+        return goingToLogin ? null : AppRoutes.login;
+      }
+
+      // Logged in — wait for user profile before deciding OTP guard.
+      final userValue = userListenable.value;
+      if (userValue.isLoading) return null;
+
+      final user = userValue.valueOrNull;
+      if (user != null && !user.emailVerified) {
+        return goingToOtp ? null : AppRoutes.otpVerify;
+      }
+
+      // Verified — push away from login/otp screens.
+      if (goingToLogin || goingToOtp) return AppRoutes.feed;
       return null;
     },
     routes: [
