@@ -6,11 +6,13 @@ import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
+import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 
 part 'app_router.g.dart';
 
 abstract final class AppRoutes {
   static const login = '/login';
+  static const register = '/register';
   static const feed = '/feed';
   static const otpVerify = '/otp-verify';
 }
@@ -46,10 +48,11 @@ GoRouter appRouter(AppRouterRef ref) {
 
       final isLoggedIn = authValue.valueOrNull != null;
       final goingToLogin = state.matchedLocation == AppRoutes.login;
+      final goingToRegister = state.matchedLocation == AppRoutes.register;
       final goingToOtp = state.matchedLocation == AppRoutes.otpVerify;
 
       if (!isLoggedIn) {
-        return goingToLogin ? null : AppRoutes.login;
+        return (goingToLogin || goingToRegister) ? null : AppRoutes.login;
       }
 
       // Logged in — wait for user profile before deciding OTP guard.
@@ -61,8 +64,8 @@ GoRouter appRouter(AppRouterRef ref) {
         return goingToOtp ? null : AppRoutes.otpVerify;
       }
 
-      // Verified — push away from login/otp screens.
-      if (goingToLogin || goingToOtp) return AppRoutes.feed;
+      // Verified — push away from login/register/otp screens.
+      if (goingToLogin || goingToRegister || goingToOtp) return AppRoutes.feed;
       return null;
     },
     routes: [
@@ -75,6 +78,10 @@ GoRouter appRouter(AppRouterRef ref) {
         builder: (context, state) => const Scaffold(
           body: Center(child: Text('Feed — WBS 1.2')),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: AppRoutes.otpVerify,

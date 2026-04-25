@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/constants/app_constants.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
@@ -126,6 +128,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Sign In'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => context.push(AppRoutes.register),
+                    child: const Text("Don't have an account? Register"),
                   ),
                 ],
               ),
