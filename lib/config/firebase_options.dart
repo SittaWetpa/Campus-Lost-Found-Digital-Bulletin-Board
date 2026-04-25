@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDVQaZTLRtAebDbO__FF-PWCdvoh2IixNg',
+    apiKey: 'AIzaSyAaAuLk617tsq-rKNYC6oHHE11cB30qN44',
     appId: '1:901205365124:web:765d93e5a5662319b1cdd1',
     messagingSenderId: '901205365124',
     projectId: 'campus-lost-found-e58a7',
@@ -59,7 +59,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCVzOBhBLxWIOsrI3mYEoJCbuL7D6fPKms',
+    apiKey: 'AIzaSyDaOYtMk5_CIlCOap1PlHQT236_4z9aPkM',
     appId: '1:901205365124:android:703293fa0103261db1cdd1',
     messagingSenderId: '901205365124',
     projectId: 'campus-lost-found-e58a7',
