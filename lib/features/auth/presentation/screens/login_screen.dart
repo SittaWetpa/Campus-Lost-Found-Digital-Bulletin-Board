@@ -199,31 +199,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Info box
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5EDE0),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5D9C5)),
-                    ),
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 13, color: Colors.black87),
-                        children: [
-                          TextSpan(text: '🔒 Only '),
-                          TextSpan(
-                            text: '@mail.kmutt.ac.th',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                              text:
-                                  ' accounts can sign in.\nDemo: any seeded email + any password works.'),
-                        ],
-                      ),
-                    ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Only @mail.kmutt.ac.th accounts can sign in.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
               ),
