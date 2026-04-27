@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
-import 'package:campus_lost_found/core/constants/app_constants.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
+
+const _amber = Color(0xFFCA8A04);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -63,6 +64,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // App icon
+                  Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: _amber,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.search,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title
                   const Text(
                     'Campus Lost & Found',
                     textAlign: TextAlign.center,
@@ -71,38 +90,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sign in with your KMUTT email',
+                  const SizedBox(height: 6),
+                  // Subtitle with KMUTT highlighted
+                  RichText(
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    text: const TextSpan(
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      children: [
+                        TextSpan(
+                          text: 'KMUTT',
+                          style: TextStyle(
+                            color: _amber,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(text: ' digital bulletin board'),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 36),
+                  // KMUTT EMAIL label + field
+                  const Text(
+                    'KMUTT EMAIL',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: AppConstants.emailDomainLabel,
-                      border: OutlineInputBorder(),
+                      hintText: 'pun.wo@mail.kmutt.ac.th',
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Email is required.';
                       }
-                      if (!RegExp(r'^[^@]+@mail\.kmutt\.ac\.th$').hasMatch(value.trim())) {
-                        return 'Only ${AppConstants.emailDomain} emails are allowed.';
+                      if (!RegExp(r'^[^@]+@mail\.kmutt\.ac\.th$')
+                          .hasMatch(value.trim())) {
+                        return 'Only @mail.kmutt.ac.th emails are allowed.';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
+                  // PASSWORD label + field
+                  const Text(
+                    'PASSWORD',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(_obscurePassword
                             ? Icons.visibility_off
@@ -119,6 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
+                  // Sign in button
                   FilledButton(
                     onPressed: loginState.isLoading ? null : _submit,
                     child: loginState.isLoading
@@ -127,12 +176,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign In'),
+                        : const Text('Sign in'),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => context.push(AppRoutes.register),
-                    child: const Text("Don't have an account? Register"),
+                  const SizedBox(height: 12),
+                  // Create account link
+                  GestureDetector(
+                    onTap: () => context.push(AppRoutes.register),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        children: [
+                          TextSpan(text: 'New to Lost & Found? '),
+                          TextSpan(
+                            text: 'Create account',
+                            style: TextStyle(
+                              color: _amber,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Only @mail.kmutt.ac.th accounts can sign in.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
               ),

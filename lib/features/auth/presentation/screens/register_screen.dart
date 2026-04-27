@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:campus_lost_found/core/constants/app_constants.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/register_provider.dart';
+
+const _amber = Color(0xFFCA8A04);
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -48,6 +48,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
   }
 
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final registerState = ref.watch(registerNotifierProvider);
@@ -67,7 +79,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5EDE0),
+        elevation: 0,
+        leading: const BackButton(),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'Create your account',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'Verify with your @mail.kmutt.ac.th address',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        centerTitle: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -76,91 +106,112 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
-                  controller: _firstNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'First name is required.';
-                    }
-                    return null;
-                  },
+                // FIRST NAME + LAST NAME side by side
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _label('FIRST NAME'),
+                          TextFormField(
+                            controller: _firstNameController,
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Required.';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _label('LAST NAME'),
+                          TextFormField(
+                            controller: _lastNameController,
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Required.';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _lastNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Last name is required.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                // STUDENT ID
+                _label('STUDENT ID'),
                 TextFormField(
                   controller: _studentIdController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Student ID',
-                    border: OutlineInputBorder(),
+                    helperText: '11-digit KMUTT ID',
+                    helperStyle: TextStyle(color: _amber),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Student ID is required.';
                     }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _telephoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Telephone',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Telephone is required.';
+                    if (!RegExp(r'^\d{11}$').hasMatch(value.trim())) {
+                      return 'Student ID must be exactly 11 digits.';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
+                // PHONE NUMBER
+                _label('PHONE NUMBER'),
+                TextFormField(
+                  controller: _telephoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    hintText: '08x-xxx-xxxx',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Phone number is required.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // KMUTT EMAIL
+                _label('KMUTT EMAIL'),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: AppConstants.emailDomainLabel,
-                    border: OutlineInputBorder(),
+                    hintText: 'name@mail.kmutt.ac.th',
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Email is required.';
                     }
-                    if (!RegExp(r'^[^@]+@mail\.kmutt\.ac\.th$').hasMatch(value.trim())) {
-                      return 'Only ${AppConstants.emailDomain} emails are allowed.';
+                    if (!RegExp(r'^[^@]+@mail\.kmutt\.ac\.th$')
+                        .hasMatch(value.trim())) {
+                      return 'Only @mail.kmutt.ac.th emails are allowed.';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
+                // PASSWORD
+                _label('PASSWORD'),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
                           ? Icons.visibility_off
@@ -180,12 +231,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                // CONFIRM PASSWORD
+                _label('CONFIRM PASSWORD'),
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscureConfirmPassword
                           ? Icons.visibility_off
@@ -204,7 +255,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 FilledButton(
                   onPressed: registerState.isLoading ? null : _submit,
                   child: registerState.isLoading
@@ -213,12 +264,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Create Account'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Already have an account? Sign in'),
+                      : const Text('Create account'),
                 ),
               ],
             ),
