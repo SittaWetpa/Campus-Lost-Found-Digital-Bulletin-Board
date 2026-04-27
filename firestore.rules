@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: own profile only; emailVerified and createdAt are server-managed
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.emailVerified == false
+                    && request.resource.data.createdAt == request.time;
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data)
+                        .affectedKeys().hasAny(['emailVerified', 'createdAt']);
+    }
+
+    // OTP verifications: Admin SDK only — no client access
+    match /otp_verifications/{uid} {
+      allow read, write: if false;
+    }
+
+    // Mail: Trigger Email Extension only — no client access
+    match /mail/{docId} {
+      allow read, write: if false;
+    }
+
+    // Items: any authenticated user may read; only the Poster may create/edit/delete
+    match /items/{itemId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null
+                            && resource.data.userId == request.auth.uid;
+
+      // Requests sub-collection
+      match /requests/{requestId} {
+        allow create: if request.auth != null
+                      && request.resource.data.requesterId == request.auth.uid;
+        allow read, update: if request.auth != null
+                            && (resource.data.requesterId == request.auth.uid
+                                || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+      }
+    }
+  }
+}

@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node / npm
+node_modules/
+package-lock.json
+
+# Firebase secrets — never commit to a public repo
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.env
+*.env.*
