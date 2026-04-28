@@ -41,6 +41,7 @@ class ItemRepositoryImpl implements ItemRepository {
 
   @override
   Future<List<Item>> searchItems(String keyword) async {
+    if (keyword.trim().isEmpty) return [];
     try {
       final models = await _datasource.searchByTitle(keyword);
       return models.map((m) => m.toEntity()).toList();

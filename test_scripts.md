@@ -95,7 +95,7 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.1 | Firestore rules | `test/firestore_rules/rules.test.js` | Node.js | ✅ 9 tests |
 | 2.1 | Firestore rules (placeholder) | `test/integration/wbs_2_1_firestore_rules_test.dart` | Integration | ⏭️ 3 skipped (manual) |
 | 2.2 | Firestore CRUD for items | `test/features/feed/data/datasources/item_remote_datasource_test.dart` | Unit | ✅ 4 tests |
-| 2.3 | Keyword search query | — | Unit | ⬜ not yet written |
+| 2.3 | Keyword search query | `test/features/feed/data/repositories/item_repository_impl_test.dart` | Unit | ✅ 3 tests |
 | 2.4 | Request & approval system | — | Unit + Widget | ⬜ not yet written |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
 | 2.6 | Post edit | — | Unit + Widget | ⬜ not yet written |
@@ -149,12 +149,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 17 | 16 (1 known issue) |
 | 1.0 Flutter UI | 0 | — |
-| 2.0 Data Layer | 84 + 9 (npm) | 93 |
+| 2.0 Data Layer | 87 + 9 (npm) | 96 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 33 (1 known issue) |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **135 Dart + 9 npm** | **133 passing** |
+| **Total** | **138 Dart + 9 npm** | **136 passing** |
 
 ---
 
-*Last updated: 2026-04-28 (WBS 2.2 — added item_remote_datasource_test.dart)*
+*Last updated: 2026-04-28 (WBS 2.3 — added item_repository_impl_test.dart)*

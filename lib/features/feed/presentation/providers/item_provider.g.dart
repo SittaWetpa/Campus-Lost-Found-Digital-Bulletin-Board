@@ -326,5 +326,22 @@ class _WatchMyItemsProviderElement
   @override
   String get userId => (origin as WatchMyItemsProvider).userId;
 }
+
+String _$searchNotifierHash() => r'bd39a6b8430ed693086027b47e1708850adcaab6';
+
+/// See also [SearchNotifier].
+@ProviderFor(SearchNotifier)
+final searchNotifierProvider = AutoDisposeNotifierProvider<SearchNotifier,
+    AsyncValue<List<Item>>>.internal(
+  SearchNotifier.new,
+  name: r'searchNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$searchNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SearchNotifier = AutoDisposeNotifier<AsyncValue<List<Item>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

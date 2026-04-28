@@ -31,3 +31,18 @@ Stream<Item?> watchItem(WatchItemRef ref, String itemId) {
 Stream<List<Item>> watchMyItems(WatchMyItemsRef ref, String userId) {
   return ref.watch(itemRepositoryProvider).watchMyItems(userId);
 }
+
+@riverpod
+class SearchNotifier extends _$SearchNotifier {
+  @override
+  AsyncValue<List<Item>> build() => const AsyncData([]);
+
+  Future<void> search(String keyword) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(itemRepositoryProvider).searchItems(keyword),
+    );
+  }
+
+  void clear() => state = const AsyncData([]);
+}
