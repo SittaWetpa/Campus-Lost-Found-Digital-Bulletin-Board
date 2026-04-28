@@ -31,8 +31,11 @@ test/
 │   ├── auth/presentation/screens/
 │   │   ├── login_screen_test.dart               ← WBS 0.3
 │   │   └── register_screen_test.dart            ← WBS 0.3
-│   └── feed/data/datasources/
-│       └── item_remote_datasource_test.dart     ← WBS 2.2
+│   └── feed/data/
+│       ├── datasources/
+│       │   └── item_remote_datasource_test.dart     ← WBS 2.2
+│       └── repositories/
+│           └── item_repository_impl_test.dart        ← WBS 2.3
 ├── integration/                  # Integration tests (require Firebase Emulator)
 │   └── wbs_2_1_firestore_rules_test.dart        ← WBS 2.1 (manual placeholder)
 └── firestore_rules/              # Node.js Firestore rules tests
@@ -157,4 +160,4 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 ---
 
-*Last updated: 2026-04-28 (WBS 2.3 — added item_repository_impl_test.dart)*
+*Last updated: 2026-04-28 (PR #9 merged — WBS 2.2 & 2.3 complete; tree updated with item_repository_impl_test.dart)*
