@@ -841,6 +841,9 @@ Expose a read-only REST API on top of Firestore using **Firebase Cloud Functions
 **Scope / Statement of Work**
 When a **Poster** creates a **Founder Post** (found item), they may optionally set a **Secret Question** — a short question whose correct answer only the true owner of the item would know (e.g. "What brand is printed on the inside of the wallet?"). The Poster also privately records the expected answer at post-creation time. No answer is shown to anyone publicly. When a **Visitor** (potential owner) submits a **Claim Request** on that Founder Post, they must provide their own answer to the secret question before the request can be sent — without any hints from the app. The Poster then reviews each Claim Request and manually compares the Visitor's submitted answer against the expected answer they set, using it as one verification factor before approving or rejecting. The expected answer is never exposed to Visitors at any point.
 
+**Photo Safety Guard (sub-plan within 2.10)**
+A Poster who sets a Secret Question could accidentally undermine the verification by attaching a photo that visually reveals the answer (e.g. a close-up of the wallet interior showing the brand name). To prevent this, whenever the Poster attempts to add a photo on a Founder Post form where the Secret Question field is or isn't already filled, the app must intercept the file-picker launch and display a **Photo Safety Warning dialog** first. The dialog explains the risk, lists what to avoid (images that contain, display, or hint at the secret answer), and requires the Poster to explicitly confirm before the image picker opens. If the Poster cancels the dialog, no photo is selected. This guard applies on both the initial post-creation form and the post-edit form. It is skipped when no Secret Question has been entered yet, and skipped entirely for Seeker Posts.
+
 **Deliverables**
 - Optional "Secret Question" field and a private "Expected Answer" field added to the **Founder Post** creation form (Post Form Screen), shown only when category is "Founder Post"
 - `secretQuestion` (String?) and `secretAnswer` (String?) stored in the Firestore `items` document; `secretAnswer` is readable only by the Poster (Firestore security rules)
@@ -848,6 +851,13 @@ When a **Poster** creates a **Founder Post** (found item), they may optionally s
 - Visitor's submitted answer stored as `visitorAnswer` in the `requests` sub-collection document
 - Request Detail screen (**Poster view only**) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison
 - `secretQuestion` and `secretAnswer` are hidden from all Visitor-facing views (Feed, Detail Screen, Claim Request form result)
+- **Photo Safety Warning dialog** (`PhotoSafetyWarningDialog` widget): a modal dialog triggered before the image picker opens, whenever the Poster has already filled the Secret Question field on a Founder Post form. Content:
+  - **Title**: "Check your photo before adding"
+  - **Body**: "Make sure the photo you are about to add does not show, contain, or hint at the answer to your secret question. If it does, anyone who sees the post could guess the answer and submit a fraudulent claim."
+  - **Examples to avoid** (bulleted in the dialog body): close-ups that show a distinguishing mark, brand label, serial number, colour pattern, or any detail that the question is asking about
+  - **Actions**: "Cancel" (secondary, dismisses without opening picker) and "I understand, add photo" (primary, proceeds to open the image picker)
+  - Dialog is presented every time the Poster taps "Add Photo" while the Secret Question field is non-empty — not just the first time — to reinforce awareness for each photo
+  - Dialog is **not** shown when the Secret Question field is empty, or when the post category is Seeker Post
 
 **Associated Activities**
 - Add optional `secretQuestion` (String?) and `secretAnswer` (String?) fields to the Post Form Screen UI, shown only when category is "Founder Post"
@@ -858,6 +868,14 @@ When a **Poster** creates a **Founder Post** (found item), they may optionally s
 - Update Request Detail Screen (Poster view) to show a "Verification" section: question, expected answer (`secretAnswer`), and the Visitor's answer (`visitorAnswer`) side by side
 - Apply Firestore security rules so `secretAnswer` is readable only by the document owner (Poster); `visitorAnswer` is readable only by the Poster
 - Hide the `secretQuestion` display and all answer fields from the Detail Screen when the viewer is a Visitor
+- **Photo Safety Guard implementation steps:**
+  - In the Post Form Screen, intercept every "Add Photo" button tap (both in create and edit flows)
+  - Before launching the image picker, evaluate the guard condition: `category == FounderPost && secretQuestionController.text.isNotEmpty`
+  - If condition is true, `await showDialog(PhotoSafetyWarningDialog)` and proceed to open the image picker only if the user confirmed (dialog returned `true`); if the user cancelled (returned `false` or dismissed), abort the tap handler — do not open the picker
+  - If condition is false, open the image picker directly without the dialog
+  - Build `PhotoSafetyWarningDialog` as a stateless `AlertDialog` widget with the title, body, example bullets, and two actions described in Deliverables
+  - The dialog must not be bypassed or auto-confirmed — it requires an explicit tap on "I understand, add photo"
+  - No persistent flag needed to track "already shown" — the dialog fires on every qualifying tap by design
 
 **Testing**
 - Unit test: `ItemService.createItem()` with `secretQuestion` set — verify both `secretQuestion` and `secretAnswer` saved to Firestore
@@ -866,6 +884,14 @@ When a **Poster** creates a **Founder Post** (found item), they may optionally s
 - Widget test: Claim Request form on a Founder Post without a secret question — verify no answer field is shown
 - Unit test: `RequestService.submitClaimRequest()` — verify `visitorAnswer` is saved to the request document
 - Widget test: Request Detail Screen as Poster — verify "Verification" section shows question, expected answer, and visitor's answer side by side
+- **Photo Safety Guard tests:**
+  - Widget test: Post Form with category = Founder Post and secret question field non-empty → tap "Add Photo" → verify `PhotoSafetyWarningDialog` appears (dialog title and body text are present in the widget tree) before the image picker is invoked
+  - Widget test: dialog visible → tap "Cancel" → verify dialog is dismissed and the image picker is **not** launched (mock picker `pickImage` is never called)
+  - Widget test: dialog visible → tap "I understand, add photo" → verify dialog is dismissed and the image picker **is** launched
+  - Widget test: Post Form with category = Founder Post and secret question field **empty** → tap "Add Photo" → verify no dialog appears and the image picker launches directly
+  - Widget test: Post Form with category = Seeker Post (secret question fields hidden) → tap "Add Photo" → verify no dialog appears
+  - Widget test: tap "Add Photo" twice in sequence (both times with secret question non-empty) → verify the dialog appears both times (not suppressed after first confirmation)
+  - Widget test: Post Edit Screen (editing an existing Founder Post that already has a secret question) → tap "Add Photo" → verify warning dialog appears
 
 ---
 
