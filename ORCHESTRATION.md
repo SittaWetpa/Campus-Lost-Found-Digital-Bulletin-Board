@@ -126,9 +126,14 @@ Suggested ownership (update this table as the team assigns tasks):
 
 Update this table every week. It is evidence for WBS 6.1.
 
-| Week | Plans Approved | Agent Tasks Run | Key Handoffs | Human Reviewer Catches |
+> ⚠️ **Apr 18 – Apr 27 reconstructed from git log** (`git log --all --oneline --format="%ad | %s" --date=short`) on 2026-04-28. Future entries must be logged in real time.
+
+| Dates | WBS Completed | Agent Tasks Run | Key Handoffs | Human Reviewer Catches |
 |---|---|---|---|---|
-| W1 | — | — | — | — |
+| Apr 18 | Project scaffold | — | — | — |
+| Apr 23–25 | WBS 0.1, 0.2, 0.3, 0.5 (auth + OTP), WBS 2.9 (Cloud Functions REST API), WBS 4.1 (Clean Architecture scaffold), WBS 4.2 (Riverpod + Firebase init) | `flutter_engineer` → auth implementation; `security_reviewer` → audit of auth layer and Firestore rules | `flutter_engineer` → `security_reviewer` (auth audit) → `flutter_engineer` (apply fixes) | CRITICAL: `google-services.json` was tracked by git — removed and keys rotated; HIGH: OTP `verifyOtp` had a Firestore race condition — fixed with a transaction; HIGH: `createdAt` was set client-side — replaced with `FieldValue.serverTimestamp()`; LOW: email domain check used `endsWith` — replaced with anchored regex |
+| Apr 26–27 | WBS 2.1 (domain entities + Firestore indexes), WBS 4.3 (GoRouter + auth guards + 33 unit tests), WBS 0.3 redesign (amber/cream UI + 17 widget tests) | `architect` → schema design for Item/ItemRequest entities; `flutter_engineer` → implementation; `qa_engineer` → widget tests for 0.3 and unit tests for 4.3 | `architect` → `flutter_engineer` (entity + router implementation) → `qa_engineer` (write tests) | Auth redesign PR (#6) was accidentally merged to `main` instead of `develop` — resolved by opening PR #7 (main → develop), fixing merge conflicts manually, and updating the login screen (removed demo info box) |
+| Apr 28 | WBS 1.2 (feed screen), WBS 7.1 (test_scripts.md + traceability matrix), CLAUDE.md testing rules | `flutter_engineer` → feed screen; `qa_engineer` → test_scripts.md + traceability matrix | — | — |
 
 ---
 

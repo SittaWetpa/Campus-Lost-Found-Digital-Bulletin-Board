@@ -19,6 +19,11 @@
 | status: "active" | **Active** | A post that is still open and accepting requests |
 | status: "returned" | **Resolved** | A post that has been closed; the item has been returned |
 
+
+---
+
+> **Testing Guide, run commands, writing conventions, and the full traceability matrix are in [`test_scripts.md`](test_scripts.md).** The work package definition is at **WBS 7.1**.
+
 ---
 
 ## Phase 0.0 — Authentication
@@ -1100,8 +1105,6 @@ The Lost & Found system carries a risk that malicious users may attempt to claim
 
 ## Phase 4.0 — Enterprise Architecture & Tooling
 
-> **Foundational phase** — All 1.x feature screens and 2.x data services are implemented on top of the skeleton defined here.
-
 ---
 
 ### 4.1 Clean Architecture Skeleton
@@ -1211,8 +1214,6 @@ Replace the `StreamBuilder`-based routing with **GoRouter**. All routes are decl
 
 ## Phase 5.0 — Quality Gates
 
-> Cross-cutting quality concerns that complement the per-WP Testing sections. These are enforced in CI and gate merges.
-
 ---
 
 ### 5.1 Accessibility Sweep — WCAG 2.2 AA
@@ -1288,8 +1289,6 @@ Enforce the security quality gate via automated scans in CI: dependency vulnerab
 
 ## Phase 6.0 — Orchestration & Tooling
 
-> **Leader-owned phase.** Meta/workflow work package covering multi-agent orchestration (R3). Owned by the PM / Orchestrator role, not by feature developers.
-
 ---
 
 ### 6.1 Multi-Agent Orchestration Setup
@@ -1330,6 +1329,49 @@ Establish the `.claude/agents/` structure with role-scoped subagent definitions 
 
 ---
 
-*WBS Dictionary v4.0 — Campus Lost & Found Digital Bulletin Board*
+## Phase 7.0 — Test Scripts & Quality Evidence
+
+> **QA phase.** Owns the test traceability matrix, execution scripts, and coverage evidence submitted alongside the project. See the full run guide and per-WBS status table in [`test_scripts.md`](test_scripts.md).
+
+---
+
+### 7.1 Test Scripts & Traceability Matrix
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 7.1 |
+| **Type** | Work Package |
+| **Requirement** | Testing & Test Scripts |
+
+**Scope / Statement of Work**
+Maintain a living traceability matrix that maps every test case listed in each WBS work package's **Testing** section to an actual test file in the repository. The matrix tracks implementation status (written / not yet written / known failure) for all phases. The dedicated file `test_scripts.md` is the single source of truth for how to run tests, what scripts exist, and what their current status is. This WP is updated whenever a new test file is added or a test status changes.
+
+**Deliverables**
+- `test_scripts.md` at the project root containing:
+  - Run commands for each test type (`flutter test`, `npm test`, `flutter drive`)
+  - `test/` directory structure with file-to-WBS mapping
+  - Writing conventions for unit, widget, and integration tests
+  - Traceability matrix: one table per phase, columns — WBS code, description, test file, type, status
+  - Coverage summary table updated each sprint
+- All test files located under `test/` mirroring the `lib/` folder structure
+- `test/` directory committed to the repository and included in submission
+
+**Associated Activities**
+- Create `test_scripts.md` with the initial run guide and traceability matrix
+- Update `test_scripts.md` whenever a new test file is added (add a row to the matrix)
+- Update status column (⬜ → ✅ or ⚠️) as each WBS work package's tests are implemented
+- Run `flutter test --coverage` at the end of each sprint and update the Coverage Summary table
+- Ensure `test/firestore_rules/rules.test.js` is runnable via `npm test` from the `test/firestore_rules/` directory
+- Flag known failures with a ⚠️ status and document the root cause inline in the matrix
+
+**Testing**
+- All test files listed in the matrix must exist at the paths stated — no phantom entries
+- `flutter test` exits with zero failures before each PR to `develop` is merged
+- `flutter test --coverage` is run and the coverage report is committed for WBS 3.1 / 3.2 submission
+- `cd test/firestore_rules && npm test` passes all 9 Firestore rules tests
+
+---
+
+*WBS Dictionary v4.1 — Campus Lost & Found Digital Bulletin Board*
 *Tech Stack: Flutter (Dart) + Riverpod 2.x + GoRouter + Firebase (Auth, Firestore, Storage, Cloud Functions, Crashlytics, Remote Config) + Hive + shared_preferences*
-*Total Work Packages: 33 | Changes since v3.1: 0.4 & 2.5 superseded in place; new 2.11 Hive, 2.12 Crashlytics, 2.13 Feature Flag; new 3.2 Web; new Phase 4.0 (4.1 Clean Architecture, 4.2 Riverpod, 4.3 GoRouter); new Phase 5.0 (5.1 A11y, 5.2 Security & Dep Scans); new Phase 6.0 (6.1 Multi-Agent Orchestration)*
+*Total Work Packages: 34 | Changes since v4.0: added Phase 7.0 (7.1 Test Scripts & Traceability Matrix); added Testing Guide pointer and per-phase test status blocks*
