@@ -6,7 +6,7 @@ part of 'otp_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$otpDatasourceHash() => r'2ee8ff349fad825cfd348f3300dd8383a2ce9e79';
+String _$otpDatasourceHash() => r'bffd1628954811addbab0625ce1c8190b1067d99';
 
 /// See also [otpDatasource].
 @ProviderFor(otpDatasource)
@@ -21,7 +21,7 @@ final otpDatasourceProvider = AutoDisposeProvider<OtpRemoteDatasource>.internal(
 );
 
 typedef OtpDatasourceRef = AutoDisposeProviderRef<OtpRemoteDatasource>;
-String _$otpRepositoryHash() => r'ef1d232282039aa2c64d1efc890064fe2bf33ffa';
+String _$otpRepositoryHash() => r'f5b3017f8d43be0283a34eadb4c971833edd4403';
 
 /// See also [otpRepository].
 @ProviderFor(otpRepository)

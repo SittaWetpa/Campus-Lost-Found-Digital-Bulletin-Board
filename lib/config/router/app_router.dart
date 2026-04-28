@@ -8,6 +8,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -104,9 +105,7 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.feed,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Feed — WBS 1.2')),
-        ),
+        builder: (context, state) => const FeedScreen(),
       ),
       GoRoute(
         path: AppRoutes.itemDetail,
