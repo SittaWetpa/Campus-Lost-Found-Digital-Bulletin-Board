@@ -1072,6 +1072,184 @@ Gate at least one major feature behind a Firebase Remote Config boolean flag so 
 
 ---
 
+### 2.14 Sensitive Item Handling & Auto-Expire
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.14 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+Some found items (financial cards, ID cards, passports, keys, documents) cannot safely or reliably be verified or returned through an in-app flow. For these items, the app's role is notification only — directing the Seeker to contact the security office rather than facilitating an in-app handover.
+
+When a Founder creates a post, they choose between **General** or **Sensitive** as the item type. Sensitive posts disable the Claim Request flow entirely and display a security office contact number instead. The sensitive item taxonomy (list of categories that count as sensitive) is managed via Firebase Remote Config so it can be updated without releasing a new app version.
+
+Sensitive posts are resolved either manually by the Founder (after handing the item to security) or automatically after **14 days** via a scheduled Cloud Function.
+
+**Deliverables**
+- Item type selector (General / Sensitive) added to Post Form Screen, shown only on Founder Posts
+- Sensitive Founder Posts: `description` and `contact` fields hidden; Secret Question disabled; only `category`, `location`, and `photo` allowed
+- Feed and Detail Screen: sensitive posts display a warning banner — "This is a sensitive item — cannot be claimed through the app" — plus a "Contact Security Office" button with phone number pulled from Remote Config
+- No Claim Request or Found Report buttons shown on sensitive posts
+- Founder retains the Resolve button on sensitive posts
+- Scheduled Cloud Function (`autoExpireSensitivePosts`) runs daily — queries Firestore for sensitive posts where `expiresAt <= now` and `status == "active"`, batch-updates them to `status: "expired"`
+- Expired posts hidden from Feed and search results but remain in Firestore for audit
+- `isSensitive: bool` and `expiresAt: Timestamp?` added to items Firestore schema
+- `sensitive_categories` string array added to Remote Config (e.g. `["credit_card","id_card","passport","key","document"]`)
+- Security office phone number stored in Remote Config as `security_office_contact`
+
+**Associated Activities**
+- Add `isSensitive` and `expiresAt` fields to `ItemModel` (`fromJson`/`toJson`) and `Item` entity
+- Add item type selector widget to Post Form Screen; on selection of Sensitive, hide description/contact/Secret Question fields and set `expiresAt = now + 14 days`
+- Update `ItemService.createItem()` to write `isSensitive` and `expiresAt`
+- Update Feed Screen and Detail Screen to read `isSensitive` and conditionally render warning banner + security office contact button
+- Remove Claim Request / Found Report buttons from Detail Screen when `isSensitive == true`
+- Add `sensitive_categories` and `security_office_contact` keys to Firebase Remote Config; read via `FeatureFlagService`
+- Write `autoExpireSensitivePosts` Cloud Function (Node 22, scheduled via Firebase Cloud Scheduler, `asia-southeast1`)
+- Update Firestore security rules: `isSensitive` and `expiresAt` may only be set at creation, not mutated by client after the fact
+- Update REST API (`GET /items`) to redact `contact`, `description`, and personal fields for sensitive items — expose only `category`, `location`, `createdAt`, `isSensitive`
+
+**Testing**
+- Unit test: `ItemService.createItem()` with `isSensitive: true` — verify `expiresAt` is set to approximately now + 14 days
+- Widget test: Post Form with category = Founder Post → select Sensitive type → verify description, contact, and Secret Question fields are hidden
+- Widget test: Detail Screen with `isSensitive: true` (Visitor view) — verify warning banner shown, Claim Request button absent, security office contact button present
+- Widget test: Detail Screen with `isSensitive: true` (Poster view) — verify Resolve button still present
+- Unit test: `autoExpireSensitivePosts` Cloud Function — mock Firestore with one post where `expiresAt < now` and `status: "active"` → verify status updated to `"expired"`
+- Unit test: `autoExpireSensitivePosts` — post where `expiresAt > now` → verify status unchanged
+- API test: `GET /items` with a sensitive item in Firestore — verify response omits `contact` and `description`, includes `isSensitive: true`
+- Firestore rules test: client tries to update `isSensitive` after creation — verify denied
+
+---
+
+### 2.15 QR Walk-in Web Form
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.15 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+A lightweight bilingual (Thai/English) web form accessible via a static QR code placed at physical lost & found drop-off points on campus (security office, library, canteen, etc.). Anyone — including non-students and visitors — can scan the QR, fill in a short form, and submit a found item directly into Firestore without needing a KMUTT account or the app.
+
+Walk-in submissions are written as Founder Posts with `source: "qr_walk_in"` and publish immediately with no moderation step. The sensitive item taxonomy applies — if a sensitive category is selected, a warning message is shown recommending the finder hand the item to the security office, but submission is not blocked.
+
+Spam protection is handled via rate limiting per IP and Google reCAPTCHA v3. The QR code is a static printable link with no expiry.
+
+**Deliverables**
+- Bilingual (TH/EN) HTML web form hosted on Firebase Hosting
+  - Fields: item category (dropdown), location found (text), description (optional), contact (optional), photo upload (optional)
+  - Language toggle button (TH ↔ EN)
+  - Sensitive category warning message (shown if sensitive category selected, does not block submit)
+- `POST /items` endpoint added to Cloud Functions — accepts anonymous walk-in submissions, writes to Firestore with `source: "qr_walk_in"`, `status: "active"`, and `isSensitive` derived from the category
+- Rate limiting: max 5 submissions per IP per hour
+- Google reCAPTCHA v3 integration on the web form
+- `source: "app" | "qr_walk_in"` field added to items Firestore schema
+- Static QR code image + A4 print template (PDF) linking to the web form URL
+- Optional: "Walk-in" badge on Founder Posts in the app Feed where `source == "qr_walk_in"`
+
+**Associated Activities**
+- Write bilingual HTML/CSS/JS web form; deploy to Firebase Hosting
+- Add `POST /items` Cloud Function endpoint with input validation and rate limiting
+- Integrate reCAPTCHA v3: verify token server-side in the Cloud Function before writing to Firestore
+- Add `source` field to `ItemModel` (`fromJson`/`toJson`) and `Item` entity
+- Update `ItemService` and Feed Screen to handle `source` field
+- Generate static QR code linking to the hosted form URL
+- Design and export A4 print template for physical placement
+- Update Firestore security rules: `source` field writable only by Cloud Function service account, not by app clients
+
+**Testing**
+- Integration test: submit valid form via `POST /items` → verify Firestore document created with correct fields including `source: "qr_walk_in"`
+- Integration test: submit with missing required fields (category, location) → verify 400 response
+- Integration test: submit 6 times from same IP within 1 hour → verify 6th request returns 429 Too Many Requests
+- Integration test: submit with invalid reCAPTCHA token → verify request rejected
+- Integration test: submit with sensitive category → verify `isSensitive: true` in Firestore document
+- Widget test (app): Feed Screen with a walk-in post in the list — verify "Walk-in" badge rendered when `source == "qr_walk_in"`
+- Firestore rules test: app client tries to write `source: "qr_walk_in"` directly — verify denied
+
+---
+
+### 2.16 Push Notifications
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.16 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+Notify users via Firebase Cloud Messaging (FCM) push notifications when activity occurs on their posts or requests. Notifications are delivered through Cloud Functions triggered by Firestore document events — no in-app notification inbox is included in this scope.
+
+Four events trigger a notification:
+
+- **T1 — New Claim Request:** a Visitor submits a Claim Request on a Founder Post → notify the Poster. Only triggered when `source == "app"`; walk-in submissions (`source: "qr_walk_in"`) do not trigger a notification because the submitter is a guest with no app account.
+- **T2 — New Found Report:** a Visitor submits a Found Report on a Seeker Post → notify the Poster.
+- **T3 — Request approved:** Poster approves a request → notify the Visitor (requester).
+- **T4 — Request rejected:** Poster rejects a request → notify the Visitor (requester).
+
+Notification text is in English only, matching the app language. For sensitive posts (`isSensitive: true`), the item title is included in the notification body — the notification itself does not expose any redacted fields (contact, description). FCM tokens are stored as an array on the user's Firestore document and are cleaned up automatically when stale.
+
+**Deliverables**
+- `firebase_messaging` package added to `pubspec.yaml`
+- FCM token management in `NotificationService`:
+  - `registerToken()` — calls `FirebaseMessaging.instance.getToken()` and writes the token to `users/{uid}.fcmTokens` via `arrayUnion`; called after every successful login
+  - `unregisterToken()` — removes the current token from `users/{uid}.fcmTokens` via `arrayRemove`; called on `signOut()`
+- Notification permission request shown to the user after first successful login (required on iOS; required on Android 13+)
+- Notification toggle ("Receive notifications") in Settings & Profile Screen (1.6) bound to `users/{uid}.notificationsEnabled`; Cloud Functions check this flag before sending
+- `users/{uid}` Firestore document gains two new fields: `fcmTokens: [String]` and `notificationsEnabled: bool` (default `true`)
+- Cloud Function `onNewRequest` — `onDocumentCreated` trigger on `items/{itemId}/requests/{requestId}`:
+  - Skips if `request.source == "qr_walk_in"` (guest submission — no Poster account to notify)
+  - Reads `items/{itemId}.userId` to identify the Poster
+  - Reads `users/{posterId}.fcmTokens` and `notificationsEnabled`
+  - Sends FCM notification to all Poster tokens if `notificationsEnabled == true`
+  - Stale token cleanup: on `messaging/registration-token-not-registered` error, removes the token from `fcmTokens` via `arrayRemove`
+- Cloud Function `onRequestStatusChange` — `onDocumentUpdated` trigger on `items/{itemId}/requests/{requestId}`:
+  - Fires only when `status` field changes from `pending` → `approved` or `pending` → `rejected`
+  - Reads `users/{requesterId}.fcmTokens` and `notificationsEnabled`
+  - Sends FCM notification to all Visitor tokens if `notificationsEnabled == true`
+  - Same stale token cleanup as above
+- Notification payloads (all in English):
+
+  | Event | Title | Body |
+  |-------|-------|------|
+  | T1 Claim Request | `"New Claim Request"` | `"{requesterName} submitted a Claim Request on your post '{itemTitle}'"` |
+  | T2 Found Report | `"Someone found your item"` | `"{requesterName} reported finding '{itemTitle}'"` |
+  | T3 Approved | `"Your request was approved"` | `"'{itemTitle}' — contact the poster to arrange a handover"` |
+  | T4 Rejected | `"Your request was declined"` | `"The poster declined your request on '{itemTitle}'"` |
+
+- `data` payload on every notification: `{ type, itemId, requestId }` — used to deep-link into the Detail Screen (`/items/{itemId}`) when the user taps the notification
+- GoRouter handles the incoming notification tap via `FirebaseMessaging.onMessageOpenedApp` and `getInitialMessage()` streams
+
+**Associated Activities**
+- Add `firebase_messaging` to `pubspec.yaml`; run `flutter pub get`
+- Configure `AndroidManifest.xml` for FCM (notification channel, permissions)
+- Create `notification_service.dart` with `registerToken()`, `unregisterToken()`, and `requestPermission()` methods
+- Call `NotificationService.requestPermission()` and `registerToken()` after successful login (in `AuthService.signIn()` / registration flow)
+- Call `NotificationService.unregisterToken()` inside `AuthService.signOut()`
+- Add `fcmTokens` and `notificationsEnabled` fields to `UserService.createUserProfile()` defaults
+- Add notification toggle to Settings Screen; bind to `UserService.updateUserProfile()` for `notificationsEnabled`
+- Write `onNewRequest` Cloud Function with `source` guard and stale-token cleanup
+- Write `onRequestStatusChange` Cloud Function with status-diff guard and stale-token cleanup
+- Handle notification tap navigation: wire `FirebaseMessaging.onMessageOpenedApp` and `getInitialMessage()` to GoRouter push `/items/{itemId}`
+- Update Firestore security rules: `fcmTokens` writable only by the owning user; `notificationsEnabled` writable only by the owning user
+
+**Testing**
+- Unit test: `NotificationService.registerToken()` — verify `arrayUnion` called on `users/{uid}.fcmTokens` with the current token
+- Unit test: `NotificationService.unregisterToken()` — verify `arrayRemove` called on `users/{uid}.fcmTokens`
+- Unit test: `onNewRequest` Cloud Function — mock request doc with `source: "app"`, Poster has `notificationsEnabled: true` and one valid token → verify FCM `sendEachForMulticast()` called with correct payload
+- Unit test: `onNewRequest` — mock request doc with `source: "qr_walk_in"` → verify FCM is NOT called
+- Unit test: `onNewRequest` — Poster has `notificationsEnabled: false` → verify FCM is NOT called
+- Unit test: `onNewRequest` — FCM returns `messaging/registration-token-not-registered` for one token → verify `arrayRemove` called on that token and other tokens are still attempted
+- Unit test: `onRequestStatusChange` — status changes `pending` → `approved` → verify FCM called for Visitor with T3 payload
+- Unit test: `onRequestStatusChange` — status changes `pending` → `rejected` → verify FCM called for Visitor with T4 payload
+- Unit test: `onRequestStatusChange` — status changes `approved` → `resolved` (non-qualifying change) → verify FCM is NOT called
+- Widget test: Settings Screen — toggle "Receive notifications" off → verify `UserService.updateUserProfile()` called with `notificationsEnabled: false`
+- Integration test: submit a Claim Request → verify the Poster's device receives a push notification with correct title and body
+- Integration test: tap incoming notification → verify app navigates to the correct Detail Screen (`/items/{itemId}`)
+
+---
+
 ## Phase 3.0 — Cross-Platform
 
 ---
@@ -1455,6 +1633,6 @@ Maintain a living traceability matrix that maps every test case listed in each W
 
 ---
 
-*WBS Dictionary v4.1 — Campus Lost & Found Digital Bulletin Board*
+*WBS Dictionary v5.0 — Campus Lost & Found Digital Bulletin Board*
 *Tech Stack: Flutter (Dart) + Riverpod 2.x + GoRouter + Firebase (Auth, Firestore, Storage, Cloud Functions, Crashlytics, Remote Config) + Hive + shared_preferences*
-*Total Work Packages: 34 | Changes since v4.0: added Phase 7.0 (7.1 Test Scripts & Traceability Matrix); added Testing Guide pointer and per-phase test status blocks*
+*Total Work Packages: 37 | Changes since v4.1: added Phase 2.14 (Sensitive Item Handling & Auto-Expire), Phase 2.15 (QR Walk-in Web Form), Phase 2.16 (Push Notifications); updated existing WBS per v5.0 change summary*
