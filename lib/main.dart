@@ -15,9 +15,11 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     // Firebase core
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
 
     // Hive (WBS 2.11)
     await Hive.initFlutter();
