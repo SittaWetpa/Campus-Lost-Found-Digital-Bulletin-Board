@@ -109,6 +109,9 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
 | 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
 | 2.13 | Feature flag (Remote Config) | — | Unit + Widget | ⬜ not yet written |
+| 2.14 | Sensitive item handling & auto-expire | — | Unit + Widget | ⬜ not yet written |
+| 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
+| 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
 
 ---
 
@@ -160,4 +163,4 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 ---
 
-*Last updated: 2026-04-28 (PR #9 merged — WBS 2.2 & 2.3 complete; tree updated with item_repository_impl_test.dart)*
+*Last updated: 2026-04-29 (GANTT sync — WBS 2.14, 2.15, 2.16 added to traceability matrix)*
