@@ -11,6 +11,8 @@ class ItemModel {
   final String contact;
   final List<String> imageUrls;
   final String userId;
+  final String source;
+  final bool isSensitive;
   final DateTime createdAt;
   final DateTime? editedAt;
   final String? claimedBy;
@@ -27,6 +29,8 @@ class ItemModel {
     required this.contact,
     required this.imageUrls,
     required this.userId,
+    this.source = 'web',
+    this.isSensitive = false,
     required this.createdAt,
     this.editedAt,
     this.claimedBy,
@@ -44,6 +48,8 @@ class ItemModel {
         contact: data['contact'] as String,
         imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
         userId: data['userId'] as String,
+        source: data['source'] as String? ?? 'web',
+        isSensitive: data['isSensitive'] as bool? ?? false,
         createdAt: (data['createdAt'] as Timestamp).toDate(),
         editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
         claimedBy: data['claimedBy'] as String?,
@@ -64,6 +70,8 @@ class ItemModel {
         contact: item.contact,
         imageUrls: item.imageUrls,
         userId: item.userId,
+        source: item.source == ItemSource.qrWalkIn ? 'qr_walk_in' : 'web',
+        isSensitive: item.isSensitive,
         createdAt: item.createdAt,
         editedAt: item.editedAt,
         claimedBy: item.claimedBy,
@@ -80,6 +88,8 @@ class ItemModel {
         'contact': contact,
         'imageUrls': imageUrls,
         'userId': userId,
+        'source': source,
+        'isSensitive': isSensitive,
         'createdAt': Timestamp.fromDate(createdAt),
         if (editedAt != null) 'editedAt': Timestamp.fromDate(editedAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
@@ -97,6 +107,8 @@ class ItemModel {
         contact: contact,
         imageUrls: imageUrls,
         userId: userId,
+        source: ItemSource.fromString(source),
+        isSensitive: isSensitive,
         createdAt: createdAt,
         editedAt: editedAt,
         claimedBy: claimedBy,

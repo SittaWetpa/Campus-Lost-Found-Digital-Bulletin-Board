@@ -193,6 +193,38 @@ void main() {
       expect(rt.secretQuestion, original.secretQuestion);
       expect(rt.secretAnswer,   original.secretAnswer);
     });
+
+    // WBS 2.15 / isSensitive — entity round-trip
+    test('qr_walk_in source round-trips through model', () {
+      final model = ItemModel.fromMap('doc-qr', {
+        'title': 'T', 'description': 'D', 'category': 'founder',
+        'status': 'active', 'location': 'L', 'contact': 'C',
+        'imageUrls': <String>[], 'userId': 'U',
+        'createdAt': Timestamp.fromDate(createdAt),
+        'source': 'qr_walk_in',
+        'isSensitive': true,
+      });
+      final entity = model.toEntity();
+      expect(entity.source,      ItemSource.qrWalkIn);
+      expect(entity.isSensitive, true);
+
+      final map = ItemModel.fromEntity(entity).toFirestore();
+      expect(map['source'],      'qr_walk_in');
+      expect(map['isSensitive'], true);
+    });
+
+    test('old Firestore doc without source/isSensitive defaults correctly', () {
+      final entity = ItemModel.fromMap('doc-old', {
+        'title': 'T', 'description': 'D', 'category': 'seeker',
+        'status': 'active', 'location': 'L', 'contact': 'C',
+        'imageUrls': <String>[], 'userId': 'U',
+        'createdAt': Timestamp.fromDate(createdAt),
+        // no 'source' or 'isSensitive' keys
+      }).toEntity();
+
+      expect(entity.source,      ItemSource.web);
+      expect(entity.isSensitive, false);
+    });
   });
 
   // ── ItemModel.toFirestore() ────────────────────────────────────────────────
@@ -209,6 +241,8 @@ void main() {
         contact: '0845678901',
         imageUrls: const ['url1', 'url2'],
         userId: 'uid-003',
+        source: 'qr_walk_in',
+        isSensitive: true,
         createdAt: createdAt,
         editedAt: editedAt,
         claimedBy: 'uid-c',
@@ -224,6 +258,8 @@ void main() {
       expect(map['contact'], '0845678901');
       expect(map['imageUrls'], ['url1', 'url2']);
       expect(map['userId'], 'uid-003');
+      expect(map['source'], 'qr_walk_in');
+      expect(map['isSensitive'], true);
       expect((map['createdAt'] as Timestamp).toDate(), createdAt);
       expect((map['editedAt'] as Timestamp).toDate(), editedAt);
       expect(map['claimedBy'], 'uid-c');
