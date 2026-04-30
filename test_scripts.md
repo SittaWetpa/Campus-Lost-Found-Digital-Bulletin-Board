@@ -82,9 +82,9 @@ Run: `flutter test test/features/`
 | 1.3 | Item detail screen | — | Widget | ⬜ not yet written |
 | 1.4 | Post form screen | — | Widget | ⬜ not yet written |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
-| 1.6 | Settings & profile screen | — | Widget | ⬜ not yet written |
+| 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
 | 1.7 | My posts screen | — | Widget | ⬜ not yet written |
-| 1.8 | Edit profile & avatar screen | — | Widget | ⬜ not yet written |
+| 1.8 | Edit profile & avatar screen | `test/features/profile/presentation/screens/edit_profile_screen_test.dart` | Widget | ✅ 4 tests |
 
 ---
 
@@ -154,12 +154,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 17 | 16 (1 known issue) |
-| 1.0 Flutter UI | 0 | — |
+| 1.0 Flutter UI | 4 | 4 |
 | 2.0 Data Layer | 87 + 9 (npm) | 96 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 33 (1 known issue) |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **138 Dart + 9 npm** | **136 passing** |
+| **Total** | **142 Dart + 9 npm** | **140 passing** |
 
 ---
 

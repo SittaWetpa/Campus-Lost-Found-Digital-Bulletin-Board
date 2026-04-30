@@ -16,9 +16,14 @@ Future<void> main() async {
 
     // Firebase core
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      } on FirebaseException catch (e) {
+        if (e.code != 'duplicate-app') rethrow;
+        // Native Firebase still alive after hot restart — safe to continue
+      }
     }
 
     // Hive (WBS 2.11)
