@@ -1,17 +1,431 @@
-# campus_lost_found
+# Campus Lost & Found — Digital Bulletin Board
 
-A new Flutter project.
+A Flutter mobile application for reporting and finding lost items on campus. Students can post Seeker Posts (lost items) or Founder Posts (found items), browse the feed, send Claim Requests or Found Reports, and receive Similar Post recommendations before creating duplicates.
+
+---
+
+## Term Glossary
+
+| Term | Meaning |
+|---|---|
+| **Seeker Post** | A post created by someone who lost an item (previously: "Lost post") |
+| **Founder Post** | A post created by someone who found an item (previously: "Found post / Non-owner found post") |
+| **Poster** | The user who created the post (previously: "post owner") |
+| **Visitor** | A user viewing someone else's post (previously: "non-owner") |
+| **Claim Request** | A request to reclaim a lost item — sent by a Visitor to the Poster of a Founder Post |
+| **Found Report** | A report that an item has been found — sent by a Visitor to the Poster of a Seeker Post |
+| **Active** | Post status indicating it is still open for requests (previously: "active") |
+| **Resolved** | Post status indicating the item has been returned and the post is closed (previously: "returned") |
+
+---
+
+## Tech Stack
+
+- **Flutter** (Dart)
+- **Riverpod 2.x** (with `riverpod_generator`) — state management
+- **GoRouter** — declarative routing with auth guards
+- **Firebase Authentication** — Email/Password, `@mail.kmutt.ac.th` domain only
+- **Cloud Firestore** — real-time database
+- **Firebase Storage** — photo uploads
+- **Firebase Cloud Functions** — REST API for external integration
+- **Firebase Crashlytics** — error reporting (mobile only; Web uses console logging)
+- **Firebase Remote Config** — feature flags
+- **Firebase Extension (Trigger Email)** — OTP email delivery for account verification
+- **Hive** — offline-first local cache
+- **shared_preferences** — lightweight user preferences
+
+**Target platforms:** Android and Web only.
+
+---
+
+## Key Features
+
+- **Email OTP Verification** — new accounts must verify their `@mail.kmutt.ac.th` email with a 6-digit OTP before accessing the app
+- **Seeker & Founder Posts** — create posts to search for lost items or report found items
+- **Claim Request / Found Report** — request and approval system with Cancel (undo) support
+- **Similar Posts Recommendation** — suggests matching Founder Posts before a user creates a new Seeker Post
+- **Secret Question Verification** — Poster sets a secret question on a Founder Post; Visitor must answer correctly before sending a Claim Request to prevent false ownership claims
+- **REST API** — read-only endpoint for external tools to access Active items via API Key
+- **Offline Cache** — browse recent posts even without an internet connection
+
+---
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+> **Team members:** Follow **[TEAM_SETUP.md](./TEAM_SETUP.md)** — it covers everything you need in 20–40 minutes. The steps below are for reference only.
 
-A few resources to get you started if this is your first Flutter project:
+### Prerequisites
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter SDK `>=3.0.0`
+- Dart SDK `>=3.0.0`
+- Node.js `>=18` (for Cloud Functions)
+- Firebase CLI (`npm install -g firebase-tools`)
+- FlutterFire CLI (`dart pub global activate flutterfire_cli`)
+- A Firebase project with the following services enabled:
+  - **Authentication** (Email/Password provider, `@mail.kmutt.ac.th` domain only)
+  - **Cloud Firestore**
+  - **Firebase Storage**
+  - **Cloud Functions**
+  - **Crashlytics** (mobile builds only)
+  - **Remote Config**
+  - **Firebase Extension: Trigger Email from Firestore** (for OTP email delivery)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Setup
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/SittaWetpa/Campus-Lost-Found-Digital-Bulletin-Board.git campus_lost_found
+   cd campus_lost_found
+   git checkout develop
+   git pull origin develop
+   ```
+
+2. Install Flutter dependencies
+   ```bash
+   flutter pub get
+   ```
+
+3. _(One-time, already done)_ Configure Firebase for the project (Android + Web)
+   ```bash
+   flutterfire configure --project=<your-project-id>
+   ```
+
+4. _(One-time, already done)_ Configure Firebase Storage CORS for Web
+   ```bash
+   gsutil cors set cors.json gs://<your-bucket>.firebasestorage.app
+   ```
+
+5. _(One-time, already done)_ Install Cloud Functions dependencies
+   ```bash
+   cd functions && npm install && cd ..
+   ```
+
+6. Run the app
+   ```bash
+   flutter run                 # Android (emulator or device)
+   flutter run -d chrome       # Web
+   ```
+
+---
+
+## Project Structure
+
+The project follows **Clean Architecture** with a feature-first layout. Each feature contains its own `data`, `domain`, and `presentation` layers.
+
+```
+lib/
+├── main.dart                           # Firebase init, Hive init, runApp
+├── app.dart                            # MaterialApp.router, theme
+├── config/
+│   ├── firebase_options.dart           # Generated by flutterfire configure
+│   └── router/
+│       └── app_router.dart             # GoRouter + auth guards
+├── core/
+│   ├── constants/                      # app_colors, app_text_styles, app_spacing
+│   ├── theme/app_theme.dart
+│   ├── errors/                         # failures.dart, exceptions.dart
+│   ├── utils/                          # validators, formatters
+│   ├── network/                        # connectivity provider
+│   ├── observability/                  # AppLogger, Crashlytics wrapper
+│   └── services/
+│       ├── preference_service.dart     # shared_preferences wrapper
+│       └── feature_flag_service.dart   # Remote Config wrapper
+├── features/
+│   ├── auth/
+│   │   ├── data/
+│   │   │   ├── datasources/            # auth_remote_datasource.dart, otp_remote_datasource.dart
+│   │   │   └── repositories/           # auth_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/               # user.dart
+│   │   │   ├── repositories/           # auth_repository.dart (abstract)
+│   │   │   └── usecases/               # sign_in, sign_up, sign_out, send_otp, verify_otp
+│   │   └── presentation/
+│   │       ├── providers/              # currentUserProvider
+│   │       ├── screens/                # login_screen.dart, register_screen.dart, otp_verification_screen.dart
+│   │       └── widgets/
+│   ├── feed/
+│   │   ├── data/
+│   │   │   ├── datasources/            # item_remote (Firestore), item_local (Hive)
+│   │   │   ├── models/                 # item_model.dart with @HiveType adapters
+│   │   │   └── repositories/           # item_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/               # item.dart
+│   │   │   ├── repositories/           # item_repository.dart (abstract)
+│   │   │   └── usecases/               # get_items, search_items, get_similar_posts
+│   │   └── presentation/
+│   │       ├── providers/
+│   │       ├── screens/                # feed_screen.dart, detail_screen.dart
+│   │       └── widgets/                # item_card.dart
+│   ├── post/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/               # post_form_screen.dart, similar_posts_panel.dart
+│   ├── requests/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/               # claim_request_form, found_report_form
+│   └── profile/
+│       ├── data/
+│       ├── domain/
+│       └── presentation/               # settings_screen, edit_profile, my_posts
+└── shared/
+    └── widgets/                        # Reusable: badges, avatar, photo_picker
+functions/
+└── index.js                            # Cloud Functions — REST API endpoint
+test/
+├── unit/
+├── widget/
+└── integration/
+```
+
+**Layer rules:**
+- `presentation/` may depend on `domain/` only — never directly on `data/`
+- `data/` depends on `domain/` (implements its abstract repositories)
+- `domain/` has zero Flutter or Firebase imports — pure Dart, testable in isolation
+- `core/` and `shared/` have no dependency on any `features/` directory
+
+---
+
+## REST API
+
+The app exposes a read-only REST API via Firebase Cloud Functions for external integrations.
+
+**Base URL**: `https://<region>-<project-id>.cloudfunctions.net`
+
+### `GET /items`
+
+Returns Active items from Firestore.
+
+**Headers**
+```
+x-api-key: <your-api-key>
+```
+
+**Query Params**
+
+| Param | Type | Description |
+|---|---|---|
+| `category` | `seeker` \| `founder` | Filter by post type |
+| `keyword` | string | Filter by title keyword (prefix match) |
+| `limit` | number | Max results (default: 20) |
+
+**Response**
+```json
+[
+  {
+    "id": "abc123",
+    "title": "Black wallet",
+    "category": "founder",
+    "description": "Found near the library",
+    "location": "Library 1st floor",
+    "contact": "081-234-5678",
+    "imageUrls": ["https://..."],
+    "createdAt": "2025-04-01T10:00:00Z"
+  }
+]
+```
+
+**Error Responses**
+- `401 Unauthorized` — missing or invalid API Key
+- `400 Bad Request` — invalid query params
+
+> ⚠️ API Key is shared securely within the team. Never commit it to the repository.
+
+---
+
+## Branching Strategy
+
+```
+release (default) ← stable, production-ready
+  └── develop     ← integration branch, all features merge here
+        └── <nickname>/feat/<feature-name>   ← individual feature branches
+```
+
+### Branch Naming Convention
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Feature | `<nickname>/feat/<feature-name>` | `film/feat/auth` |
+| Bug fix | `<nickname>/fix/<issue-name>` | `van/fix/feed-scroll-bug` |
+| Hotfix | `hotfix/<issue-name>` | `hotfix/login-crash` |
+
+### Full Git Workflow
+
+#### Starting a new feature (no branch yet)
+
+**1. Sync and create your branch**
+```bash
+git fetch origin
+git checkout develop
+git pull origin develop
+git checkout -b <nickname>/feat/<feature-name>
+```
+
+**2. Work and commit regularly**
+```bash
+git add .
+git commit -m "feat(scope): short description"
+```
+
+Follow the commit convention — see [Commit Message Convention](#commit-message-convention) below.
+
+**3. Push your branch to remote for the first time**
+```bash
+git push origin <nickname>/feat/<feature-name>
+```
+
+VS Code's Git panel also has a **Publish Branch** button that does this automatically.
+
+**4. Open a Pull Request**
+
+Go to the repo on GitHub → **Pull Requests** → **New Pull Request**
+
+- **base:** `develop` ← **compare:** `<your-branch>`
+- **Title:** follow commit convention, e.g. `feat(auth): implement login screen (WBS 0.3)`
+- **Description:** include the WBS number, what was done, and how to test
+- Request a review from **Film**
+- Submit — Film will review, approve, and merge
+
+> Do not merge your own PR. Wait for at least 1 approval.
+
+---
+
+#### Continuing work on an existing branch
+
+**1. Sync your branch**
+```bash
+git fetch origin
+git checkout <nickname>/feat/<feature-name>
+git pull origin <nickname>/feat/<feature-name>
+```
+
+**2. Keep your branch up to date with `develop`** (do this regularly to avoid conflicts)
+```bash
+git merge origin/develop
+```
+
+**3. Work and commit regularly**
+```bash
+git add .
+git commit -m "feat(scope): short description"
+```
+
+**4. Push to remote**
+```bash
+git push origin <nickname>/feat/<feature-name>
+```
+
+The PR you opened earlier will update automatically — no need to open a new one.
+
+---
+
+## Branch Ownership
+
+| Branch | Owner | WBS |
+|--------|-------|-----|
+| `film/feat/auth` | Film | 0.1, 0.2 |
+| `film/feat/otp` | Film | 0.5 |
+| `film/feat/schema` | Film | 2.1 |
+| `film/feat/riverpod` | Film | 4.2 |
+| `film/feat/api` | Film | 2.9 |
+| `film/feat/crashlytics` | Film | 2.12 |
+| `film/feat/android` | Film | 3.1 |
+| `film/feat/push` | Film | 2.16 |
+| `posh/feat/auth` | Posh | 0.3 |
+| `posh/feat/router` | Posh | 4.3 |
+| `posh/feat/requests` | Posh | 2.4, 2.5 |
+| `posh/feat/cache` | Posh | 2.11 |
+| `posh/feat/sensitive` | Posh | 2.14 |
+| `van/feat/feed` | Van | 1.2, 1.3, 1.5 |
+| `van/feat/post` | Van | 1.4 |
+| `van/feat/secret-question` | Van | 2.10 |
+| `van/feat/remote-config` | Van | 2.13 |
+| `van/feat/web` | Van | 3.2 |
+| `jed/feat/crud` | Jed | 2.2, 2.3, 2.6, 2.7 |
+| `jed/feat/post` | Jed | 2.8 |
+| `jed/feat/security` | Jed | 5.2 |
+| `shogun/feat/ui` | Shogun | 1.6, 1.7, 1.8 |
+| `shogun/feat/architecture` | Shogun | 4.1 |
+| `shogun/feat/a11y` | Shogun | 5.1 |
+| `shogun/feat/qr` | Shogun | 2.15 |
+
+> **WBS 1.1 (UI/UX Design & Prototype)** is a design task — output is a Figma file, not code. No branch required.
+
+---
+
+## Running Tests
+
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+
+# View coverage (requires lcov)
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+---
+
+## Commit Message Convention
+
+```
+<type>(<scope>): <short description>
+
+feat(auth): add email/password login
+fix(feed): correct item card thumbnail size
+test(crud): add unit tests for ItemService
+docs(readme): update branch strategy
+```
+
+Types: `feat`, `fix`, `test`, `docs`, `refactor`, `style`, `chore`
+
+---
+
+## AI Development Tools
+
+This project uses **Claude Code** for AI-assisted development. Every team member should set it up before starting feature work.
+
+### File Structure
+
+```
+campus_lost_found/
+├── CLAUDE.md                   # Project memory — Claude Code reads this every session
+├── ORCHESTRATION.md            # Multi-agent workflow guide
+└── .claude/
+    └── agents/                 # Subagent definitions
+        ├── flutter_engineer.md
+        ├── architect.md
+        ├── qa_engineer.md
+        └── security_reviewer.md
+```
+
+### Setup
+
+1. Install the **Claude Code** extension in VS Code (`anthropic.claude-code`)
+2. Sign in with your Anthropic account
+3. Open the project folder — Claude Code reads `CLAUDE.md` automatically every session
+
+### How to Use Claude Code for a WBS Feature
+
+Follow the 4-agent workflow: **design → implement → test → review**
+
+See **[ORCHESTRATION.md](./ORCHESTRATION.md)** for the full step-by-step prompt guide, agent reference, and Plan Mode instructions.
+
+> Always work on your own feature branch. Never commit directly to `develop` or `release`.
+
+---
+
+## Team
+
+| Name | Role | Tasks |
+|------|------|-------|
+| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.9, 2.12, 2.16, 3.1, 4.2, 6.1 |
+| Van | Frontend Lead | 1.2, 1.3, 1.4, 1.5, 2.10, 2.13, 3.2 |
+| Posh | Auth · Backend | 0.3, 0.4, 2.4, 2.5, 2.11, 2.14, 4.3 |
+| Jed | Backend · Frontend | 2.2, 2.3, 2.6, 2.7, 2.8, 5.2 |
+| Shogun | Frontend · Design | 1.1, 1.6, 1.7, 1.8, 2.15, 4.1, 5.1 |
+
+> **6.1 Multi-Agent Orchestration Setup** is leader-owned (Film) and is complete ✅

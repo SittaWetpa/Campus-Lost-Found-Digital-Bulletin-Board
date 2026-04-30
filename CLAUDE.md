@@ -176,6 +176,26 @@ Each feature follows this internal structure:
 - ❌ Commit secrets, API keys, or `google-services.json` to a public repo
 - ❌ Use `StreamBuilder` for routing — GoRouter handles auth redirects
 - ❌ Write business logic in `presentation/` — use cases belong in `domain/`
+- ❌ Skip writing tests after implementing a WBS work package — see Testing Rules above
+- ❌ Call `Firebase.initializeApp()` inside a test — use `ProviderScope(overrides: [...])` instead
+- ❌ Forget to update `test_scripts.md` after adding a new test file
+- ❌ Forget to update the Weekly Orchestration Log in `ORCHESTRATION.md` after completing a work package
+
+---
+
+## Testing Rules — Always Follow
+
+After implementing any WBS work package:
+
+1. **Write the tests** listed in that WP's **Testing** section in `wbs_dictionary.md`. No exceptions.
+2. **Place the test file** under `test/` mirroring the `lib/` path — e.g. `lib/features/auth/presentation/screens/login_screen.dart` → `test/features/auth/presentation/screens/login_screen_test.dart`.
+3. **Update `test_scripts.md`** — add a row to the traceability matrix for the new test file and set its status to ✅.
+4. **Run `flutter test`** and confirm zero failures before committing.
+5. **Update the Weekly Orchestration Log** in `ORCHESTRATION.md` — fill in the current week's row: what was planned, which agent tasks ran, key handoffs, and anything the human reviewer caught.
+
+Widget test rules (never break these):
+- Always wrap in `ProviderScope(overrides: [...])` — never call `Firebase.initializeApp()` in a test.
+- Use `mocktail` for fakes — it is already in `pubspec.yaml` dev dependencies.
 
 ---
 
@@ -189,6 +209,7 @@ Each feature follows this internal structure:
 | `firestore.rules` | Firestore security rules |
 | `storage.rules` | Storage security rules |
 | `functions/index.js` | REST API endpoint (`GET /items`) |
+| `test_scripts.md` | Test run commands, file structure, traceability matrix |
 | `SETUP.md` | Full setup guide from scratch |
 | `README.md` | Project overview, team, branching strategy |
 
@@ -212,4 +233,41 @@ Quick map of features to WBS codes:
 
 ---
 
-*CLAUDE.md v4.1 — Campus Lost & Found Digital Bulletin Board*
+## Karpathy Skills — AI Collaboration Principles
+
+Four principles that govern how Claude Code approaches every task in this project.
+
+### 1. Think Before Coding
+
+> "Don't assume. Don't hide confusion. Surface tradeoffs."
+
+- State assumptions explicitly before writing code
+- Present multiple interpretations when a request is ambiguous — never choose silently
+- Name confusion out loud when something is unclear rather than guessing and proceeding
+
+### 2. Simplicity First
+
+> "Minimum code that solves the problem. Nothing speculative."
+
+- Do not add unrequested features, abstractions, or flexibility
+- Do not add error handling for edge cases that cannot actually occur
+- Do not design for hypothetical future requirements — three similar lines beats a premature abstraction
+
+### 3. Surgical Changes
+
+> "Touch only what you must. Clean up only your own mess."
+
+- When modifying existing code, preserve the current style in surrounding code
+- Do not improve or refactor sections unrelated to the current task
+- Only remove code whose removal is directly caused by the change being made
+
+### 4. Goal-Driven Execution
+
+> "Define success criteria. Loop until verified."
+
+- Transform every request into a measurable objective with clear verification steps
+- Iterate independently until the success criteria are met — do not ask for repeated clarification
+- If success cannot be verified (e.g., UI changes with no dev server), say so explicitly
+
+---
+
