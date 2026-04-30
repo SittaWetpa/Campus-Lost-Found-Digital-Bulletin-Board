@@ -131,7 +131,7 @@ class _Content extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          item.description,
+          item.description ?? '',
           style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

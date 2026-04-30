@@ -34,24 +34,36 @@ enum ItemSource {
 class Item {
   final String id;
   final String title;
-  final String description;
+
+  // Null when isSensitive == true (hidden from public view)
+  final String? description;
+
   final ItemCategory category;
   final ItemStatus status;
   final String location;
-  final String contact;
+
+  // Null when isSensitive == true (hidden from public view)
+  final String? contact;
+
   final List<String> imageUrls;
   final String userId;
 
   // WBS 2.15 — walk-in QR registration badge on ItemCard
   final ItemSource source;
 
-  // Future WBS — hides photo & description; shows "Contact Security Office"
+  // WBS 2.14 — hides description & contact; directs seekers to Security Office
   final bool isSensitive;
 
   final DateTime createdAt;
 
+  // When the item was lost (seeker) or found (founder) — drives the datetime picker
+  final DateTime occurredAt;
+
   // WBS 2.6 — null until post has been edited
   final DateTime? editedAt;
+
+  // Sensitive Founder Posts auto-expire after 14 days; null for all other posts
+  final DateTime? expiresAt;
 
   // WBS 2.4 — null until a request is approved
   final String? claimedBy;
@@ -71,9 +83,11 @@ class Item {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
+    required this.occurredAt,
     this.source = ItemSource.web,
     this.isSensitive = false,
     this.editedAt,
+    this.expiresAt,
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
@@ -92,7 +106,9 @@ class Item {
     ItemSource? source,
     bool? isSensitive,
     DateTime? createdAt,
+    DateTime? occurredAt,
     DateTime? editedAt,
+    DateTime? expiresAt,
     String? claimedBy,
     String? secretQuestion,
     String? secretAnswer,
@@ -109,7 +125,9 @@ class Item {
         source: source ?? this.source,
         isSensitive: isSensitive ?? this.isSensitive,
         createdAt: createdAt ?? this.createdAt,
+        occurredAt: occurredAt ?? this.occurredAt,
         editedAt: editedAt ?? this.editedAt,
+        expiresAt: expiresAt ?? this.expiresAt,
         claimedBy: claimedBy ?? this.claimedBy,
         secretQuestion: secretQuestion ?? this.secretQuestion,
         secretAnswer: secretAnswer ?? this.secretAnswer,

@@ -66,6 +66,7 @@ Item _makeItem({
       imageUrls: const [],
       userId: userId,
       createdAt: DateTime(2025, 3, 15, 10, 30),
+      occurredAt: DateTime(2025, 3, 15, 10, 30),
     );
 
 User _makeUser({String uid = _visitorUid, String firstName = 'Pun'}) => User(
@@ -455,6 +456,7 @@ void main() {
       imageUrls: const [],
       userId: _visitorUid,
       createdAt: DateTime(2025, 3, 15),
+      occurredAt: DateTime(2025, 3, 15),
     );
 
     // WBS 1.2-01-a ─────────────────────────────────────────────────────────

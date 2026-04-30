@@ -44,6 +44,7 @@ Item _makeItem({required String id, required ItemCategory category}) => Item(
       imageUrls: const [],
       userId: 'uid',
       createdAt: DateTime(2025),
+      occurredAt: DateTime(2025),
     );
 
 // ── tests ─────────────────────────────────────────────────────────────────────

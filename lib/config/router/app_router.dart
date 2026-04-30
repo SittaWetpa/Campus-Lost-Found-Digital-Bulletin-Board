@@ -9,6 +9,7 @@ import 'package:campus_lost_found/features/auth/presentation/screens/login_scree
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
+import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -117,17 +118,12 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.post,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Post Form — WBS 1.4')),
-        ),
+        builder: (context, state) => const PostFormScreen(),
       ),
       GoRoute(
         path: AppRoutes.editPost,
-        builder: (context, state) => Scaffold(
-          body: Center(
-            child: Text('Edit Post — id: ${state.pathParameters['id']} — WBS 2.6'),
-          ),
-        ),
+        builder: (context, state) =>
+            PostFormScreen(editId: state.pathParameters['id']),
       ),
       GoRoute(
         path: AppRoutes.myPosts,

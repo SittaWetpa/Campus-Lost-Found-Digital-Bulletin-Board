@@ -5,8 +5,9 @@ import 'package:campus_lost_found/features/feed/data/models/item_model.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 
 void main() {
-  final createdAt = DateTime(2025, 3, 15, 10, 30);
-  final editedAt  = DateTime(2025, 3, 16, 9, 0);
+  final createdAt  = DateTime(2025, 3, 15, 10, 30);
+  final occurredAt = DateTime(2025, 3, 15, 9, 0);
+  final editedAt   = DateTime(2025, 3, 16, 9, 0);
 
   // ── ItemModel.fromEntity() ─────────────────────────────────────────────────
 
@@ -26,6 +27,7 @@ void main() {
         imageUrls: const ['https://example.com/img1.jpg'],
         userId: 'uid-poster',
         createdAt: createdAt,
+        occurredAt: occurredAt,
         editedAt: editedAt,
         claimedBy: 'uid-claimer',
         secretQuestion: 'What color is the card sleeve?',
@@ -44,6 +46,7 @@ void main() {
     test('maps imageUrls', () => expect(model.imageUrls, ['https://example.com/img1.jpg']));
     test('maps userId', () => expect(model.userId, 'uid-poster'));
     test('maps createdAt', () => expect(model.createdAt, createdAt));
+    test('maps occurredAt (WBS 1.4)', () => expect(model.occurredAt, occurredAt));
     test('maps editedAt', () => expect(model.editedAt, editedAt));
     test('maps claimedBy', () => expect(model.claimedBy, 'uid-claimer'));
     test('maps secretQuestion', () => expect(model.secretQuestion, 'What color is the card sleeve?'));
@@ -54,7 +57,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.seeker, status: ItemStatus.active,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: occurredAt,
       ));
       expect(m.category, 'seeker');
     });
@@ -64,7 +67,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.founder, status: ItemStatus.resolved,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: occurredAt,
       ));
       expect(m.status, 'resolved');
     });
@@ -74,12 +77,26 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.seeker, status: ItemStatus.active,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: occurredAt,
       ));
       expect(m.editedAt, isNull);
+      expect(m.expiresAt, isNull);
       expect(m.claimedBy, isNull);
       expect(m.secretQuestion, isNull);
       expect(m.secretAnswer, isNull);
+    });
+
+    test('maps null description for sensitive item (WBS 2.14)', () {
+      final m = ItemModel.fromEntity(Item(
+        id: 'x', title: 'ID card', description: null,
+        category: ItemCategory.founder, status: ItemStatus.active,
+        location: 'ECC', contact: null, imageUrls: const [],
+        userId: 'u', createdAt: createdAt, occurredAt: occurredAt,
+        isSensitive: true,
+      ));
+      expect(m.description, isNull);
+      expect(m.contact, isNull);
+      expect(m.isSensitive, isTrue);
     });
   });
 
@@ -101,6 +118,7 @@ void main() {
         imageUrls: const [],
         userId: 'uid-seeker',
         createdAt: createdAt,
+        occurredAt: occurredAt,
         editedAt: editedAt,
         claimedBy: 'uid-c',
         secretQuestion: 'Q?',
@@ -120,6 +138,7 @@ void main() {
     test('maps contact', () => expect(entity.contact, '0823456789'));
     test('maps userId', () => expect(entity.userId, 'uid-seeker'));
     test('maps createdAt', () => expect(entity.createdAt, createdAt));
+    test('maps occurredAt (WBS 1.4)', () => expect(entity.occurredAt, occurredAt));
     test('maps editedAt', () => expect(entity.editedAt, editedAt));
     test('maps claimedBy', () => expect(entity.claimedBy, 'uid-c'));
     test('maps secretQuestion', () => expect(entity.secretQuestion, 'Q?'));
@@ -130,6 +149,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: 'founder', status: 'active', location: 'l', contact: 'c',
         imageUrls: const [], userId: 'u', createdAt: createdAt,
+        occurredAt: occurredAt,
       ).toEntity();
       expect(e.category, ItemCategory.founder);
     });
@@ -139,6 +159,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: 'seeker', status: 'resolved', location: 'l', contact: 'c',
         imageUrls: const [], userId: 'u', createdAt: createdAt,
+        occurredAt: occurredAt,
       ).toEntity();
       expect(e.status, ItemStatus.resolved);
     });
@@ -148,8 +169,10 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: 'seeker', status: 'active', location: 'l', contact: 'c',
         imageUrls: const [], userId: 'u', createdAt: createdAt,
+        occurredAt: occurredAt,
       ).toEntity();
       expect(e.editedAt, isNull);
+      expect(e.expiresAt, isNull);
       expect(e.claimedBy, isNull);
       expect(e.secretQuestion, isNull);
       expect(e.secretAnswer, isNull);
@@ -159,7 +182,8 @@ void main() {
   // ── fromEntity → toEntity round-trip ──────────────────────────────────────
 
   group('fromEntity → toEntity round-trip — WBS 1.2', () {
-    test('preserves all fields', () {
+    test('preserves all fields including occurredAt and expiresAt', () {
+      final expiresAt = DateTime(2025, 3, 29);
       final original = Item(
         id: 'rt-001',
         title: 'AirPods case',
@@ -171,6 +195,8 @@ void main() {
         imageUrls: const ['https://example.com/rt.jpg'],
         userId: 'uid-rt',
         createdAt: createdAt,
+        occurredAt: occurredAt,
+        expiresAt: expiresAt,
         editedAt: editedAt,
         claimedBy: 'uid-claim',
         secretQuestion: 'Q?',
@@ -188,6 +214,8 @@ void main() {
       expect(rt.imageUrls,      original.imageUrls);
       expect(rt.userId,         original.userId);
       expect(rt.createdAt,      original.createdAt);
+      expect(rt.occurredAt,     original.occurredAt);
+      expect(rt.expiresAt,      original.expiresAt);
       expect(rt.editedAt,       original.editedAt);
       expect(rt.claimedBy,      original.claimedBy);
       expect(rt.secretQuestion, original.secretQuestion);
@@ -201,6 +229,7 @@ void main() {
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(occurredAt),
         'source': 'qr_walk_in',
         'isSensitive': true,
       });
@@ -213,17 +242,19 @@ void main() {
       expect(map['isSensitive'], true);
     });
 
-    test('old Firestore doc without source/isSensitive defaults correctly', () {
+    test('old Firestore doc without source/isSensitive/occurredAt defaults correctly', () {
       final entity = ItemModel.fromMap('doc-old', {
         'title': 'T', 'description': 'D', 'category': 'seeker',
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
-        // no 'source' or 'isSensitive' keys
+        // no 'source', 'isSensitive', or 'occurredAt' keys
       }).toEntity();
 
       expect(entity.source,      ItemSource.web);
       expect(entity.isSensitive, false);
+      // Legacy docs fall back to createdAt for occurredAt.
+      expect(entity.occurredAt,  createdAt);
     });
   });
 
@@ -231,6 +262,7 @@ void main() {
 
   group('ItemModel.toFirestore() — WBS 1.2', () {
     test('produces correct map with all optional fields', () {
+      final expiresAt = DateTime(2025, 3, 29);
       final map = ItemModel(
         id: 'item-003',
         title: 'Umbrella',
@@ -244,6 +276,8 @@ void main() {
         source: 'qr_walk_in',
         isSensitive: true,
         createdAt: createdAt,
+        occurredAt: occurredAt,
+        expiresAt: expiresAt,
         editedAt: editedAt,
         claimedBy: 'uid-c',
         secretQuestion: 'Q',
@@ -260,8 +294,10 @@ void main() {
       expect(map['userId'], 'uid-003');
       expect(map['source'], 'qr_walk_in');
       expect(map['isSensitive'], true);
-      expect((map['createdAt'] as Timestamp).toDate(), createdAt);
-      expect((map['editedAt'] as Timestamp).toDate(), editedAt);
+      expect((map['createdAt']  as Timestamp).toDate(), createdAt);
+      expect((map['occurredAt'] as Timestamp).toDate(), occurredAt);
+      expect((map['expiresAt']  as Timestamp).toDate(), expiresAt);
+      expect((map['editedAt']   as Timestamp).toDate(), editedAt);
       expect(map['claimedBy'], 'uid-c');
       expect(map['secretQuestion'], 'Q');
       expect(map['secretAnswer'], 'A');
@@ -272,12 +308,14 @@ void main() {
         id: 'item-004', title: 'T', description: 'D', category: 'seeker',
         status: 'active', location: 'L', contact: 'C',
         imageUrls: const [], userId: 'U', createdAt: createdAt,
+        occurredAt: occurredAt,
       ).toFirestore();
 
-      expect(map.containsKey('editedAt'),       isFalse);
-      expect(map.containsKey('claimedBy'),      isFalse);
+      expect(map.containsKey('expiresAt'),     isFalse);
+      expect(map.containsKey('editedAt'),      isFalse);
+      expect(map.containsKey('claimedBy'),     isFalse);
       expect(map.containsKey('secretQuestion'), isFalse);
-      expect(map.containsKey('secretAnswer'),   isFalse);
+      expect(map.containsKey('secretAnswer'),  isFalse);
     });
 
     test('does not include document id in the map', () {
@@ -285,6 +323,7 @@ void main() {
         id: 'should-not-appear', title: 'T', description: 'D',
         category: 'seeker', status: 'active', location: 'L', contact: 'C',
         imageUrls: const [], userId: 'U', createdAt: createdAt,
+        occurredAt: occurredAt,
       ).toFirestore();
       expect(map.containsKey('id'), isFalse);
     });
@@ -294,7 +333,7 @@ void main() {
   // fromFirestore() delegates to fromMap(), so testing fromMap() covers both.
 
   group('ItemModel.fromMap() — WBS 1.2', () {
-    test('parses all fields including optional ones', () {
+    test('parses all fields including occurredAt and optional ones', () {
       final model = ItemModel.fromMap('doc-001', {
         'title': 'Brown leather wallet',
         'description': 'Found near CB2',
@@ -305,6 +344,7 @@ void main() {
         'imageUrls': ['https://example.com/img1.jpg'],
         'userId': 'uid-poster',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(occurredAt),
         'editedAt': Timestamp.fromDate(editedAt),
         'claimedBy': 'uid-claimer',
         'secretQuestion': 'What color?',
@@ -321,6 +361,7 @@ void main() {
       expect(model.imageUrls,      ['https://example.com/img1.jpg']);
       expect(model.userId,         'uid-poster');
       expect(model.createdAt,      createdAt);
+      expect(model.occurredAt,     occurredAt);
       expect(model.editedAt,       editedAt);
       expect(model.claimedBy,      'uid-claimer');
       expect(model.secretQuestion, 'What color?');
@@ -333,9 +374,11 @@ void main() {
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(occurredAt),
       });
 
       expect(model.editedAt,       isNull);
+      expect(model.expiresAt,      isNull);
       expect(model.claimedBy,      isNull);
       expect(model.secretQuestion, isNull);
       expect(model.secretAnswer,   isNull);
@@ -357,12 +400,25 @@ void main() {
         'location': 'Bus stop', 'contact': '0823456789',
         'imageUrls': <String>[], 'userId': 'uid-seeker',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(occurredAt),
       }).toEntity();
 
-      expect(entity.id,       'doc-ff');
-      expect(entity.category, ItemCategory.seeker);
-      expect(entity.status,   ItemStatus.active);
+      expect(entity.id,        'doc-ff');
+      expect(entity.category,  ItemCategory.seeker);
+      expect(entity.status,    ItemStatus.active);
       expect(entity.createdAt, createdAt);
+      expect(entity.occurredAt, occurredAt);
+    });
+
+    test('occurredAt falls back to createdAt when absent (legacy document)', () {
+      final model = ItemModel.fromMap('doc-legacy', {
+        'title': 'T', 'description': 'D', 'category': 'seeker',
+        'status': 'active', 'location': 'L', 'contact': 'C',
+        'imageUrls': <String>[], 'userId': 'U',
+        'createdAt': Timestamp.fromDate(createdAt),
+        // no 'occurredAt' key
+      });
+      expect(model.occurredAt, createdAt);
     });
   });
 }

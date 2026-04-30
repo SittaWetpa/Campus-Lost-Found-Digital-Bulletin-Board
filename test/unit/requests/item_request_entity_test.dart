@@ -1,5 +1,5 @@
 // WBS 2.1 — Domain Entities & Repository Interfaces
-// Covers: ItemRequest entity, RequestStatus enum
+// Covers: ItemRequest entity, RequestStatus enum, RequestType enum
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,6 +58,25 @@ void main() {
     });
   });
 
+  // ── RequestType.fromString() ─────────────────────────────────────────────
+
+  group('RequestType.fromString()', () {
+    test('returns claim for "claim"', () {
+      expect(RequestType.fromString('claim'), RequestType.claim);
+    });
+
+    test('returns found for "found"', () {
+      expect(RequestType.fromString('found'), RequestType.found);
+    });
+
+    test('throws ArgumentError for an unrecognised value', () {
+      expect(
+        () => RequestType.fromString('report'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
   // ── ItemRequest constructor ──────────────────────────────────────────────
 
   group('ItemRequest', () {
@@ -73,6 +92,8 @@ void main() {
           requesterId: 'uid-requester',
           requesterName: 'Alice Smith',
           requesterContact: '0812345678',
+          studentId: '63070001',
+          type: RequestType.claim,
           message: 'I believe this is my wallet. It has my student ID inside.',
           status: RequestStatus.pending,
           createdAt: baseCreatedAt,
@@ -99,6 +120,14 @@ void main() {
         expect(request.requesterContact, '0812345678');
       });
 
+      test('stores studentId correctly (WBS 1.4)', () {
+        expect(request.studentId, '63070001');
+      });
+
+      test('stores type correctly (WBS 1.4)', () {
+        expect(request.type, RequestType.claim);
+      });
+
       test('stores message correctly', () {
         expect(
           request.message,
@@ -123,6 +152,8 @@ void main() {
           requesterId: 'uid-002',
           requesterName: 'Bob Jones',
           requesterContact: '0823456789',
+          studentId: '63070002',
+          type: RequestType.claim,
           message: 'This is my item.',
           status: RequestStatus.pending,
           createdAt: baseCreatedAt,
@@ -137,6 +168,8 @@ void main() {
           requesterId: 'uid-003',
           requesterName: 'Carol Lee',
           requesterContact: '0834567890',
+          studentId: '63070003',
+          type: RequestType.claim,
           message: 'I lost this item last Tuesday.',
           status: RequestStatus.pending,
           createdAt: baseCreatedAt,
@@ -152,12 +185,59 @@ void main() {
           requesterId: 'uid-004',
           requesterName: 'Dave Park',
           requesterContact: '0845678901',
+          studentId: '63070004',
+          type: RequestType.claim,
           message: 'I found this item.',
           status: RequestStatus.pending,
           createdAt: baseCreatedAt,
           visitorAnswer: '',
         );
         expect(request.visitorAnswer, '');
+      });
+    });
+
+    group('type variants (WBS 1.4)', () {
+      test('type claim — seeker asserts ownership on a Founder Post', () {
+        final req = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.claim,
+          status: RequestStatus.pending, createdAt: baseCreatedAt,
+        );
+        expect(req.type, RequestType.claim);
+      });
+
+      test('type found — third party reports finding a Seeker\'s item', () {
+        final req = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.found,
+          status: RequestStatus.pending, createdAt: baseCreatedAt,
+        );
+        expect(req.type, RequestType.found);
+      });
+    });
+
+    group('photoUrl (WBS 2.4)', () {
+      test('photoUrl defaults to null when not provided', () {
+        final req = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.found,
+          status: RequestStatus.pending, createdAt: baseCreatedAt,
+        );
+        expect(req.photoUrl, isNull);
+      });
+
+      test('photoUrl is stored when provided (Found Report photo)', () {
+        final req = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.found,
+          status: RequestStatus.pending, createdAt: baseCreatedAt,
+          photoUrl: 'https://storage.example.com/photo.jpg',
+        );
+        expect(req.photoUrl, 'https://storage.example.com/photo.jpg');
       });
     });
 
@@ -168,6 +248,8 @@ void main() {
             requesterId: 'uid-status',
             requesterName: 'Test User',
             requesterContact: '0856789012',
+            studentId: '63070005',
+            type: RequestType.claim,
             message: 'Test message',
             status: status,
             createdAt: baseCreatedAt,
@@ -199,6 +281,8 @@ void main() {
           requesterId: 'uid-no-firebase',
           requesterName: 'Pure Dart',
           requesterContact: '0000000000',
+          studentId: '00000000',
+          type: RequestType.claim,
           message: 'Verifies pure Dart construction',
           status: RequestStatus.pending,
           createdAt: DateTime(2025),

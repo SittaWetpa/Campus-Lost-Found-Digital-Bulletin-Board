@@ -31,6 +31,7 @@ ItemModel _makeModel({
       imageUrls: const [],
       userId: 'uid-user',
       createdAt: _createdAt,
+      occurredAt: _createdAt,
     );
 
 // ── tests ─────────────────────────────────────────────────────────────────────

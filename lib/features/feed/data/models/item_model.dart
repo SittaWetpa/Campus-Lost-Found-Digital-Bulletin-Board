@@ -4,16 +4,18 @@ import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 class ItemModel {
   final String id;
   final String title;
-  final String description;
+  final String? description; // null when isSensitive == true
   final String category;
   final String status;
   final String location;
-  final String contact;
+  final String? contact; // null when isSensitive == true
   final List<String> imageUrls;
   final String userId;
   final String source;
   final bool isSensitive;
   final DateTime createdAt;
+  final DateTime occurredAt;
+  final DateTime? expiresAt; // non-null for sensitive Founder Posts (14-day TTL)
   final DateTime? editedAt;
   final String? claimedBy;
   final String? secretQuestion;
@@ -32,30 +34,38 @@ class ItemModel {
     this.source = 'web',
     this.isSensitive = false,
     required this.createdAt,
+    required this.occurredAt,
+    this.expiresAt,
     this.editedAt,
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
   });
 
-  factory ItemModel.fromMap(String id, Map<String, dynamic> data) => ItemModel(
-        id: id,
-        title: data['title'] as String,
-        description: data['description'] as String,
-        category: data['category'] as String,
-        status: data['status'] as String,
-        location: data['location'] as String,
-        contact: data['contact'] as String,
-        imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
-        userId: data['userId'] as String,
-        source: data['source'] as String? ?? 'web',
-        isSensitive: data['isSensitive'] as bool? ?? false,
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-        editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
-        claimedBy: data['claimedBy'] as String?,
-        secretQuestion: data['secretQuestion'] as String?,
-        secretAnswer: data['secretAnswer'] as String?,
-      );
+  factory ItemModel.fromMap(String id, Map<String, dynamic> data) {
+    final createdAt = (data['createdAt'] as Timestamp).toDate();
+    return ItemModel(
+      id: id,
+      title: data['title'] as String,
+      description: data['description'] as String?,
+      category: data['category'] as String,
+      status: data['status'] as String,
+      location: data['location'] as String,
+      contact: data['contact'] as String?,
+      imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
+      userId: data['userId'] as String,
+      source: data['source'] as String? ?? 'web',
+      isSensitive: data['isSensitive'] as bool? ?? false,
+      createdAt: createdAt,
+      // Fallback to createdAt for legacy documents that predate WBS 1.4.
+      occurredAt: (data['occurredAt'] as Timestamp?)?.toDate() ?? createdAt,
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
+      claimedBy: data['claimedBy'] as String?,
+      secretQuestion: data['secretQuestion'] as String?,
+      secretAnswer: data['secretAnswer'] as String?,
+    );
+  }
 
   factory ItemModel.fromFirestore(DocumentSnapshot doc) =>
       ItemModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
@@ -73,6 +83,8 @@ class ItemModel {
         source: item.source == ItemSource.qrWalkIn ? 'qr_walk_in' : 'web',
         isSensitive: item.isSensitive,
         createdAt: item.createdAt,
+        occurredAt: item.occurredAt,
+        expiresAt: item.expiresAt,
         editedAt: item.editedAt,
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
@@ -91,6 +103,8 @@ class ItemModel {
         'source': source,
         'isSensitive': isSensitive,
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(occurredAt),
+        if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
         if (editedAt != null) 'editedAt': Timestamp.fromDate(editedAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
@@ -110,6 +124,8 @@ class ItemModel {
         source: ItemSource.fromString(source),
         isSensitive: isSensitive,
         createdAt: createdAt,
+        occurredAt: occurredAt,
+        expiresAt: expiresAt,
         editedAt: editedAt,
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,
