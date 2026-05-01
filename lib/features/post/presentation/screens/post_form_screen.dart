@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
 import 'package:campus_lost_found/features/post/presentation/providers/post_providers.dart';
 
 const _kAmber = Color(0xFFCA8A04);
@@ -39,6 +41,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
 
   Item? _editItem;
   bool _isLoadingEdit = false;
+  bool _isUploadingPhoto = false;
 
   bool get _isEdit => widget.editId != null;
 
@@ -121,6 +124,60 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
       _occurredAt = DateTime(
         date.year, date.month, date.day, time.hour, time.minute,
       );
+    });
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    if (_imageUrls.length >= 3) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 3 photos per post')),
+      );
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final bytes = await picked.readAsBytes();
+      final authUser = ref.read(authStateProvider).valueOrNull;
+      if (authUser == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required')),
+        );
+        return;
+      }
+
+      final useCase = ref.read(uploadPostPhotosUseCaseProvider);
+      final urls = await useCase(
+        userId: authUser.uid,
+        photoBytes: [bytes],
+      );
+
+      if (urls.isNotEmpty && mounted) {
+        setState(() {
+          _imageUrls = [..._imageUrls, urls.first];
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload photo')),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
+  Future<void> _removePhoto(int index) async {
+    setState(() {
+      _imageUrls = [
+        ..._imageUrls.sublist(0, index),
+        ..._imageUrls.sublist(index + 1),
+      ];
     });
   }
 
@@ -341,12 +398,19 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
 
                 // ── Photos ────────────────────────────────────────
                 _FieldLabel('PHOTOS'),
-                _PhotosPlaceholder(count: _imageUrls.length),
+                _PhotosSection(
+                  imageUrls: _imageUrls,
+                  isUploading: _isUploadingPhoto,
+                  onAddPhoto: _pickAndUploadPhoto,
+                  onRemovePhoto: _removePhoto,
+                  maxPhotos: 3,
+                ),
                 const SizedBox(height: 12),
 
                 // ── Founder-only options ───────────────────────────
                 if (isFounder) ...[
-                  _SensitiveToggle(
+                  _FieldLabel('SENSITIVE ITEM'),
+                  _SensitiveSelector(
                     value: _isSensitive,
                     onChanged: (v) => setState(() => _isSensitive = v),
                   ),
@@ -633,76 +697,233 @@ class _DateTimeTile extends StatelessWidget {
   }
 }
 
-class _PhotosPlaceholder extends StatelessWidget {
-  const _PhotosPlaceholder({required this.count});
-  final int count;
+class _PhotosSection extends StatelessWidget {
+  const _PhotosSection({
+    required this.imageUrls,
+    required this.isUploading,
+    required this.onAddPhoto,
+    required this.onRemovePhoto,
+    required this.maxPhotos,
+  });
+
+  final List<String> imageUrls;
+  final bool isUploading;
+  final VoidCallback onAddPhoto;
+  final ValueChanged<int> onRemovePhoto;
+  final int maxPhotos;
 
   @override
-  Widget build(BuildContext context) => Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_photo_alternate_outlined,
-                  color: Colors.grey.shade400, size: 28),
-              const SizedBox(height: 4),
-              Text(
-                count == 0
-                    ? 'Add photos (up to 3)'
-                    : '$count photo${count == 1 ? '' : 's'} selected',
-                style: TextStyle(
-                    fontSize: 12, color: Colors.grey.shade500),
-              ),
-            ],
+  Widget build(BuildContext context) {
+    if (imageUrls.isEmpty) {
+      return MouseRegion(
+        cursor: isUploading ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: isUploading ? null : onAddPhoto,
+          child: Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Center(
+              child: isUploading
+                  ? const SizedBox(
+                      height: 30,
+                      width: 30,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_photo_alternate_outlined,
+                            color: Colors.grey.shade400, size: 32),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Add photos (up to $maxPhotos)',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
       );
+    }
+
+    return Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: imageUrls.length,
+          itemBuilder: (context, index) {
+            final url = imageUrls[index];
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Icon(Icons.broken_image,
+                          color: Colors.grey.shade400),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => onRemovePhoto(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _kRed,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.close,
+                            size: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        if (imageUrls.length < maxPhotos) ...[
+          const SizedBox(height: 8),
+          MouseRegion(
+            cursor: isUploading ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: isUploading ? null : onAddPhoto,
+              child: Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Center(
+                  child: isUploading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add_photo_alternate_outlined,
+                                color: Colors.grey.shade400, size: 20),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Add more',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
-class _SensitiveToggle extends StatelessWidget {
-  const _SensitiveToggle(
-      {required this.value, required this.onChanged});
+class _SensitiveSelector extends StatelessWidget {
+  const _SensitiveSelector({
+    required this.value,
+    required this.onChanged,
+  });
 
   final bool value;
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Sensitive Item',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Hides description and contact. Seekers are directed to the Security Office.',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: _SensitiveButton(
+              label: 'General Item',
+              selected: !value,
+              onTap: () => onChanged(false),
             ),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: const Color(0xFFD97706),
-              activeTrackColor: const Color(0xFFFCD34D),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _SensitiveButton(
+              label: 'Sensitive Item',
+              selected: value,
+              onTap: () => onChanged(true),
             ),
-          ],
-        ),
+          ),
+        ],
       );
+}
+
+class _SensitiveButton extends StatelessWidget {
+  const _SensitiveButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFD97706) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: selected
+                  ? const Color(0xFFD97706)
+                  : Colors.grey.shade300),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.grey.shade700,
+            fontWeight:
+                selected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
 }

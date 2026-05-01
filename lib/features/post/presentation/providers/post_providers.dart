@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:campus_lost_found/core/services/storage_repository.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/post/data/datasources/post_remote_datasource.dart';
@@ -10,6 +13,7 @@ import 'package:campus_lost_found/features/post/data/repositories/post_repositor
 import 'package:campus_lost_found/features/post/domain/repositories/post_repository.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/create_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/get_similar_founder_posts_use_case.dart';
+import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
 
 part 'post_providers.g.dart';
 
@@ -20,6 +24,37 @@ PostRemoteDatasource postRemoteDatasource(PostRemoteDatasourceRef ref) =>
 @riverpod
 PostRepository postRepository(PostRepositoryRef ref) =>
     PostRepositoryImpl(ref.watch(postRemoteDatasourceProvider));
+
+@riverpod
+StorageRepository storageRepository(_) {
+  return _FirebaseStorageRepository(FirebaseStorage.instance);
+}
+
+@riverpod
+UploadPostPhotosUseCase uploadPostPhotosUseCase(ref) {
+  return UploadPostPhotosUseCase(ref.watch(storageRepositoryProvider));
+}
+
+class _FirebaseStorageRepository implements StorageRepository {
+  final FirebaseStorage _storage;
+  _FirebaseStorageRepository(this._storage);
+
+  @override
+  Future<String> uploadBytes(List<int> bytes, String storagePath) async {
+    final ref = _storage.ref(storagePath);
+    final uint8bytes = Uint8List.fromList(bytes);
+    await ref.putData(uint8bytes);
+    return ref.getDownloadURL();
+  }
+
+  @override
+  Future<void> deleteByUrl(String url) async {
+    try {
+      final ref = FirebaseStorage.instance.refFromURL(url);
+      await ref.delete();
+    } catch (_) {}
+  }
+}
 
 @riverpod
 class PostFormNotifier extends _$PostFormNotifier {
