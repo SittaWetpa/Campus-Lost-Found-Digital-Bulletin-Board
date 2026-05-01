@@ -86,6 +86,7 @@ void main() {
 
   group('Item', () {
     final baseCreatedAt = DateTime(2025, 1, 15, 10, 30);
+    final baseOccurredAt = DateTime(2025, 1, 14, 18, 0);
 
     group('required fields', () {
       late Item item;
@@ -102,6 +103,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-001',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
       });
 
@@ -141,6 +143,10 @@ void main() {
         expect(item.createdAt, baseCreatedAt);
       });
 
+      test('stores occurredAt correctly (WBS 2.2)', () {
+        expect(item.occurredAt, baseOccurredAt);
+      });
+
       test('accepts an empty imageUrls list', () {
         expect(item.imageUrls, isEmpty);
       });
@@ -159,6 +165,7 @@ void main() {
           imageUrls: const ['https://storage.example.com/img1.jpg'],
           userId: 'uid-002',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.imageUrls, hasLength(1));
         expect(item.imageUrls.first, 'https://storage.example.com/img1.jpg');
@@ -176,6 +183,7 @@ void main() {
           imageUrls: const ['url1', 'url2', 'url3'],
           userId: 'uid-003',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.imageUrls, ['url1', 'url2', 'url3']);
       });
@@ -196,6 +204,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-004',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
       });
 
@@ -232,6 +241,7 @@ void main() {
           imageUrls: const ['https://storage.example.com/found1.jpg'],
           userId: 'uid-005',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
           editedAt: editedAt,
           claimedBy: 'uid-999',
           secretQuestion: 'What colour is the card sleeve inside?',
@@ -269,6 +279,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-s',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.category, ItemCategory.seeker);
       });
@@ -285,6 +296,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-f',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.category, ItemCategory.founder);
       });
@@ -303,6 +315,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-active',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.status, ItemStatus.active);
       });
@@ -319,6 +332,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-resolved',
           createdAt: baseCreatedAt,
+          occurredAt: baseOccurredAt,
         );
         expect(item.status, ItemStatus.resolved);
       });
@@ -341,6 +355,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-test',
           createdAt: DateTime(2025),
+          occurredAt: DateTime(2024, 12, 31),
         );
         expect(item.id, 'no-firebase');
       });

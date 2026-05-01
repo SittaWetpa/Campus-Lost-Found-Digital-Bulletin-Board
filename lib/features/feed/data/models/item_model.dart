@@ -12,6 +12,7 @@ class ItemModel {
   final List<String> imageUrls;
   final String userId;
   final DateTime createdAt;
+  final DateTime occurredAt;
   final DateTime? editedAt;
   final String? claimedBy;
   final String? secretQuestion;
@@ -28,6 +29,7 @@ class ItemModel {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
+    required this.occurredAt,
     this.editedAt,
     this.claimedBy,
     this.secretQuestion,
@@ -48,6 +50,8 @@ class ItemModel {
       userId: data['userId'] as String,
       // serverTimestamp is null during the pending-write window; fall back to now
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      // user-supplied; never null on a well-formed doc — let it throw if missing
+      occurredAt: (data['occurredAt'] as Timestamp).toDate(),
       editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
       claimedBy: data['claimedBy'] as String?,
       secretQuestion: data['secretQuestion'] as String?,
@@ -66,6 +70,7 @@ class ItemModel {
         imageUrls: item.imageUrls,
         userId: item.userId,
         createdAt: item.createdAt,
+        occurredAt: item.occurredAt,
         editedAt: item.editedAt,
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
@@ -84,6 +89,7 @@ class ItemModel {
         'contact': contact,
         'imageUrls': imageUrls,
         'userId': userId,
+        'occurredAt': Timestamp.fromDate(occurredAt),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
         if (secretAnswer != null) 'secretAnswer': secretAnswer,
@@ -100,6 +106,7 @@ class ItemModel {
         imageUrls: imageUrls,
         userId: userId,
         createdAt: createdAt,
+        occurredAt: occurredAt,
         editedAt: editedAt,
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,

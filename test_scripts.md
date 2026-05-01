@@ -34,6 +34,8 @@ test/
 │   └── feed/data/
 │       ├── datasources/
 │       │   └── item_remote_datasource_test.dart     ← WBS 2.2
+│       ├── models/
+│       │   └── item_model_test.dart                  ← WBS 2.1 / 2.2
 │       └── repositories/
 │           └── item_repository_impl_test.dart        ← WBS 2.3
 ├── integration/                  # Integration tests (require Firebase Emulator)
@@ -93,11 +95,12 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 2.1 | Item entity | `test/unit/items/item_entity_test.dart` | Unit | ✅ 59 tests |
+| 2.1 | Item entity | `test/unit/items/item_entity_test.dart` | Unit | ✅ 60 tests |
 | 2.1 | ItemRequest entity | `test/unit/requests/item_request_entity_test.dart` | Unit | ✅ 21 tests |
 | 2.1 | Firestore rules | `test/firestore_rules/rules.test.js` | Node.js | ✅ 9 tests |
 | 2.1 | Firestore rules (placeholder) | `test/integration/wbs_2_1_firestore_rules_test.dart` | Integration | ⏭️ 3 skipped (manual) |
-| 2.2 | Firestore CRUD for items | `test/features/feed/data/datasources/item_remote_datasource_test.dart` | Unit | ✅ 4 tests |
+| 2.2 | Firestore CRUD for items | `test/features/feed/data/datasources/item_remote_datasource_test.dart` | Unit | ✅ 5 tests |
+| 2.1 / 2.2 | ItemModel ↔ Firestore mapping | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 5 tests |
 | 2.3 | Keyword search query | `test/features/feed/data/repositories/item_repository_impl_test.dart` | Unit | ✅ 3 tests |
 | 2.4 | Request & approval system | — | Unit + Widget | ⬜ not yet written |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
@@ -155,12 +158,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 17 | 16 (1 known issue) |
 | 1.0 Flutter UI | 0 | — |
-| 2.0 Data Layer | 87 + 9 (npm) | 96 |
+| 2.0 Data Layer | 94 + 9 (npm) | 103 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 33 (1 known issue) |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **138 Dart + 9 npm** | **136 passing** |
+| **Total** | **145 Dart + 9 npm** | **143 passing** |
 
 ---
 
-*Last updated: 2026-04-29 (GANTT sync — WBS 2.14, 2.15, 2.16 added to traceability matrix)*
+*Last updated: 2026-05-01 (WBS 2.1 / 2.2 — `occurredAt` field added to Item entity, ItemModel, and tests; QA pass added direct ItemModel round-trip + missing-field tests)*

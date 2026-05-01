@@ -32,6 +32,9 @@ class Item {
   final String userId;
   final DateTime createdAt;
 
+  // WBS 2.2 — when the item was lost (Seeker) or found (Founder), user-provided
+  final DateTime occurredAt;
+
   // WBS 2.6 — null until post has been edited
   final DateTime? editedAt;
 
@@ -53,6 +56,7 @@ class Item {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
+    required this.occurredAt,
     this.editedAt,
     this.claimedBy,
     this.secretQuestion,

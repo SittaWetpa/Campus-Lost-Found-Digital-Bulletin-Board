@@ -521,7 +521,7 @@ Create and configure the Firebase project, connect it to Flutter, and define the
 
 **Deliverables**
 - Firebase project connected to Flutter via `google-services.json` / `GoogleService-Info.plist`
-- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `createdAt`, `userId`
+- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `occurredAt` (when the item was lost/found — user-supplied), `createdAt`, `userId`
 - Firestore `items` schema (fields added by later tasks — documented here for completeness):
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
