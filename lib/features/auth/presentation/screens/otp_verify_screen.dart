@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/otp_provider.dart';
 
 const _amber = Color(0xFFCA8A04);
@@ -70,7 +71,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   }
 
   String _maskedEmail() {
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final email = ref.read(authStateProvider).value?.email ?? '';
     if (email.isEmpty) return '';
     final atIndex = email.indexOf('@');
     if (atIndex <= 0) return email;
