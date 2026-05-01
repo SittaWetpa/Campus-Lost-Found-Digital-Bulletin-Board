@@ -1,29 +1,22 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:campus_lost_found/core/services/storage_repository.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
-import 'package:campus_lost_found/features/post/data/datasources/post_remote_datasource.dart';
-import 'package:campus_lost_found/features/post/data/repositories/post_repository_impl.dart';
-import 'package:campus_lost_found/features/post/domain/repositories/post_repository.dart';
+import 'package:campus_lost_found/features/post/data/providers.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/create_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/get_similar_founder_posts_use_case.dart';
+import 'package:campus_lost_found/features/post/domain/usecases/update_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
 
+export 'package:campus_lost_found/features/post/data/providers.dart'
+    show postRepositoryProvider, postRemoteDatasourceProvider;
+
 part 'post_providers.g.dart';
-
-@riverpod
-PostRemoteDatasource postRemoteDatasource(PostRemoteDatasourceRef ref) =>
-    PostRemoteDatasourceImpl(FirebaseFirestore.instance);
-
-@riverpod
-PostRepository postRepository(PostRepositoryRef ref) =>
-    PostRepositoryImpl(ref.watch(postRemoteDatasourceProvider));
 
 @riverpod
 StorageRepository storageRepository(_) {
@@ -71,7 +64,7 @@ class PostFormNotifier extends _$PostFormNotifier {
   Future<void> update(Item item) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(postRepositoryProvider).updateItem(item);
+      await UpdateItemUseCase(ref.read(postRepositoryProvider)).call(item);
     });
   }
 }

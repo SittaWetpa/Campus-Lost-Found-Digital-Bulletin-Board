@@ -6,41 +6,41 @@ part of 'post_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$postRemoteDatasourceHash() =>
-    r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
+String _$storageRepositoryHash() => r'5917769b1a1e3e026cb7224c6e860ba6e5a8e02a';
 
-/// See also [postRemoteDatasource].
-@ProviderFor(postRemoteDatasource)
-final postRemoteDatasourceProvider =
-    AutoDisposeProvider<PostRemoteDatasource>.internal(
-  postRemoteDatasource,
-  name: r'postRemoteDatasourceProvider',
+/// See also [storageRepository].
+@ProviderFor(storageRepository)
+final storageRepositoryProvider =
+    AutoDisposeProvider<StorageRepository>.internal(
+  storageRepository,
+  name: r'storageRepositoryProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$postRemoteDatasourceHash,
+      : _$storageRepositoryHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef PostRemoteDatasourceRef = AutoDisposeProviderRef<PostRemoteDatasource>;
-String _$postRepositoryHash() => r'b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0';
+typedef StorageRepositoryRef = AutoDisposeProviderRef<StorageRepository>;
+String _$uploadPostPhotosUseCaseHash() =>
+    r'0b1927f4115a67dfcda80a08960868b866fb38b1';
 
-/// See also [postRepository].
-@ProviderFor(postRepository)
-final postRepositoryProvider =
-    AutoDisposeProvider<PostRepository>.internal(
-  postRepository,
-  name: r'postRepositoryProvider',
+/// See also [uploadPostPhotosUseCase].
+@ProviderFor(uploadPostPhotosUseCase)
+final uploadPostPhotosUseCaseProvider =
+    AutoDisposeProvider<UploadPostPhotosUseCase>.internal(
+  uploadPostPhotosUseCase,
+  name: r'uploadPostPhotosUseCaseProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$postRepositoryHash,
+      : _$uploadPostPhotosUseCaseHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef PostRepositoryRef = AutoDisposeProviderRef<PostRepository>;
-String _$postFormNotifierHash() =>
-    r'c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0';
+typedef UploadPostPhotosUseCaseRef
+    = AutoDisposeProviderRef<UploadPostPhotosUseCase>;
+String _$postFormNotifierHash() => r'36ad9561c3932b9c87b63f2573826f0df160d186';
 
 /// See also [PostFormNotifier].
 @ProviderFor(PostFormNotifier)
@@ -57,7 +57,7 @@ final postFormNotifierProvider =
 
 typedef _$PostFormNotifier = AutoDisposeNotifier<AsyncValue<void>>;
 String _$similarPostsNotifierHash() =>
-    r'd1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0';
+    r'd3dc6d03fed896d916e80973837cf6abe9d82c5b';
 
 /// See also [SimilarPostsNotifier].
 @ProviderFor(SimilarPostsNotifier)

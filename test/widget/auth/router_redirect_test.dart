@@ -12,6 +12,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/otp_provi
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
 class _FakeOtpNotifier extends OtpNotifier {
@@ -208,10 +209,7 @@ void main() {
       container.read(appRouterProvider).go('/post/item-99/edit');
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Edit Post — id: item-99 — WBS 2.6'),
-        findsOneWidget,
-      );
+      expect(find.byType(PostFormScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -238,10 +236,7 @@ void main() {
       container.read(appRouterProvider).go(route.location);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Edit Post — id: post-42 — WBS 2.6'),
-        findsOneWidget,
-      );
+      expect(find.byType(PostFormScreen), findsOneWidget);
     });
   });
 
@@ -270,7 +265,7 @@ void main() {
       container.read(appRouterProvider).go(AppRoutes.post);
       await tester.pumpAndSettle();
 
-      expect(find.text('Post Form — WBS 1.4'), findsOneWidget);
+      expect(find.byType(PostFormScreen), findsOneWidget);
     });
 
     testWidgets('navigate to /my-posts renders My Posts placeholder',

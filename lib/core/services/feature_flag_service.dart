@@ -2,7 +2,9 @@
 // Until then this service returns hardcoded in-app defaults so all
 // feature-flagged code paths compile and run correctly.
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'feature_flag_service.g.dart';
 
 class FeatureFlagService {
   const FeatureFlagService();
@@ -11,6 +13,5 @@ class FeatureFlagService {
   bool get secretQuestionEnabled => true;
 }
 
-final featureFlagsProvider = Provider<FeatureFlagService>(
-  (_) => const FeatureFlagService(),
-);
+@riverpod
+FeatureFlagService featureFlags(_) => const FeatureFlagService();
