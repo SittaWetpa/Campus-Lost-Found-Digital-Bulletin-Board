@@ -66,12 +66,16 @@ Run: `flutter test test/features/auth/`
 |---|---|---|---|---|
 | 0.3 | Login screen | `test/features/auth/presentation/screens/login_screen_test.dart` | Widget | ✅ 6 tests |
 | 0.3 | Register screen | `test/features/auth/presentation/screens/register_screen_test.dart` | Widget | ✅ 11 tests |
-| 0.1 | Firebase Auth setup | — | Unit | ⬜ not yet written |
-| 0.2 | User profile schema | — | Unit | ⬜ not yet written |
-| 0.4 | Auth state & route guard | `test/widget/auth/router_redirect_test.dart` | Widget | ⚠️ 1 failing — see note |
-| 0.5 | OTP verification screen | — | Widget | ⬜ not yet written |
+| 0.1 | SignUp use case (domain check + auth/user repo delegation) | `test/unit/auth/sign_up_test.dart` | Unit | ✅ 7 tests |
+| 0.1 | SignIn use case (domain check + repo delegation) | `test/unit/auth/sign_in_test.dart` | Unit | ✅ 4 tests |
+| 0.1 | OTP Cloud Functions caller (exception mapping + call shape) | `test/unit/auth/otp_remote_datasource_test.dart` | Unit | ✅ 4 tests |
+| 0.2 | Firestore user-profile datasource | `test/unit/auth/user_remote_datasource_test.dart` | Unit | ✅ 10 tests |
+| 0.2 | UserRepositoryImpl (delegation + Failure wrapping) | `test/unit/auth/user_repository_impl_test.dart` | Unit | ✅ 8 tests |
+| 0.4 | Auth state & route guard | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
+| 0.5 | OTP verification screen | `test/features/auth/presentation/screens/otp_verify_screen_test.dart` | Widget | ✅ 5 tests |
 
-> ⚠️ **0.4 known failure**: `OtpVerifyScreen` calls `FirebaseAuth.instance` directly inside `build()` for `_maskedEmail()`. The test crashes because Firebase is not initialized. Fix: inject the email via a provider or constructor parameter instead of calling Firebase directly in build.
+> ℹ️ **WBS 0.1 OTP behavioural cases live in Cloud Functions, not Dart.** The four OTP test cases listed in `wbs_dictionary.md` WBS 0.1 ("correct code returns true / writes emailVerified", "expired returns false", "5 wrong attempts locked out", "attempts ≥ 5 returns false") test logic that runs server-side in `functions/index.js`. The Dart `CloudFunctionOtpDatasource` is a thin caller — `otp_remote_datasource_test.dart` covers the call shape and exception mapping it actually owns. A Cloud Functions test suite is not yet in place; flagged as follow-up for the WBS 0.1 owner.
+> ℹ️ **WBS 0.2 cross-user-access denial** is enforced by Firestore Security Rules, exercised in `test/firestore_rules/rules.test.js` (Node.js — `cd test/firestore_rules && npm test`).
 
 ---
 
@@ -134,7 +138,7 @@ Run: `flutter test test/unit/router/ test/widget/`
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 4.3 | Route constants | `test/unit/router/app_routes_test.dart` | Unit | ✅ 33 tests |
-| 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ⚠️ 1 failing — see Phase 0.0 note |
+| 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
 | 4.1 | Clean architecture skeleton | — | Unit | ⬜ not yet written |
 | 4.2 | Riverpod state management | — | Unit + Widget | ⬜ not yet written |
 
@@ -156,14 +160,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 | Phase | Tests written | Tests passing |
 |---|---|---|
-| 0.0 Auth | 17 | 16 (1 known issue) |
+| 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 0 | — |
 | 2.0 Data Layer | 94 + 9 (npm) | 103 |
 | 3.0 Cross-Platform | 0 | — |
-| 4.0 Architecture | 34 | 33 (1 known issue) |
+| 4.0 Architecture | 34 | 34 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **145 Dart + 9 npm** | **143 passing** |
+| **Total** | **183 Dart + 9 npm** | **183 passing** |
 
 ---
 
-*Last updated: 2026-05-01 (WBS 2.1 / 2.2 — `occurredAt` field added to Item entity, ItemModel, and tests; QA pass added direct ItemModel round-trip + missing-field tests)*
+*Last updated: 2026-05-02 (WBS 0.1 / 0.2 — added 33 unit tests covering SignUp + SignIn domain validation, OTP Cloud Function caller exception mapping, FirestoreUserDatasource Firestore CRUD via fake_cloud_firestore, and UserRepositoryImpl Failure wrapping; OTP behavioural cases flagged as Cloud Functions follow-up.)*
