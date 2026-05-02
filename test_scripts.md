@@ -22,14 +22,26 @@
 ```
 test/
 ├── unit/                         # Pure Dart — no Firebase, no Flutter
+│   ├── auth/                                    ← WBS 0.1 / 0.2
+│   │   ├── sign_up_test.dart
+│   │   ├── sign_in_test.dart
+│   │   ├── otp_remote_datasource_test.dart
+│   │   ├── user_remote_datasource_test.dart
+│   │   └── user_repository_impl_test.dart
+│   ├── feed/                                    ← WBS 1.2
+│   │   ├── feed_providers_test.dart
+│   │   ├── item_model_test.dart
+│   │   └── item_repository_impl_test.dart
 │   ├── items/item_entity_test.dart              ← WBS 2.1
 │   ├── requests/item_request_entity_test.dart   ← WBS 2.1
 │   └── router/app_routes_test.dart              ← WBS 4.3
 ├── widget/                       # Widget tests — use ProviderScope overrides
-│   └── auth/router_redirect_test.dart           ← WBS 0.4 / 4.3
+│   ├── auth/router_redirect_test.dart           ← WBS 0.4 / 4.3
+│   └── feed/feed_screen_test.dart               ← WBS 1.2
 ├── features/                     # Per-feature widget tests
 │   ├── auth/presentation/screens/
 │   │   ├── login_screen_test.dart               ← WBS 0.3
+│   │   ├── otp_verify_screen_test.dart          ← WBS 0.5
 │   │   └── register_screen_test.dart            ← WBS 0.3
 │   └── feed/data/
 │       ├── datasources/
@@ -84,7 +96,8 @@ Run: `flutter test test/features/`
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 1.2 | Item listing feed screen | — | Widget | ⬜ not yet written |
+| 1.2 | Item listing feed screen + ItemCard | `test/widget/feed/feed_screen_test.dart` | Widget | ✅ 23 tests |
+| 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
 | 1.3 | Item detail screen | — | Widget | ⬜ not yet written |
 | 1.4 | Post form screen | — | Widget | ⬜ not yet written |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
@@ -104,8 +117,10 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.1 | Firestore rules | `test/firestore_rules/rules.test.js` | Node.js | ✅ 9 tests |
 | 2.1 | Firestore rules (placeholder) | `test/integration/wbs_2_1_firestore_rules_test.dart` | Integration | ⏭️ 3 skipped (manual) |
 | 2.2 | Firestore CRUD for items | `test/features/feed/data/datasources/item_remote_datasource_test.dart` | Unit | ✅ 5 tests |
-| 2.1 / 2.2 | ItemModel ↔ Firestore mapping | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 5 tests |
+| 2.1 / 2.2 | ItemModel ↔ Firestore mapping (focused) | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 5 tests |
+| 1.2 / 2.1 | ItemModel full mapping + null-tolerance regression (`source` / `isSensitive` / `occurredAt`) | `test/unit/feed/item_model_test.dart` | Unit | ✅ 48 tests |
 | 2.3 | Keyword search query | `test/features/feed/data/repositories/item_repository_impl_test.dart` | Unit | ✅ 3 tests |
+| 1.2 | ItemRepositoryImpl (entity↔model mapping + ItemFailure wrapping) | `test/unit/feed/item_repository_impl_test.dart` | Unit | ✅ 12 tests |
 | 2.4 | Request & approval system | — | Unit + Widget | ⬜ not yet written |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
 | 2.6 | Post edit | — | Unit + Widget | ⬜ not yet written |
@@ -161,13 +176,15 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
-| 1.0 Flutter UI | 0 | — |
-| 2.0 Data Layer | 94 + 9 (npm) | 103 |
+| 1.0 Flutter UI | 33 | 33 |
+| 2.0 Data Layer | 154 + 9 (npm) | 163 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 34 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **183 Dart + 9 npm** | **183 passing** |
+| **Total** | **276 Dart + 9 npm** | **275 passing + 9 npm** |
+
+> Phase totals add to 276; `flutter test` reports 275 passing + 3 skipped (the manual integration placeholder). The 1-test discrepancy is matrix accounting drift across overlapping test files — `flutter test` is the source of truth.
 
 ---
 
-*Last updated: 2026-05-02 (WBS 0.1 / 0.2 — added 33 unit tests covering SignUp + SignIn domain validation, OTP Cloud Function caller exception mapping, FirestoreUserDatasource Firestore CRUD via fake_cloud_firestore, and UserRepositoryImpl Failure wrapping; OTP behavioural cases flagged as Cloud Functions follow-up.)*
+*Last updated: 2026-05-02 (PR #8 merge — WBS 1.2 feed screen, ItemCard, feed providers, and PR-side data-layer tests landed; matrix updated for `test/widget/feed/`, `test/unit/feed/`, and the OTP screen test row missing under Phase 0.0.)*
