@@ -1,0 +1,24 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/feed_filter_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
+
+part 'feed_provider.g.dart';
+
+/// Filtered view of the feed stream — applies [FeedFilter] on top of the
+/// shared [itemRepositoryProvider] / `watchFeed()` chain defined in
+/// `item_provider.dart`. The data layer (datasource, repository) lives there;
+/// this provider is a thin presentation-layer view-model.
+@riverpod
+Stream<List<Item>> feedItems(FeedItemsRef ref) {
+  final filter = ref.watch(feedFilterNotifierProvider);
+  return ref.watch(itemRepositoryProvider).watchFeed().map((items) {
+    return switch (filter) {
+      FeedFilter.all => items,
+      FeedFilter.found =>
+        items.where((i) => i.category == ItemCategory.founder).toList(),
+      FeedFilter.lost =>
+        items.where((i) => i.category == ItemCategory.seeker).toList(),
+    };
+  });
+}

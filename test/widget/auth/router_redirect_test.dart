@@ -12,6 +12,9 @@ import 'package:campus_lost_found/features/auth/presentation/providers/otp_provi
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
 class _FakeOtpNotifier extends OtpNotifier {
@@ -101,13 +104,14 @@ void main() {
             authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
             currentUserProvider
                 .overrideWith((ref) => Stream.value(_verifiedUser)),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -151,12 +155,13 @@ void main() {
           overrides: [
             authStateProvider.overrideWith((ref) => authCtrl.stream),
             currentUserProvider.overrideWith((ref) => userCtrl.stream),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
 
       // Simulate sign-out: emit null from both streams.
       authCtrl.add(null);
@@ -362,6 +367,7 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
+          feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
         ],
       );
       addTearDown(container.dispose);
@@ -372,7 +378,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Guard pushes verified users away from /otp-verify back to /feed.
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
       expect(find.byType(OtpVerifyScreen), findsNothing);
     });
 
