@@ -23,3 +23,7 @@ final class NetworkFailure extends Failure {
 final class OtpFailure extends Failure {
   const OtpFailure(super.message);
 }
+
+final class ItemFailure extends Failure {
+  const ItemFailure(super.message);
+}

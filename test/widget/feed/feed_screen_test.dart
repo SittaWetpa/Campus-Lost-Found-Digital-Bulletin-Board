@@ -13,6 +13,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
 
@@ -66,6 +67,7 @@ Item _makeItem({
       imageUrls: const [],
       userId: userId,
       createdAt: DateTime(2025, 3, 15, 10, 30),
+      occurredAt: DateTime(2025, 3, 15, 10, 30),
     );
 
 User _makeUser({String uid = _visitorUid, String firstName = 'Pun'}) => User(
@@ -455,6 +457,7 @@ void main() {
       imageUrls: const [],
       userId: _visitorUid,
       createdAt: DateTime(2025, 3, 15),
+      occurredAt: DateTime(2025, 3, 15),
     );
 
     // WBS 1.2-01-a ─────────────────────────────────────────────────────────

@@ -50,6 +50,9 @@ class Item {
 
   final DateTime createdAt;
 
+  // WBS 2.2 — when the item was lost (Seeker) or found (Founder), user-provided
+  final DateTime occurredAt;
+
   // WBS 2.6 — null until post has been edited
   final DateTime? editedAt;
 
@@ -71,6 +74,7 @@ class Item {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
+    required this.occurredAt,
     this.source = ItemSource.web,
     this.isSensitive = false,
     this.editedAt,
@@ -92,11 +96,13 @@ class Item {
     ItemSource? source,
     bool? isSensitive,
     DateTime? createdAt,
+    DateTime? occurredAt,
     DateTime? editedAt,
     String? claimedBy,
     String? secretQuestion,
     String? secretAnswer,
-  }) => Item(
+  }) =>
+      Item(
         id: id ?? this.id,
         title: title ?? this.title,
         description: description ?? this.description,
@@ -109,6 +115,7 @@ class Item {
         source: source ?? this.source,
         isSensitive: isSensitive ?? this.isSensitive,
         createdAt: createdAt ?? this.createdAt,
+        occurredAt: occurredAt ?? this.occurredAt,
         editedAt: editedAt ?? this.editedAt,
         claimedBy: claimedBy ?? this.claimedBy,
         secretQuestion: secretQuestion ?? this.secretQuestion,

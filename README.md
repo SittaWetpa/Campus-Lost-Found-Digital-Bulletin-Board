@@ -330,20 +330,24 @@ The PR you opened earlier will update automatically — no need to open a new on
 | `film/feat/api` | Film | 2.9 |
 | `film/feat/crashlytics` | Film | 2.12 |
 | `film/feat/android` | Film | 3.1 |
+| `film/feat/push` | Film | 2.16 |
 | `posh/feat/auth` | Posh | 0.3 |
 | `posh/feat/router` | Posh | 4.3 |
 | `posh/feat/requests` | Posh | 2.4, 2.5 |
 | `posh/feat/cache` | Posh | 2.11 |
+| `posh/feat/sensitive` | Posh | 2.14 |
 | `van/feat/feed` | Van | 1.2, 1.3, 1.5 |
+| `van/feat/post` | Van | 1.4 |
 | `van/feat/secret-question` | Van | 2.10 |
 | `van/feat/remote-config` | Van | 2.13 |
 | `van/feat/web` | Van | 3.2 |
 | `jed/feat/crud` | Jed | 2.2, 2.3, 2.6, 2.7 |
-| `jed/feat/post` | Jed | 1.4, 2.8 |
+| `jed/feat/post` | Jed | 2.8 |
 | `jed/feat/security` | Jed | 5.2 |
 | `shogun/feat/ui` | Shogun | 1.6, 1.7, 1.8 |
 | `shogun/feat/architecture` | Shogun | 4.1 |
 | `shogun/feat/a11y` | Shogun | 5.1 |
+| `shogun/feat/qr` | Shogun | 2.15 |
 
 > **WBS 1.1 (UI/UX Design & Prototype)** is a design task — output is a Figma file, not code. No branch required.
 
@@ -418,10 +422,10 @@ See **[ORCHESTRATION.md](./ORCHESTRATION.md)** for the full step-by-step prompt 
 
 | Name | Role | Tasks |
 |------|------|-------|
-| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.9, 2.12, 3.1, 4.2, 6.1 |
-| Van | Frontend Lead | 1.2, 1.3, 1.5, 2.10, 2.13, 3.2 |
-| Posh | Auth · Backend | 0.3, 0.4, 2.4, 2.5, 2.11, 4.3 |
-| Jed | Backend · Frontend | 1.4, 2.2, 2.3, 2.6, 2.7, 2.8, 5.2 |
-| Shogun | Frontend · Design | 1.1, 1.6, 1.7, 1.8, 4.1, 5.1 |
+| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.9, 2.12, 2.16, 3.1, 4.2, 6.1 |
+| Van | Frontend Lead | 1.2, 1.3, 1.4, 1.5, 2.10, 2.13, 3.2 |
+| Posh | Auth · Backend | 0.3, 0.4, 2.4, 2.5, 2.11, 2.14, 4.3 |
+| Jed | Backend · Frontend | 2.2, 2.3, 2.6, 2.7, 2.8, 5.2 |
+| Shogun | Frontend · Design | 1.1, 1.6, 1.7, 1.8, 2.15, 4.1, 5.1 |
 
 > **6.1 Multi-Agent Orchestration Setup** is leader-owned (Film) and is complete ✅

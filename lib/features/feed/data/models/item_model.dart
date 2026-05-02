@@ -14,6 +14,7 @@ class ItemModel {
   final String source;
   final bool isSensitive;
   final DateTime createdAt;
+  final DateTime occurredAt;
   final DateTime? editedAt;
   final String? claimedBy;
   final String? secretQuestion;
@@ -29,9 +30,10 @@ class ItemModel {
     required this.contact,
     required this.imageUrls,
     required this.userId,
+    required this.createdAt,
+    required this.occurredAt,
     this.source = 'web',
     this.isSensitive = false,
-    required this.createdAt,
     this.editedAt,
     this.claimedBy,
     this.secretQuestion,
@@ -55,7 +57,10 @@ class ItemModel {
         userId: data['userId'] as String,
         source: data['source'] as String? ?? 'web',
         isSensitive: data['isSensitive'] as bool? ?? false,
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
+        // serverTimestamp is null during the pending-write window; fall back to now
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        // user-supplied; never null on a well-formed doc — let it throw if missing
+        occurredAt: (data['occurredAt'] as Timestamp).toDate(),
         editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
         claimedBy: data['claimedBy'] as String?,
         secretQuestion: data['secretQuestion'] as String?,
@@ -78,12 +83,16 @@ class ItemModel {
         source: item.source == ItemSource.qrWalkIn ? 'qr_walk_in' : 'web',
         isSensitive: item.isSensitive,
         createdAt: item.createdAt,
+        occurredAt: item.occurredAt,
         editedAt: item.editedAt,
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
         secretAnswer: item.secretAnswer,
       );
 
+  /// Returns the mutable fields to write to Firestore.
+  /// createdAt and editedAt are excluded — the datasource sets them
+  /// via FieldValue.serverTimestamp() to guarantee server-side timestamps.
   Map<String, dynamic> toFirestore() => {
         'title': title,
         'description': description,
@@ -95,8 +104,7 @@ class ItemModel {
         'userId': userId,
         'source': source,
         'isSensitive': isSensitive,
-        'createdAt': Timestamp.fromDate(createdAt),
-        if (editedAt != null) 'editedAt': Timestamp.fromDate(editedAt!),
+        'occurredAt': Timestamp.fromDate(occurredAt),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
         if (secretAnswer != null) 'secretAnswer': secretAnswer,
@@ -115,6 +123,7 @@ class ItemModel {
         source: ItemSource.fromString(source),
         isSensitive: isSensitive,
         createdAt: createdAt,
+        occurredAt: occurredAt,
         editedAt: editedAt,
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,

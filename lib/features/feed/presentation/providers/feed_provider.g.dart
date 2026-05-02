@@ -6,41 +6,14 @@ part of 'feed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$feedRemoteDatasourceHash() =>
-    r'31426a9aae7dc0bd1ddaeba2d307a7cb6757ca19';
-
-/// See also [feedRemoteDatasource].
-@ProviderFor(feedRemoteDatasource)
-final feedRemoteDatasourceProvider =
-    AutoDisposeProvider<FeedRemoteDatasource>.internal(
-  feedRemoteDatasource,
-  name: r'feedRemoteDatasourceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$feedRemoteDatasourceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef FeedRemoteDatasourceRef = AutoDisposeProviderRef<FeedRemoteDatasource>;
-String _$itemRepositoryHash() => r'e6ad0ddb6736953b0baf39bf8c210fed1246ec9c';
-
-/// See also [itemRepository].
-@ProviderFor(itemRepository)
-final itemRepositoryProvider = AutoDisposeProvider<ItemRepository>.internal(
-  itemRepository,
-  name: r'itemRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$itemRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef ItemRepositoryRef = AutoDisposeProviderRef<ItemRepository>;
 String _$feedItemsHash() => r'45d4cbf074ac8bebcd35366fcf86feccd1258628';
 
-/// See also [feedItems].
+/// Filtered view of the feed stream — applies [FeedFilter] on top of the
+/// shared [itemRepositoryProvider] / `watchFeed()` chain defined in
+/// `item_provider.dart`. The data layer (datasource, repository) lives there;
+/// this provider is a thin presentation-layer view-model.
+///
+/// Copied from [feedItems].
 @ProviderFor(feedItems)
 final feedItemsProvider = AutoDisposeStreamProvider<List<Item>>.internal(
   feedItems,

@@ -19,6 +19,11 @@
 | status: "active" | **Active** | A post that is still open and accepting requests |
 | status: "returned" | **Resolved** | A post that has been closed; the item has been returned |
 
+
+---
+
+> **Testing Guide, run commands, writing conventions, and the full traceability matrix are in [`test_scripts.md`](test_scripts.md).** The work package definition is at **WBS 7.1**.
+
 ---
 
 ## Phase 0.0 — Authentication
@@ -516,7 +521,7 @@ Create and configure the Firebase project, connect it to Flutter, and define the
 
 **Deliverables**
 - Firebase project connected to Flutter via `google-services.json` / `GoogleService-Info.plist`
-- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `createdAt`, `userId`
+- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `occurredAt` (when the item was lost/found — user-supplied), `createdAt`, `userId`
 - Firestore `items` schema (fields added by later tasks — documented here for completeness):
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
@@ -825,43 +830,126 @@ Expose a read-only REST API on top of Firestore using **Firebase Cloud Functions
 
 ---
 
-### 2.10 Secret Question for Claim Request Verification
+### 2.10 — Secret Question for Claim Request Verification
 
 | Field | Detail |
-|---|---|
-| **WBS Code** | 2.10 |
-| **Type** | Work Package |
-| **Requirement** | Data Storage · Pages & Navigation |
+|-------|--------|
+| WBS Code | 2.10 |
+| Type | Work Package |
+| Requirement | Data Storage · Pages & Navigation |
+
+---
 
 **Scope / Statement of Work**
-When a **Poster** creates a **Founder Post** (found item), they may optionally set a **Secret Question** — a short question whose correct answer only the true owner of the item would know (e.g. "What brand is printed on the inside of the wallet?"). The Poster also privately records the expected answer at post-creation time. No answer is shown to anyone publicly. When a **Visitor** (potential owner) submits a **Claim Request** on that Founder Post, they must provide their own answer to the secret question before the request can be sent — without any hints from the app. The Poster then reviews each Claim Request and manually compares the Visitor's submitted answer against the expected answer they set, using it as one verification factor before approving or rejecting. The expected answer is never exposed to Visitors at any point.
+
+When a Poster creates a Founder Post (found item), they may optionally set a Secret Question — a short question whose correct answer only the true owner of the item would know (e.g. "What brand is printed on the inside of the wallet?"). The Poster also privately records the expected answer at post-creation time. No answer is shown to anyone publicly.
+
+When a Visitor (potential owner) submits a Claim Request on that Founder Post, they must provide their own answer to the secret question before the request can be sent — without any hints from the app. **A Visitor may only have one active Claim Request per post at a time. To submit a new request, the Visitor must first cancel their existing one.**
+
+The Poster then reviews each Claim Request and manually compares the Visitor's submitted answer against the expected answer they set. Answer comparison is **manual and case-insensitive at the Poster's discretion** — the app displays both answers side by side but does not auto-match or score them. The Poster uses it as one verification factor before approving or rejecting. The expected answer is never exposed to Visitors at any point.
+
+Secret Question is **not applicable when `isSensitive: true`** on a Founder Post — the `secretQuestion` and `secretAnswer` fields are hidden on the Post Form, and no answer field is shown on the Claim Request form.
+
+Found Reports on Seeker Posts do not involve Secret Questions — Seeker Posts do not have a secret question field and no answer is required from the Visitor.
+
+---
+
+**Photo Safety Guard (sub-plan within 2.10)**
+
+A Poster who sets a Secret Question could accidentally undermine the verification by attaching a photo that visually reveals the answer (e.g. a close-up of the wallet interior showing the brand name). The guard covers two directions:
+
+**Case 1 — Secret Question filled first, then photo added**
+Whenever the Poster taps "Add Photo" on a Founder Post form where the Secret Question field is already filled, the app intercepts the file-picker launch and displays a Photo Safety Warning dialog. The Poster must explicitly confirm before the image picker opens.
+
+**Case 2 — Photo added first, then Secret Question filled**
+Whenever the Poster fills in the Secret Question field and photos already exist on the form, the app immediately displays the same Photo Safety Warning dialog — this time as a review prompt, asking the Poster to check that existing photos do not reveal the answer. The Poster must confirm or remove the photos before proceeding.
+
+Both cases use the same `PhotoSafetyWarningDialog` widget. The guard applies on both the initial post-creation form and the post-edit form. It is skipped when no Secret Question has been entered, and skipped entirely for Seeker Posts and sensitive posts.
+
+---
 
 **Deliverables**
-- Optional "Secret Question" field and a private "Expected Answer" field added to the **Founder Post** creation form (Post Form Screen), shown only when category is "Founder Post"
-- `secretQuestion` (String?) and `secretAnswer` (String?) stored in the Firestore `items` document; `secretAnswer` is readable only by the Poster (Firestore security rules)
-- `secretQuestion` is displayed on the **Claim Request form** when the target Founder Post has one set, requiring the Visitor to fill in their own answer before submitting — no hints or expected answer shown
-- Visitor's submitted answer stored as `visitorAnswer` in the `requests` sub-collection document
-- Request Detail screen (**Poster view only**) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison
+
+- Optional `secretQuestion` field and a private `secretAnswer` field added to the Founder Post creation form (Post Form Screen), shown only when category is "Founder Post" and `isSensitive` is false
+- `secretQuestion (String?)` and `secretAnswer (String?)` stored as plain text in the Firestore items document; `secretAnswer` is readable only by the Poster (Firestore security rules)
+- `secretQuestion` is displayed on the Claim Request form when the target Founder Post has one set, requiring the Visitor to fill in their own answer before submitting — no hints or expected answer shown
+- **One active Claim Request per Visitor per post enforced** — if a Visitor already has a pending or approved request on a post, the Claim Request button is replaced with a "Cancel Request" option. A new request can only be submitted after cancellation
+- Visitor's submitted answer stored as `visitorAnswer` in the requests sub-collection document
+- Request Detail screen (Poster view only) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison. A note in the UI reminds the Poster that comparison is manual
 - `secretQuestion` and `secretAnswer` are hidden from all Visitor-facing views (Feed, Detail Screen, Claim Request form result)
+- Found Report form on Seeker Posts has no answer field — Secret Question does not apply
+- `PhotoSafetyWarningDialog` widget — used in both guard cases:
+  - **Title:** "Check your photo before adding"
+  - **Body:** "Make sure the photo you are about to add does not show, contain, or hint at the answer to your secret question. If it does, anyone who sees the post could guess the answer and submit a fraudulent claim."
+  - **Examples to avoid (bulleted):** close-ups that show a distinguishing mark, brand label, serial number, colour pattern, or any detail that the question is asking about
+  - **Actions:** "Cancel" (secondary) and "I understand, add photo" (primary)
+  - For Case 2 (existing photos when Secret Question is filled), the dialog body is adjusted: "You already have photos on this post. Please make sure none of them show, contain, or hint at the answer to your secret question."
+  - Dialog fires every qualifying time — not suppressed after first confirmation
+
+---
 
 **Associated Activities**
-- Add optional `secretQuestion` (String?) and `secretAnswer` (String?) fields to the Post Form Screen UI, shown only when category is "Founder Post"
-- Store both fields in the Firestore `items` document via `ItemService.createItem()`
-- In `RequestService.submitClaimRequest()`, check if the target Founder Post has a `secretQuestion` set
-- If a question exists, display it on the Claim Request form and require a non-empty `visitorAnswer` before allowing submission; do **not** display or hint at the expected answer
-- Save `visitorAnswer` as a field on the request document in the `requests` sub-collection
-- Update Request Detail Screen (Poster view) to show a "Verification" section: question, expected answer (`secretAnswer`), and the Visitor's answer (`visitorAnswer`) side by side
+
+- Add optional `secretQuestion (String?)` and `secretAnswer (String?)` fields to the Post Form Screen UI, shown only when category is "Founder Post" and `isSensitive` is false
+- Store both fields in the Firestore items document via `ItemService.createItem()`
+- In `RequestService.submitClaimRequest()`:
+  - Check if Visitor already has an active request on this post — if yes, block submission and prompt to cancel first
+  - Check if the target Founder Post has a `secretQuestion` set
+  - If a question exists, require a non-empty `visitorAnswer` before allowing submission; do not display or hint at the expected answer
+- Save `visitorAnswer` as a field on the request document in the requests sub-collection
+- Update Request Detail Screen (Poster view) to show a "Verification" section: question, expected answer (`secretAnswer`), and the Visitor's answer (`visitorAnswer`) side by side with a manual comparison note
 - Apply Firestore security rules so `secretAnswer` is readable only by the document owner (Poster); `visitorAnswer` is readable only by the Poster
 - Hide the `secretQuestion` display and all answer fields from the Detail Screen when the viewer is a Visitor
+- On Detail Screen (Visitor view): if Visitor already has an active request, show "Cancel Request" instead of "Send Claim Request"
+- Photo Safety Guard — Case 1 (add photo while Secret Question is filled):
+  - Intercept every "Add Photo" tap (create and edit flows)
+  - Guard condition: `category == FounderPost && isSensitive == false && secretQuestionController.text.isNotEmpty`
+  - If true, `await showDialog(PhotoSafetyWarningDialog)` — open picker only if confirmed; abort if cancelled
+  - If false, open picker directly
+- Photo Safety Guard — Case 2 (Secret Question filled while photos already exist):
+  - Listen to `secretQuestionController` changes in Post Form Screen
+  - When `secretQuestion` becomes non-empty and `imageList.isNotEmpty` and `category == FounderPost` and `isSensitive == false` → show `PhotoSafetyWarningDialog` (review variant)
+  - Poster must confirm or remove photos before the form allows further interaction
+- Build `PhotoSafetyWarningDialog` as a stateless `AlertDialog` widget accepting a `isReview: bool` parameter to switch between Case 1 and Case 2 body text
+- No persistent flag — dialog fires on every qualifying event by design
 
-**Testing**
+---
+
+## Testing
+
+**Secret Question core:**
 - Unit test: `ItemService.createItem()` with `secretQuestion` set — verify both `secretQuestion` and `secretAnswer` saved to Firestore
-- Widget test: Post Form Screen with category = Founder Post — verify secret question and expected answer fields appear; switch to Seeker Post — verify fields are hidden
-- Widget test: Claim Request form on a Founder Post with a secret question — verify answer field is required and blocks submission if empty; verify expected answer is not shown to Visitor
-- Widget test: Claim Request form on a Founder Post without a secret question — verify no answer field is shown
-- Unit test: `RequestService.submitClaimRequest()` — verify `visitorAnswer` is saved to the request document
-- Widget test: Request Detail Screen as Poster — verify "Verification" section shows question, expected answer, and visitor's answer side by side
+- Widget test: Post Form with category = Founder Post, `isSensitive` = false — verify fields appear; switch to Seeker Post — verify hidden; set `isSensitive` = true — verify hidden
+- Widget test: Claim Request form on a Founder Post with secret question — verify answer field required, blocks if empty, expected answer not shown
+- Widget test: Claim Request form on a Founder Post without secret question — verify no answer field
+- Unit test: `RequestService.submitClaimRequest()` — verify `visitorAnswer` saved to request document
+- Widget test: Request Detail Screen as Poster — verify Verification section shows question, expected answer, visitor answer, and manual comparison note
 
+**One active request per Visitor per post:**
+- Unit test: `RequestService.submitClaimRequest()` when Visitor already has active request — verify blocked
+- Widget test: Detail Screen (Visitor view) with active request — verify "Send Claim Request" replaced with "Cancel Request"
+- Widget test: Visitor cancels → verify "Send Claim Request" reappears
+
+**Found Report (no secret question):**
+- Widget test: Found Report form on Seeker Post — verify no answer field
+
+**Photo Safety Guard — Case 1 (photo added after Secret Question):**
+- Widget test: secret question non-empty → tap "Add Photo" → verify dialog appears
+- Widget test: dialog → tap "Cancel" → verify picker not launched
+- Widget test: dialog → tap "I understand, add photo" → verify picker launched
+- Widget test: secret question empty → tap "Add Photo" → verify no dialog, picker launches directly
+- Widget test: category = Seeker Post → tap "Add Photo" → verify no dialog
+- Widget test: `isSensitive` = true → tap "Add Photo" → verify no dialog
+- Widget test: tap "Add Photo" twice with secret question non-empty → verify dialog appears both times
+- Widget test: Post Edit Screen with existing secret question → tap "Add Photo" → verify dialog appears
+
+**Photo Safety Guard — Case 2 (Secret Question filled after photos exist):**
+- Widget test: photos already added → fill Secret Question field → verify review dialog appears immediately
+- Widget test: review dialog → tap "Cancel" → verify photos remain and Secret Question field is cleared
+- Widget test: review dialog → tap "I understand, add photo" → verify dialog dismissed and form proceeds normally
+- Widget test: photos exist but category = Seeker Post → fill any field → verify no dialog
+- Widget test: photos exist, `isSensitive` = true → fill Secret Question → verify no dialog
+- Widget test: no photos on form → fill Secret Question → verify no dialog triggered
 ---
 
 ### 2.11 Hive Offline-First Cache
@@ -984,6 +1072,184 @@ Gate at least one major feature behind a Firebase Remote Config boolean flag so 
 
 ---
 
+### 2.14 Sensitive Item Handling & Auto-Expire
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.14 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+Some found items (financial cards, ID cards, passports, keys, documents) cannot safely or reliably be verified or returned through an in-app flow. For these items, the app's role is notification only — directing the Seeker to contact the security office rather than facilitating an in-app handover.
+
+When a Founder creates a post, they choose between **General** or **Sensitive** as the item type. Sensitive posts disable the Claim Request flow entirely and display a security office contact number instead. The sensitive item taxonomy (list of categories that count as sensitive) is managed via Firebase Remote Config so it can be updated without releasing a new app version.
+
+Sensitive posts are resolved either manually by the Founder (after handing the item to security) or automatically after **14 days** via a scheduled Cloud Function.
+
+**Deliverables**
+- Item type selector (General / Sensitive) added to Post Form Screen, shown only on Founder Posts
+- Sensitive Founder Posts: `description` and `contact` fields hidden; Secret Question disabled; only `category`, `location`, and `photo` allowed
+- Feed and Detail Screen: sensitive posts display a warning banner — "This is a sensitive item — cannot be claimed through the app" — plus a "Contact Security Office" button with phone number pulled from Remote Config
+- No Claim Request or Found Report buttons shown on sensitive posts
+- Founder retains the Resolve button on sensitive posts
+- Scheduled Cloud Function (`autoExpireSensitivePosts`) runs daily — queries Firestore for sensitive posts where `expiresAt <= now` and `status == "active"`, batch-updates them to `status: "expired"`
+- Expired posts hidden from Feed and search results but remain in Firestore for audit
+- `isSensitive: bool` and `expiresAt: Timestamp?` added to items Firestore schema
+- `sensitive_categories` string array added to Remote Config (e.g. `["credit_card","id_card","passport","key","document"]`)
+- Security office phone number stored in Remote Config as `security_office_contact`
+
+**Associated Activities**
+- Add `isSensitive` and `expiresAt` fields to `ItemModel` (`fromJson`/`toJson`) and `Item` entity
+- Add item type selector widget to Post Form Screen; on selection of Sensitive, hide description/contact/Secret Question fields and set `expiresAt = now + 14 days`
+- Update `ItemService.createItem()` to write `isSensitive` and `expiresAt`
+- Update Feed Screen and Detail Screen to read `isSensitive` and conditionally render warning banner + security office contact button
+- Remove Claim Request / Found Report buttons from Detail Screen when `isSensitive == true`
+- Add `sensitive_categories` and `security_office_contact` keys to Firebase Remote Config; read via `FeatureFlagService`
+- Write `autoExpireSensitivePosts` Cloud Function (Node 22, scheduled via Firebase Cloud Scheduler, `asia-southeast1`)
+- Update Firestore security rules: `isSensitive` and `expiresAt` may only be set at creation, not mutated by client after the fact
+- Update REST API (`GET /items`) to redact `contact`, `description`, and personal fields for sensitive items — expose only `category`, `location`, `createdAt`, `isSensitive`
+
+**Testing**
+- Unit test: `ItemService.createItem()` with `isSensitive: true` — verify `expiresAt` is set to approximately now + 14 days
+- Widget test: Post Form with category = Founder Post → select Sensitive type → verify description, contact, and Secret Question fields are hidden
+- Widget test: Detail Screen with `isSensitive: true` (Visitor view) — verify warning banner shown, Claim Request button absent, security office contact button present
+- Widget test: Detail Screen with `isSensitive: true` (Poster view) — verify Resolve button still present
+- Unit test: `autoExpireSensitivePosts` Cloud Function — mock Firestore with one post where `expiresAt < now` and `status: "active"` → verify status updated to `"expired"`
+- Unit test: `autoExpireSensitivePosts` — post where `expiresAt > now` → verify status unchanged
+- API test: `GET /items` with a sensitive item in Firestore — verify response omits `contact` and `description`, includes `isSensitive: true`
+- Firestore rules test: client tries to update `isSensitive` after creation — verify denied
+
+---
+
+### 2.15 QR Walk-in Web Form
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.15 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+A lightweight bilingual (Thai/English) web form accessible via a static QR code placed at physical lost & found drop-off points on campus (security office, library, canteen, etc.). Anyone — including non-students and visitors — can scan the QR, fill in a short form, and submit a found item directly into Firestore without needing a KMUTT account or the app.
+
+Walk-in submissions are written as Founder Posts with `source: "qr_walk_in"` and publish immediately with no moderation step. The sensitive item taxonomy applies — if a sensitive category is selected, a warning message is shown recommending the finder hand the item to the security office, but submission is not blocked.
+
+Spam protection is handled via rate limiting per IP and Google reCAPTCHA v3. The QR code is a static printable link with no expiry.
+
+**Deliverables**
+- Bilingual (TH/EN) HTML web form hosted on Firebase Hosting
+  - Fields: item category (dropdown), location found (text), description (optional), contact (optional), photo upload (optional)
+  - Language toggle button (TH ↔ EN)
+  - Sensitive category warning message (shown if sensitive category selected, does not block submit)
+- `POST /items` endpoint added to Cloud Functions — accepts anonymous walk-in submissions, writes to Firestore with `source: "qr_walk_in"`, `status: "active"`, and `isSensitive` derived from the category
+- Rate limiting: max 5 submissions per IP per hour
+- Google reCAPTCHA v3 integration on the web form
+- `source: "app" | "qr_walk_in"` field added to items Firestore schema
+- Static QR code image + A4 print template (PDF) linking to the web form URL
+- Optional: "Walk-in" badge on Founder Posts in the app Feed where `source == "qr_walk_in"`
+
+**Associated Activities**
+- Write bilingual HTML/CSS/JS web form; deploy to Firebase Hosting
+- Add `POST /items` Cloud Function endpoint with input validation and rate limiting
+- Integrate reCAPTCHA v3: verify token server-side in the Cloud Function before writing to Firestore
+- Add `source` field to `ItemModel` (`fromJson`/`toJson`) and `Item` entity
+- Update `ItemService` and Feed Screen to handle `source` field
+- Generate static QR code linking to the hosted form URL
+- Design and export A4 print template for physical placement
+- Update Firestore security rules: `source` field writable only by Cloud Function service account, not by app clients
+
+**Testing**
+- Integration test: submit valid form via `POST /items` → verify Firestore document created with correct fields including `source: "qr_walk_in"`
+- Integration test: submit with missing required fields (category, location) → verify 400 response
+- Integration test: submit 6 times from same IP within 1 hour → verify 6th request returns 429 Too Many Requests
+- Integration test: submit with invalid reCAPTCHA token → verify request rejected
+- Integration test: submit with sensitive category → verify `isSensitive: true` in Firestore document
+- Widget test (app): Feed Screen with a walk-in post in the list — verify "Walk-in" badge rendered when `source == "qr_walk_in"`
+- Firestore rules test: app client tries to write `source: "qr_walk_in"` directly — verify denied
+
+---
+
+### 2.16 Push Notifications
+
+| Field | Detail |
+|-------|--------|
+| **WBS Code** | 2.16 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation |
+
+**Scope / Statement of Work**
+Notify users via Firebase Cloud Messaging (FCM) push notifications when activity occurs on their posts or requests. Notifications are delivered through Cloud Functions triggered by Firestore document events — no in-app notification inbox is included in this scope.
+
+Four events trigger a notification:
+
+- **T1 — New Claim Request:** a Visitor submits a Claim Request on a Founder Post → notify the Poster. Only triggered when `source == "app"`; walk-in submissions (`source: "qr_walk_in"`) do not trigger a notification because the submitter is a guest with no app account.
+- **T2 — New Found Report:** a Visitor submits a Found Report on a Seeker Post → notify the Poster.
+- **T3 — Request approved:** Poster approves a request → notify the Visitor (requester).
+- **T4 — Request rejected:** Poster rejects a request → notify the Visitor (requester).
+
+Notification text is in English only, matching the app language. For sensitive posts (`isSensitive: true`), the item title is included in the notification body — the notification itself does not expose any redacted fields (contact, description). FCM tokens are stored as an array on the user's Firestore document and are cleaned up automatically when stale.
+
+**Deliverables**
+- `firebase_messaging` package added to `pubspec.yaml`
+- FCM token management in `NotificationService`:
+  - `registerToken()` — calls `FirebaseMessaging.instance.getToken()` and writes the token to `users/{uid}.fcmTokens` via `arrayUnion`; called after every successful login
+  - `unregisterToken()` — removes the current token from `users/{uid}.fcmTokens` via `arrayRemove`; called on `signOut()`
+- Notification permission request shown to the user after first successful login (required on iOS; required on Android 13+)
+- Notification toggle ("Receive notifications") in Settings & Profile Screen (1.6) bound to `users/{uid}.notificationsEnabled`; Cloud Functions check this flag before sending
+- `users/{uid}` Firestore document gains two new fields: `fcmTokens: [String]` and `notificationsEnabled: bool` (default `true`)
+- Cloud Function `onNewRequest` — `onDocumentCreated` trigger on `items/{itemId}/requests/{requestId}`:
+  - Skips if `request.source == "qr_walk_in"` (guest submission — no Poster account to notify)
+  - Reads `items/{itemId}.userId` to identify the Poster
+  - Reads `users/{posterId}.fcmTokens` and `notificationsEnabled`
+  - Sends FCM notification to all Poster tokens if `notificationsEnabled == true`
+  - Stale token cleanup: on `messaging/registration-token-not-registered` error, removes the token from `fcmTokens` via `arrayRemove`
+- Cloud Function `onRequestStatusChange` — `onDocumentUpdated` trigger on `items/{itemId}/requests/{requestId}`:
+  - Fires only when `status` field changes from `pending` → `approved` or `pending` → `rejected`
+  - Reads `users/{requesterId}.fcmTokens` and `notificationsEnabled`
+  - Sends FCM notification to all Visitor tokens if `notificationsEnabled == true`
+  - Same stale token cleanup as above
+- Notification payloads (all in English):
+
+  | Event | Title | Body |
+  |-------|-------|------|
+  | T1 Claim Request | `"New Claim Request"` | `"{requesterName} submitted a Claim Request on your post '{itemTitle}'"` |
+  | T2 Found Report | `"Someone found your item"` | `"{requesterName} reported finding '{itemTitle}'"` |
+  | T3 Approved | `"Your request was approved"` | `"'{itemTitle}' — contact the poster to arrange a handover"` |
+  | T4 Rejected | `"Your request was declined"` | `"The poster declined your request on '{itemTitle}'"` |
+
+- `data` payload on every notification: `{ type, itemId, requestId }` — used to deep-link into the Detail Screen (`/items/{itemId}`) when the user taps the notification
+- GoRouter handles the incoming notification tap via `FirebaseMessaging.onMessageOpenedApp` and `getInitialMessage()` streams
+
+**Associated Activities**
+- Add `firebase_messaging` to `pubspec.yaml`; run `flutter pub get`
+- Configure `AndroidManifest.xml` for FCM (notification channel, permissions)
+- Create `notification_service.dart` with `registerToken()`, `unregisterToken()`, and `requestPermission()` methods
+- Call `NotificationService.requestPermission()` and `registerToken()` after successful login (in `AuthService.signIn()` / registration flow)
+- Call `NotificationService.unregisterToken()` inside `AuthService.signOut()`
+- Add `fcmTokens` and `notificationsEnabled` fields to `UserService.createUserProfile()` defaults
+- Add notification toggle to Settings Screen; bind to `UserService.updateUserProfile()` for `notificationsEnabled`
+- Write `onNewRequest` Cloud Function with `source` guard and stale-token cleanup
+- Write `onRequestStatusChange` Cloud Function with status-diff guard and stale-token cleanup
+- Handle notification tap navigation: wire `FirebaseMessaging.onMessageOpenedApp` and `getInitialMessage()` to GoRouter push `/items/{itemId}`
+- Update Firestore security rules: `fcmTokens` writable only by the owning user; `notificationsEnabled` writable only by the owning user
+
+**Testing**
+- Unit test: `NotificationService.registerToken()` — verify `arrayUnion` called on `users/{uid}.fcmTokens` with the current token
+- Unit test: `NotificationService.unregisterToken()` — verify `arrayRemove` called on `users/{uid}.fcmTokens`
+- Unit test: `onNewRequest` Cloud Function — mock request doc with `source: "app"`, Poster has `notificationsEnabled: true` and one valid token → verify FCM `sendEachForMulticast()` called with correct payload
+- Unit test: `onNewRequest` — mock request doc with `source: "qr_walk_in"` → verify FCM is NOT called
+- Unit test: `onNewRequest` — Poster has `notificationsEnabled: false` → verify FCM is NOT called
+- Unit test: `onNewRequest` — FCM returns `messaging/registration-token-not-registered` for one token → verify `arrayRemove` called on that token and other tokens are still attempted
+- Unit test: `onRequestStatusChange` — status changes `pending` → `approved` → verify FCM called for Visitor with T3 payload
+- Unit test: `onRequestStatusChange` — status changes `pending` → `rejected` → verify FCM called for Visitor with T4 payload
+- Unit test: `onRequestStatusChange` — status changes `approved` → `resolved` (non-qualifying change) → verify FCM is NOT called
+- Widget test: Settings Screen — toggle "Receive notifications" off → verify `UserService.updateUserProfile()` called with `notificationsEnabled: false`
+- Integration test: submit a Claim Request → verify the Poster's device receives a push notification with correct title and body
+- Integration test: tap incoming notification → verify app navigates to the correct Detail Screen (`/items/{itemId}`)
+
+---
+
 ## Phase 3.0 — Cross-Platform
 
 ---
@@ -1100,8 +1366,6 @@ The Lost & Found system carries a risk that malicious users may attempt to claim
 
 ## Phase 4.0 — Enterprise Architecture & Tooling
 
-> **Foundational phase** — All 1.x feature screens and 2.x data services are implemented on top of the skeleton defined here.
-
 ---
 
 ### 4.1 Clean Architecture Skeleton
@@ -1211,8 +1475,6 @@ Replace the `StreamBuilder`-based routing with **GoRouter**. All routes are decl
 
 ## Phase 5.0 — Quality Gates
 
-> Cross-cutting quality concerns that complement the per-WP Testing sections. These are enforced in CI and gate merges.
-
 ---
 
 ### 5.1 Accessibility Sweep — WCAG 2.2 AA
@@ -1288,8 +1550,6 @@ Enforce the security quality gate via automated scans in CI: dependency vulnerab
 
 ## Phase 6.0 — Orchestration & Tooling
 
-> **Leader-owned phase.** Meta/workflow work package covering multi-agent orchestration (R3). Owned by the PM / Orchestrator role, not by feature developers.
-
 ---
 
 ### 6.1 Multi-Agent Orchestration Setup
@@ -1330,6 +1590,49 @@ Establish the `.claude/agents/` structure with role-scoped subagent definitions 
 
 ---
 
-*WBS Dictionary v4.0 — Campus Lost & Found Digital Bulletin Board*
+## Phase 7.0 — Test Scripts & Quality Evidence
+
+> **QA phase.** Owns the test traceability matrix, execution scripts, and coverage evidence submitted alongside the project. See the full run guide and per-WBS status table in [`test_scripts.md`](test_scripts.md).
+
+---
+
+### 7.1 Test Scripts & Traceability Matrix
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 7.1 |
+| **Type** | Work Package |
+| **Requirement** | Testing & Test Scripts |
+
+**Scope / Statement of Work**
+Maintain a living traceability matrix that maps every test case listed in each WBS work package's **Testing** section to an actual test file in the repository. The matrix tracks implementation status (written / not yet written / known failure) for all phases. The dedicated file `test_scripts.md` is the single source of truth for how to run tests, what scripts exist, and what their current status is. This WP is updated whenever a new test file is added or a test status changes.
+
+**Deliverables**
+- `test_scripts.md` at the project root containing:
+  - Run commands for each test type (`flutter test`, `npm test`, `flutter drive`)
+  - `test/` directory structure with file-to-WBS mapping
+  - Writing conventions for unit, widget, and integration tests
+  - Traceability matrix: one table per phase, columns — WBS code, description, test file, type, status
+  - Coverage summary table updated each sprint
+- All test files located under `test/` mirroring the `lib/` folder structure
+- `test/` directory committed to the repository and included in submission
+
+**Associated Activities**
+- Create `test_scripts.md` with the initial run guide and traceability matrix
+- Update `test_scripts.md` whenever a new test file is added (add a row to the matrix)
+- Update status column (⬜ → ✅ or ⚠️) as each WBS work package's tests are implemented
+- Run `flutter test --coverage` at the end of each sprint and update the Coverage Summary table
+- Ensure `test/firestore_rules/rules.test.js` is runnable via `npm test` from the `test/firestore_rules/` directory
+- Flag known failures with a ⚠️ status and document the root cause inline in the matrix
+
+**Testing**
+- All test files listed in the matrix must exist at the paths stated — no phantom entries
+- `flutter test` exits with zero failures before each PR to `develop` is merged
+- `flutter test --coverage` is run and the coverage report is committed for WBS 3.1 / 3.2 submission
+- `cd test/firestore_rules && npm test` passes all 9 Firestore rules tests
+
+---
+
+*WBS Dictionary v5.0 — Campus Lost & Found Digital Bulletin Board*
 *Tech Stack: Flutter (Dart) + Riverpod 2.x + GoRouter + Firebase (Auth, Firestore, Storage, Cloud Functions, Crashlytics, Remote Config) + Hive + shared_preferences*
-*Total Work Packages: 33 | Changes since v3.1: 0.4 & 2.5 superseded in place; new 2.11 Hive, 2.12 Crashlytics, 2.13 Feature Flag; new 3.2 Web; new Phase 4.0 (4.1 Clean Architecture, 4.2 Riverpod, 4.3 GoRouter); new Phase 5.0 (5.1 A11y, 5.2 Security & Dep Scans); new Phase 6.0 (6.1 Multi-Agent Orchestration)*
+*Total Work Packages: 37 | Changes since v4.1: added Phase 2.14 (Sensitive Item Handling & Auto-Expire), Phase 2.15 (QR Walk-in Web Form), Phase 2.16 (Push Notifications); updated existing WBS per v5.0 change summary*

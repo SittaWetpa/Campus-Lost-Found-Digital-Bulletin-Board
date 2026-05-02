@@ -26,6 +26,7 @@ void main() {
         imageUrls: const ['https://example.com/img1.jpg'],
         userId: 'uid-poster',
         createdAt: createdAt,
+        occurredAt: createdAt,
         editedAt: editedAt,
         claimedBy: 'uid-claimer',
         secretQuestion: 'What color is the card sleeve?',
@@ -54,7 +55,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.seeker, status: ItemStatus.active,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ));
       expect(m.category, 'seeker');
     });
@@ -64,7 +65,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.founder, status: ItemStatus.resolved,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ));
       expect(m.status, 'resolved');
     });
@@ -74,7 +75,7 @@ void main() {
         id: 'x', title: 't', description: 'd',
         category: ItemCategory.seeker, status: ItemStatus.active,
         location: 'l', contact: 'c', imageUrls: const [],
-        userId: 'u', createdAt: createdAt,
+        userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ));
       expect(m.editedAt, isNull);
       expect(m.claimedBy, isNull);
@@ -101,6 +102,7 @@ void main() {
         imageUrls: const [],
         userId: 'uid-seeker',
         createdAt: createdAt,
+        occurredAt: createdAt,
         editedAt: editedAt,
         claimedBy: 'uid-c',
         secretQuestion: 'Q?',
@@ -129,7 +131,7 @@ void main() {
       final e = ItemModel(
         id: 'x', title: 't', description: 'd',
         category: 'founder', status: 'active', location: 'l', contact: 'c',
-        imageUrls: const [], userId: 'u', createdAt: createdAt,
+        imageUrls: const [], userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ).toEntity();
       expect(e.category, ItemCategory.founder);
     });
@@ -138,7 +140,7 @@ void main() {
       final e = ItemModel(
         id: 'x', title: 't', description: 'd',
         category: 'seeker', status: 'resolved', location: 'l', contact: 'c',
-        imageUrls: const [], userId: 'u', createdAt: createdAt,
+        imageUrls: const [], userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ).toEntity();
       expect(e.status, ItemStatus.resolved);
     });
@@ -147,7 +149,7 @@ void main() {
       final e = ItemModel(
         id: 'x', title: 't', description: 'd',
         category: 'seeker', status: 'active', location: 'l', contact: 'c',
-        imageUrls: const [], userId: 'u', createdAt: createdAt,
+        imageUrls: const [], userId: 'u', createdAt: createdAt, occurredAt: createdAt,
       ).toEntity();
       expect(e.editedAt, isNull);
       expect(e.claimedBy, isNull);
@@ -171,6 +173,7 @@ void main() {
         imageUrls: const ['https://example.com/rt.jpg'],
         userId: 'uid-rt',
         createdAt: createdAt,
+        occurredAt: createdAt,
         editedAt: editedAt,
         claimedBy: 'uid-claim',
         secretQuestion: 'Q?',
@@ -201,6 +204,7 @@ void main() {
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(createdAt),
         'source': 'qr_walk_in',
         'isSensitive': true,
       });
@@ -219,6 +223,7 @@ void main() {
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(createdAt),
         // no 'source' or 'isSensitive' keys
       }).toEntity();
 
@@ -244,6 +249,7 @@ void main() {
         source: 'qr_walk_in',
         isSensitive: true,
         createdAt: createdAt,
+        occurredAt: createdAt,
         editedAt: editedAt,
         claimedBy: 'uid-c',
         secretQuestion: 'Q',
@@ -260,8 +266,13 @@ void main() {
       expect(map['userId'], 'uid-003');
       expect(map['source'], 'qr_walk_in');
       expect(map['isSensitive'], true);
-      expect((map['createdAt'] as Timestamp).toDate(), createdAt);
-      expect((map['editedAt'] as Timestamp).toDate(), editedAt);
+      // createdAt and editedAt are intentionally omitted — the datasource
+      // sets them via FieldValue.serverTimestamp() to guarantee
+      // server-side timestamps. occurredAt is user-supplied and is in
+      // the map.
+      expect(map.containsKey('createdAt'), isFalse);
+      expect(map.containsKey('editedAt'), isFalse);
+      expect((map['occurredAt'] as Timestamp).toDate(), createdAt);
       expect(map['claimedBy'], 'uid-c');
       expect(map['secretQuestion'], 'Q');
       expect(map['secretAnswer'], 'A');
@@ -271,7 +282,7 @@ void main() {
       final map = ItemModel(
         id: 'item-004', title: 'T', description: 'D', category: 'seeker',
         status: 'active', location: 'L', contact: 'C',
-        imageUrls: const [], userId: 'U', createdAt: createdAt,
+        imageUrls: const [], userId: 'U', createdAt: createdAt, occurredAt: createdAt,
       ).toFirestore();
 
       expect(map.containsKey('editedAt'),       isFalse);
@@ -284,7 +295,7 @@ void main() {
       final map = ItemModel(
         id: 'should-not-appear', title: 'T', description: 'D',
         category: 'seeker', status: 'active', location: 'L', contact: 'C',
-        imageUrls: const [], userId: 'U', createdAt: createdAt,
+        imageUrls: const [], userId: 'U', createdAt: createdAt, occurredAt: createdAt,
       ).toFirestore();
       expect(map.containsKey('id'), isFalse);
     });
@@ -305,6 +316,7 @@ void main() {
         'imageUrls': ['https://example.com/img1.jpg'],
         'userId': 'uid-poster',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(createdAt),
         'editedAt': Timestamp.fromDate(editedAt),
         'claimedBy': 'uid-claimer',
         'secretQuestion': 'What color?',
@@ -333,6 +345,7 @@ void main() {
         'status': 'active', 'location': 'L', 'contact': 'C',
         'imageUrls': <String>[], 'userId': 'U',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(createdAt),
       });
 
       expect(model.editedAt,       isNull);
@@ -345,7 +358,7 @@ void main() {
       final model = ItemModel.fromMap('doc-003', {
         'title': 'T', 'description': 'D', 'category': 'seeker',
         'status': 'active', 'location': 'L', 'contact': 'C',
-        'userId': 'U', 'createdAt': Timestamp.fromDate(createdAt),
+        'userId': 'U', 'createdAt': Timestamp.fromDate(createdAt), 'occurredAt': Timestamp.fromDate(createdAt),
       });
       expect(model.imageUrls, isEmpty);
     });
@@ -357,6 +370,7 @@ void main() {
         'location': 'Bus stop', 'contact': '0823456789',
         'imageUrls': <String>[], 'userId': 'uid-seeker',
         'createdAt': Timestamp.fromDate(createdAt),
+        'occurredAt': Timestamp.fromDate(createdAt),
       }).toEntity();
 
       expect(entity.id,       'doc-ff');
@@ -386,6 +400,7 @@ void main() {
           'imageUrls': <String>[],
           'userId': 'U',
           'createdAt': Timestamp.fromDate(createdAt),
+          'occurredAt': Timestamp.fromDate(createdAt),
         };
 
     test('description: null → parses as empty string (does not throw)', () {
