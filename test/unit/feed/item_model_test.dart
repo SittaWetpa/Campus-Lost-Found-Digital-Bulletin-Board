@@ -365,4 +365,75 @@ void main() {
       expect(entity.createdAt, createdAt);
     });
   });
+
+  // ── ItemModel.fromMap() — null-tolerance for soft-string fields ────────────
+  //
+  // Regression: a single Firestore doc with `description: null` (or `contact`
+  // / `location`) used to make `data['x'] as String` throw a TypeError, which
+  // propagated up the watchFeed() stream and showed "Failed to load items"
+  // for the *entire* feed even when other docs were valid. These fields are
+  // conceptually required (the post form must always set them) but the
+  // parser now defaults to '' so one bad doc cannot blank the whole feed.
+
+  group('ItemModel.fromMap() null-tolerance — WBS 1.2 regression', () {
+    Map<String, dynamic> _baseDoc() => {
+          'title': 'T',
+          'description': 'D',
+          'category': 'seeker',
+          'status': 'active',
+          'location': 'L',
+          'contact': 'C',
+          'imageUrls': <String>[],
+          'userId': 'U',
+          'createdAt': Timestamp.fromDate(createdAt),
+        };
+
+    test('description: null → parses as empty string (does not throw)', () {
+      final model =
+          ItemModel.fromMap('doc-null-desc', _baseDoc()..['description'] = null);
+      expect(model.description, '');
+    });
+
+    test('contact: null → parses as empty string (does not throw)', () {
+      final model =
+          ItemModel.fromMap('doc-null-contact', _baseDoc()..['contact'] = null);
+      expect(model.contact, '');
+    });
+
+    test('location: null → parses as empty string (does not throw)', () {
+      final model =
+          ItemModel.fromMap('doc-null-loc', _baseDoc()..['location'] = null);
+      expect(model.location, '');
+    });
+
+    test('all three null at once still parses without throwing', () {
+      final doc = _baseDoc()
+        ..['description'] = null
+        ..['contact'] = null
+        ..['location'] = null;
+      final model = ItemModel.fromMap('doc-null-all', doc);
+      expect(model.description, '');
+      expect(model.contact, '');
+      expect(model.location, '');
+      // Strict fields are still populated.
+      expect(model.title, 'T');
+      expect(model.userId, 'U');
+      expect(model.createdAt, createdAt);
+    });
+
+    test(
+      'absent description / contact / location keys also parse as empty '
+      '(consistent with null behaviour)',
+      () {
+        final doc = _baseDoc()
+          ..remove('description')
+          ..remove('contact')
+          ..remove('location');
+        final model = ItemModel.fromMap('doc-missing-keys', doc);
+        expect(model.description, '');
+        expect(model.contact, '');
+        expect(model.location, '');
+      },
+    );
+  });
 }

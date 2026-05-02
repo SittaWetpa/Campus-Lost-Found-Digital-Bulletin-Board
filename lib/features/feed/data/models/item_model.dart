@@ -41,11 +41,16 @@ class ItemModel {
   factory ItemModel.fromMap(String id, Map<String, dynamic> data) => ItemModel(
         id: id,
         title: data['title'] as String,
-        description: data['description'] as String,
+        // description / contact / location are conceptually required but a
+        // single bad doc with null in any of them used to throw a TypeError
+        // and break the whole feed stream. Default to '' so the rest of the
+        // feed keeps rendering; the post form is responsible for never
+        // writing null in the first place.
+        description: data['description'] as String? ?? '',
         category: data['category'] as String,
         status: data['status'] as String,
-        location: data['location'] as String,
-        contact: data['contact'] as String,
+        location: data['location'] as String? ?? '',
+        contact: data['contact'] as String? ?? '',
         imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
         userId: data['userId'] as String,
         source: data['source'] as String? ?? 'web',

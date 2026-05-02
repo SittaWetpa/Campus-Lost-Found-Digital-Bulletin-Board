@@ -70,8 +70,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     await ref.read(otpNotifierProvider.notifier).verifyOtp(_code);
   }
 
-  String _maskedEmail() {
-    final email = ref.read(authStateProvider).value?.email ?? '';
+  String _maskedEmail(String email) {
     if (email.isEmpty) return '';
     final atIndex = email.indexOf('@');
     if (atIndex <= 0) return email;
@@ -196,7 +195,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _maskedEmail(),
+                  _maskedEmail(
+                    ref.watch(authStateProvider).valueOrNull?.email ?? '',
+                  ),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,

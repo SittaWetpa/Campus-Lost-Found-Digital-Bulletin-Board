@@ -12,6 +12,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/otp_provi
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 
@@ -103,7 +104,7 @@ void main() {
             authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
             currentUserProvider
                 .overrideWith((ref) => Stream.value(_verifiedUser)),
-            feedItemsProvider.overrideWith((ref) => Stream.value([])),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
@@ -154,7 +155,7 @@ void main() {
           overrides: [
             authStateProvider.overrideWith((ref) => authCtrl.stream),
             currentUserProvider.overrideWith((ref) => userCtrl.stream),
-            feedItemsProvider.overrideWith((ref) => Stream.value([])),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
@@ -184,7 +185,6 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
-          feedItemsProvider.overrideWith((ref) => Stream.value([])),
         ],
       );
     });
@@ -262,7 +262,6 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
-          feedItemsProvider.overrideWith((ref) => Stream.value([])),
         ],
       );
     });
@@ -368,7 +367,7 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
-          feedItemsProvider.overrideWith((ref) => Stream.value([])),
+          feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
         ],
       );
       addTearDown(container.dispose);
