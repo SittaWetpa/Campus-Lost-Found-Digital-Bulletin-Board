@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,6 +13,10 @@ import 'package:campus_lost_found/features/auth/presentation/providers/otp_provi
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
+import 'package:campus_lost_found/features/post/presentation/screens/edit_post_screen.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
 class _FakeOtpNotifier extends OtpNotifier {
@@ -180,6 +185,10 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
+          // Use fake Firestore so real screens don't crash on Firebase access.
+          itemDatasourceProvider.overrideWith(
+            (_) => FirestoreItemDatasource(FakeFirebaseFirestore()),
+          ),
         ],
       );
     });
@@ -194,10 +203,7 @@ void main() {
       container.read(appRouterProvider).go('/item/abc123');
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Item Detail — id: abc123 — WBS 1.3'),
-        findsOneWidget,
-      );
+      expect(find.byType(ItemDetailScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -208,10 +214,7 @@ void main() {
       container.read(appRouterProvider).go('/post/item-99/edit');
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Edit Post — id: item-99 — WBS 2.6'),
-        findsOneWidget,
-      );
+      expect(find.byType(EditPostScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -223,10 +226,7 @@ void main() {
       container.read(appRouterProvider).go(route.location);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Item Detail — id: deep-link-id — WBS 1.3'),
-        findsOneWidget,
-      );
+      expect(find.byType(ItemDetailScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -238,10 +238,7 @@ void main() {
       container.read(appRouterProvider).go(route.location);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Edit Post — id: post-42 — WBS 2.6'),
-        findsOneWidget,
-      );
+      expect(find.byType(EditPostScreen), findsOneWidget);
     });
   });
 

@@ -8,6 +8,8 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
+import 'package:campus_lost_found/features/post/presentation/screens/edit_post_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -110,11 +112,8 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.itemDetail,
-        builder: (context, state) => Scaffold(
-          body: Center(
-            child: Text('Item Detail — id: ${state.pathParameters['id']} — WBS 1.3'),
-          ),
-        ),
+        builder: (context, state) =>
+            ItemDetailScreen(itemId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.post,
@@ -124,11 +123,8 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.editPost,
-        builder: (context, state) => Scaffold(
-          body: Center(
-            child: Text('Edit Post — id: ${state.pathParameters['id']} — WBS 2.6'),
-          ),
-        ),
+        builder: (context, state) =>
+            EditPostScreen(itemId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.myPosts,

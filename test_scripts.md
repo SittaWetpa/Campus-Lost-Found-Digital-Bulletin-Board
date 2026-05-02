@@ -31,11 +31,13 @@ test/
 │   ├── auth/presentation/screens/
 │   │   ├── login_screen_test.dart               ← WBS 0.3
 │   │   └── register_screen_test.dart            ← WBS 0.3
-│   └── feed/data/
-│       ├── datasources/
-│       │   └── item_remote_datasource_test.dart     ← WBS 2.2
-│       └── repositories/
-│           └── item_repository_impl_test.dart        ← WBS 2.3
+│   ├── feed/data/
+│   │   ├── datasources/
+│   │   │   └── item_remote_datasource_test.dart     ← WBS 2.2
+│   │   └── repositories/
+│   │       └── item_repository_impl_test.dart        ← WBS 2.3
+│   └── post/presentation/screens/
+│       └── edit_post_screen_test.dart               ← WBS 2.6
 ├── integration/                  # Integration tests (require Firebase Emulator)
 │   └── wbs_2_1_firestore_rules_test.dart        ← WBS 2.1 (manual placeholder)
 └── firestore_rules/              # Node.js Firestore rules tests
@@ -101,7 +103,7 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.3 | Keyword search query | `test/features/feed/data/repositories/item_repository_impl_test.dart` | Unit | ✅ 3 tests |
 | 2.4 | Request & approval system | — | Unit + Widget | ⬜ not yet written |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
-| 2.6 | Post edit | — | Unit + Widget | ⬜ not yet written |
+| 2.6 | Post edit | `test/features/post/presentation/screens/edit_post_screen_test.dart` | Widget | ✅ 2 tests |
 | 2.7 | Post delete | — | Unit + Widget | ⬜ not yet written |
 | 2.8 | Similar posts recommendation | — | Unit + Widget | ⬜ not yet written |
 | 2.9 | REST API | — | Manual | ⬜ not yet written |
@@ -155,12 +157,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 17 | 16 (1 known issue) |
 | 1.0 Flutter UI | 0 | — |
-| 2.0 Data Layer | 87 + 9 (npm) | 96 |
+| 2.0 Data Layer | 89 + 9 (npm) | 98 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 33 (1 known issue) |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **138 Dart + 9 npm** | **136 passing** |
+| **Total** | **140 Dart + 9 npm** | **138 passing** |
 
 ---
 
-*Last updated: 2026-04-29 (GANTT sync — WBS 2.14, 2.15, 2.16 added to traceability matrix)*
+*Last updated: 2026-05-01 (WBS 2.6 Post Edit — 2 widget tests added)*
