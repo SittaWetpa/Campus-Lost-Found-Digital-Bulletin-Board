@@ -4,19 +4,19 @@ import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 class ItemModel {
   final String id;
   final String title;
-  final String? description; // null when isSensitive == true
+  final String description;
   final String category;
   final String status;
   final String location;
-  final String? contact; // null when isSensitive == true
+  final String contact;
   final List<String> imageUrls;
   final String userId;
   final String source;
   final bool isSensitive;
   final DateTime createdAt;
   final DateTime occurredAt;
-  final DateTime? expiresAt; // non-null for sensitive Founder Posts (14-day TTL)
   final DateTime? editedAt;
+  final DateTime? expiresAt;
   final String? claimedBy;
   final String? secretQuestion;
   final String? secretAnswer;
@@ -31,41 +31,44 @@ class ItemModel {
     required this.contact,
     required this.imageUrls,
     required this.userId,
-    this.source = 'web',
-    this.isSensitive = false,
     required this.createdAt,
     required this.occurredAt,
-    this.expiresAt,
+    this.source = 'web',
+    this.isSensitive = false,
     this.editedAt,
+    this.expiresAt,
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
   });
 
-  factory ItemModel.fromMap(String id, Map<String, dynamic> data) {
-    final createdAt = (data['createdAt'] as Timestamp).toDate();
-    return ItemModel(
-      id: id,
-      title: data['title'] as String,
-      description: data['description'] as String?,
-      category: data['category'] as String,
-      status: data['status'] as String,
-      location: data['location'] as String,
-      contact: data['contact'] as String?,
-      imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
-      userId: data['userId'] as String,
-      source: data['source'] as String? ?? 'web',
-      isSensitive: data['isSensitive'] as bool? ?? false,
-      createdAt: createdAt,
-      // Fallback to createdAt for legacy documents that predate WBS 1.4.
-      occurredAt: (data['occurredAt'] as Timestamp?)?.toDate() ?? createdAt,
-      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
-      editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
-      claimedBy: data['claimedBy'] as String?,
-      secretQuestion: data['secretQuestion'] as String?,
-      secretAnswer: data['secretAnswer'] as String?,
-    );
-  }
+  factory ItemModel.fromMap(String id, Map<String, dynamic> data) => ItemModel(
+        id: id,
+        title: data['title'] as String,
+        // description / contact / location are conceptually required but a
+        // single bad doc with null in any of them used to throw a TypeError
+        // and break the whole feed stream. Default to '' so the rest of the
+        // feed keeps rendering; the post form is responsible for never
+        // writing null in the first place.
+        description: data['description'] as String? ?? '',
+        category: data['category'] as String,
+        status: data['status'] as String,
+        location: data['location'] as String? ?? '',
+        contact: data['contact'] as String? ?? '',
+        imageUrls: List<String>.from(data['imageUrls'] as List? ?? []),
+        userId: data['userId'] as String,
+        source: data['source'] as String? ?? 'web',
+        isSensitive: data['isSensitive'] as bool? ?? false,
+        // serverTimestamp is null during the pending-write window; fall back to now
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        // user-supplied; never null on a well-formed doc — let it throw if missing
+        occurredAt: (data['occurredAt'] as Timestamp).toDate(),
+        editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
+        expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+        claimedBy: data['claimedBy'] as String?,
+        secretQuestion: data['secretQuestion'] as String?,
+        secretAnswer: data['secretAnswer'] as String?,
+      );
 
   factory ItemModel.fromFirestore(DocumentSnapshot doc) =>
       ItemModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
@@ -84,13 +87,16 @@ class ItemModel {
         isSensitive: item.isSensitive,
         createdAt: item.createdAt,
         occurredAt: item.occurredAt,
-        expiresAt: item.expiresAt,
         editedAt: item.editedAt,
+        expiresAt: item.expiresAt,
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
         secretAnswer: item.secretAnswer,
       );
 
+  /// Returns the mutable fields to write to Firestore.
+  /// createdAt and editedAt are excluded — the datasource sets them
+  /// via FieldValue.serverTimestamp() to guarantee server-side timestamps.
   Map<String, dynamic> toFirestore() => {
         'title': title,
         'description': description,
@@ -102,10 +108,8 @@ class ItemModel {
         'userId': userId,
         'source': source,
         'isSensitive': isSensitive,
-        'createdAt': Timestamp.fromDate(createdAt),
         'occurredAt': Timestamp.fromDate(occurredAt),
         if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
-        if (editedAt != null) 'editedAt': Timestamp.fromDate(editedAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
         if (secretAnswer != null) 'secretAnswer': secretAnswer,
@@ -125,8 +129,8 @@ class ItemModel {
         isSensitive: isSensitive,
         createdAt: createdAt,
         occurredAt: occurredAt,
-        expiresAt: expiresAt,
         editedAt: editedAt,
+        expiresAt: expiresAt,
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,
         secretAnswer: secretAnswer,

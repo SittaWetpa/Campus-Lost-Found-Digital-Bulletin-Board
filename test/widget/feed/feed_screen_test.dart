@@ -13,6 +13,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
 

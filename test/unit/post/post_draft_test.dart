@@ -170,8 +170,8 @@ void main() {
         );
 
         expect(item.isSensitive, isTrue);
-        expect(item.description, isNull);
-        expect(item.contact, isNull);
+        expect(item.description, isEmpty);
+        expect(item.contact, isEmpty);
         expect(item.expiresAt, isNotNull);
         expect(
           item.expiresAt!.difference(fixedNow),
@@ -372,15 +372,17 @@ void main() {
       expect(draft.useMyNumber, isFalse);
     });
 
-    test('null fields on Item become empty strings on draft', () {
+    test('empty-string fields on a sensitive Item stay empty on draft', () {
       final item = Item(
         id: 'i1',
         title: 'Sensitive ID',
-        description: null,
+        // Per develop's schema, description/contact are required `String`.
+        // Sensitive items write `''` (handled by the post form), not null.
+        description: '',
         category: ItemCategory.founder,
         status: ItemStatus.active,
         location: 'ECC',
-        contact: null,
+        contact: '',
         imageUrls: const [],
         userId: 'u1',
         createdAt: DateTime(2026, 5, 1),

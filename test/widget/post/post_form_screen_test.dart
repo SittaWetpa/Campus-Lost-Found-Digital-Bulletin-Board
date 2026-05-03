@@ -32,12 +32,14 @@
 //        the picker UI is wired to the use case.
 
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
+import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
-import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/post/domain/repositories/post_repository.dart';
-import 'package:campus_lost_found/features/post/presentation/providers/post_providers.dart';
+import 'package:campus_lost_found/features/post/presentation/providers/post_provider.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,14 +53,20 @@ class _MockPostRepository extends Mock implements PostRepository {}
 
 /// No-op `ItemRepository` so the `SimilarPostsNotifier`'s downstream calls
 /// (triggered by the title field's `addListener`) resolve immediately and
-/// do not leave pending timers between test phases.
+/// do not leave pending timers between test phases. Optionally returns a
+/// seeded item from `getItemById` to drive the edit-mode population path —
+/// that's how the Photo Safety Case 2 tests get photos onto the form
+/// without needing to mock image_picker.
 class _FakeItemRepository implements ItemRepository {
+  _FakeItemRepository({this.seededItem});
+  final Item? seededItem;
+
   @override
   Stream<List<Item>> watchFeed() => const Stream.empty();
   @override
-  Stream<Item?> watchItem(String id) => Stream.value(null);
+  Stream<Item?> watchItem(String id) => Stream.value(seededItem);
   @override
-  Future<Item?> getItemById(String id) async => null;
+  Future<Item?> getItemById(String id) async => seededItem;
   @override
   Future<List<Item>> searchItems(String keyword) async => const [];
   @override
@@ -69,6 +77,17 @@ class _FakeItemRepository implements ItemRepository {
 
 const _testUid = 'user-001';
 const _testEmail = 'pun@mail.kmutt.ac.th';
+const _testTelephone = '0812345678';
+
+final _testUser = User(
+  uid: _testUid,
+  email: _testEmail,
+  firstName: 'Pun',
+  lastName: 'Tester',
+  studentId: '64000000',
+  telephone: _testTelephone,
+  emailVerified: true,
+);
 
 final _fallbackItem = Item(
   id: '',
@@ -91,10 +110,19 @@ GoRouter _router(Widget homePlaceholder) => GoRouter(
       routes: [
         GoRoute(path: '/feed', builder: (_, __) => homePlaceholder),
         GoRoute(path: '/post', builder: (_, __) => const PostFormScreen()),
+        GoRoute(
+          path: '/post/:id/edit',
+          builder: (_, s) =>
+              PostFormScreen(editId: s.pathParameters['id']),
+        ),
       ],
     );
 
-Widget _app({required PostRepository postRepository}) {
+Widget _app({
+  required PostRepository postRepository,
+  User? profile,
+  Item? editingItem,
+}) {
   const authUser = AuthUser(uid: _testUid, email: _testEmail);
   // The home placeholder watches `authStateProvider` so it is primed by the
   // time the user navigates to `/post`. `Stream.value(...)` emits in a
@@ -118,7 +146,10 @@ Widget _app({required PostRepository postRepository}) {
   return ProviderScope(
     overrides: [
       authStateProvider.overrideWith((_) => Stream.value(authUser)),
-      itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
+      currentUserProvider.overrideWith((_) => Stream.value(profile)),
+      itemRepositoryProvider.overrideWith(
+        (_) => _FakeItemRepository(seededItem: editingItem),
+      ),
       postRepositoryProvider.overrideWith((_) => postRepository),
     ],
     child: MaterialApp.router(routerConfig: _router(home)),
@@ -127,14 +158,19 @@ Widget _app({required PostRepository postRepository}) {
 
 /// Pumps the app at `/feed`, taps the entry button to push `/post`, and
 /// returns the configured mock so each test can assert against it.
-Future<_MockPostRepository> _navigateToForm(WidgetTester tester) async {
+Future<_MockPostRepository> _navigateToForm(
+  WidgetTester tester, {
+  User? profile,
+}) async {
   final mockRepo = _MockPostRepository();
   when(() => mockRepo.createItem(any())).thenAnswer((inv) async {
     final item = inv.positionalArguments[0] as Item;
     return item.copyWith(id: 'firestore-id');
   });
 
-  await tester.pumpWidget(_app(postRepository: mockRepo));
+  await tester.pumpWidget(
+    _app(postRepository: mockRepo, profile: profile),
+  );
   await tester.pumpAndSettle();
   await tester.tap(find.text('go-post'));
   await tester.pumpAndSettle();
@@ -233,37 +269,88 @@ void main() {
   );
 
   // WBS 1.4-02 ────────────────────────────────────────────────────────────
-  test(
-    'WBS 1.4-02 — selecting "Use my number" pre-fills contact with profile '
-    'telephone',
-    () => fail(
-      'Expected PostFormScreen to render a "Use my number / Use other '
-      'number" selector and pre-fill the contact field with the current '
-      'user telephone when "Use my number" is active.',
-    ),
-    skip:
-        'PostFormScreen does not yet render the "Use my number" toggle. '
-        'It is queued under the architect plan, Part 4 → "Refactor in a '
-        'follow-up task (NOT this WBS)". The underlying domain rule '
-        '(useMyNumber == true ⟺ contact == currentUser.telephone) is '
-        'covered today by PostDraft.fromItem and PostDraft.empty in '
-        'test/unit/post/post_draft_test.dart.',
+  testWidgets(
+    'WBS 1.4-02 — "Use my number" is selected by default and pre-fills '
+    'contact with the profile telephone',
+    (tester) async {
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Selector renders both options.
+      expect(find.text('Use my number'), findsOneWidget);
+      expect(find.text('Use different'), findsOneWidget);
+
+      // The contact field (4th TextFormField on a Founder Post: title, desc,
+      // location, contact) should be prefilled with the profile telephone
+      // and rendered read-only.
+      final fields = find.byType(TextFormField);
+      final contactField = tester.widget<TextFormField>(fields.at(3));
+      expect(contactField.controller!.text, _testTelephone);
+      expect(contactField.controller!.text, isNotEmpty);
+    },
   );
 
   // WBS 1.4-03 ────────────────────────────────────────────────────────────
-  test(
-    'WBS 1.4-03 — selecting "Use other number" makes contact field an empty '
-    'editable input',
-    () => fail(
-      'Expected PostFormScreen to clear the contact field and enable manual '
-      'entry when the user selects "Use other number".',
-    ),
-    skip:
-        'Same toggle as 1.4-02 — UI not yet wired. Domain rule '
-        '(PostDraft.copyWith(useMyNumber: false, contact: "")) is '
-        'covered indirectly by PostDraft.fromItem in '
-        'test/unit/post/post_draft_test.dart; will become a passing widget '
-        'test once the toggle ships.',
+  testWidgets(
+    'WBS 1.4-03 — selecting "Use different" clears the contact field and '
+    'makes it editable again',
+    (tester) async {
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Sanity: starts in Use-my-number mode with profile telephone.
+      final fields = find.byType(TextFormField);
+      var contactCtrl = tester.widget<TextFormField>(fields.at(3)).controller!;
+      expect(contactCtrl.text, _testTelephone);
+
+      // Switch to "Use different".
+      await tester.tap(find.text('Use different'));
+      await tester.pumpAndSettle();
+
+      // Contact is cleared.
+      contactCtrl = tester
+          .widget<TextFormField>(find.byType(TextFormField).at(3))
+          .controller!;
+      expect(contactCtrl.text, isEmpty);
+
+      // User can type a new number.
+      await tester.enterText(find.byType(TextFormField).at(3), '0899999999');
+      await tester.pumpAndSettle();
+      contactCtrl = tester
+          .widget<TextFormField>(find.byType(TextFormField).at(3))
+          .controller!;
+      expect(contactCtrl.text, '0899999999');
+    },
+  );
+
+  // WBS 1.4-02b ───────────────────────────────────────────────────────────
+  // Edge case: profile has no telephone — selector is hidden and the
+  // contact field is just a plain editable input. Avoids trapping the
+  // user with a read-only prefilled-with-empty-string field.
+  testWidgets(
+    'WBS 1.4-02b — profile with empty telephone hides the source selector '
+    'and leaves contact field editable',
+    (tester) async {
+      const noPhoneUser = User(
+        uid: _testUid,
+        email: _testEmail,
+        firstName: 'Pun',
+        lastName: 'Tester',
+        studentId: '64000000',
+        telephone: '',
+        emailVerified: true,
+      );
+      await _navigateToForm(tester, profile: noPhoneUser);
+
+      expect(find.text('Use my number'), findsNothing);
+      expect(find.text('Use different'), findsNothing);
+
+      // Contact field is empty and accepts user input.
+      await tester.enterText(find.byType(TextFormField).at(3), '0888888888');
+      await tester.pumpAndSettle();
+      final contactCtrl = tester
+          .widget<TextFormField>(find.byType(TextFormField).at(3))
+          .controller!;
+      expect(contactCtrl.text, '0888888888');
+    },
   );
 
   // WBS 1.4-04 ────────────────────────────────────────────────────────────
@@ -279,5 +366,159 @@ void main() {
         'the image picker (mocking ImagePicker.pickImage) is complex. The 3-photo '
         'cap is enforced and unit-tested in test/unit/post/upload_post_photos_use_case_test.dart. '
         'Integration test coverage via manual testing or E2E framework recommended.',
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 1 ────────────────────────────────
+  // Tap "Add Photo" with secret question already filled → dialog appears,
+  // gating the file picker behind explicit confirmation.
+  test(
+    'Photo Safety Case 1 — tapping Add Photo with SQ filled shows the '
+    'safety dialog before opening the picker',
+    () => fail(
+      'Expected an AlertDialog with title "Photo Safety" to render before '
+      '`ImagePicker().pickImage` is invoked.',
+    ),
+    skip:
+        'Verifies that _pickAndUploadPhoto in post_form_screen.dart shows '
+        'the dialog gate when _sqCtrl.text is non-empty before invoking '
+        'the picker. Mocking image_picker in widget tests is brittle (same '
+        'reason WBS 1.4-04 is skipped); the gate is wired at '
+        'lib/features/post/presentation/screens/post_form_screen.dart in '
+        '_pickAndUploadPhoto. Manual smoke test recommended.',
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 2 ────────────────────────────────
+  // Photos already present → user types into Secret Question → dialog
+  // appears as a review prompt. Cancelling clears the SQ field so the
+  // user can scrub photos before re-entering the question.
+  //
+  // Photos are seeded by routing through edit-mode (`/post/:id/edit`) with
+  // a fake repository that returns an Item carrying imageUrls. This avoids
+  // touching the form's private state while still exercising the real
+  // _populateFromItem → _imageUrls path.
+  testWidgets(
+    'Photo Safety Case 2 — filling SQ with photos already present shows '
+    'the review dialog; cancelling clears the SQ field',
+    (tester) async {
+      // Existing item with photos and NO secret question yet.
+      final existing = Item(
+        id: 'edit-1',
+        title: 'Existing post',
+        description: 'has photos already',
+        category: ItemCategory.founder,
+        status: ItemStatus.active,
+        location: 'CB2',
+        contact: '0812345678',
+        imageUrls: const ['https://example.com/seeded.jpg'],
+        userId: _testUid,
+        createdAt: DateTime(2024),
+        occurredAt: DateTime(2024),
+      );
+
+      final mockRepo = _MockPostRepository();
+      await tester.pumpWidget(_app(
+        postRepository: mockRepo,
+        profile: _testUser,
+        editingItem: existing,
+      ));
+      await tester.pumpAndSettle();
+
+      // Navigate to edit-mode for the seeded item.
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .context
+          .go('/post/${existing.id}/edit');
+      await tester.pumpAndSettle();
+
+      // Form is populated; the SQ field starts empty (existing item had
+      // no secret question). Find the SQ field — on edit-mode founder
+      // post: title, desc, location, contact, sq, sa.
+      final fields = find.byType(TextFormField);
+      final sqIndex = fields.evaluate().length - 2;
+
+      await tester.enterText(fields.at(sqIndex), 'What colour is the lining?');
+      await tester.pumpAndSettle();
+
+      // Dialog appears.
+      expect(find.text('Photo Safety'), findsOneWidget);
+      expect(find.text('I understand'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+
+      // Cancel → dialog closes AND SQ field is cleared (revert).
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing);
+      final sqCtrl = tester
+          .widget<TextFormField>(find.byType(TextFormField).at(sqIndex))
+          .controller!;
+      expect(sqCtrl.text, isEmpty);
+    },
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 2 confirm path ──────────────────
+  testWidgets(
+    'Photo Safety Case 2 — "I understand" keeps the SQ text intact',
+    (tester) async {
+      final existing = Item(
+        id: 'edit-2',
+        title: 'Existing post',
+        description: 'has photos already',
+        category: ItemCategory.founder,
+        status: ItemStatus.active,
+        location: 'CB2',
+        contact: '0812345678',
+        imageUrls: const ['https://example.com/seeded.jpg'],
+        userId: _testUid,
+        createdAt: DateTime(2024),
+        occurredAt: DateTime(2024),
+      );
+
+      final mockRepo = _MockPostRepository();
+      await tester.pumpWidget(_app(
+        postRepository: mockRepo,
+        profile: _testUser,
+        editingItem: existing,
+      ));
+      await tester.pumpAndSettle();
+
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .context
+          .go('/post/${existing.id}/edit');
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextFormField);
+      final sqIndex = fields.evaluate().length - 2;
+      const sqText = 'What colour is the lining?';
+      await tester.enterText(fields.at(sqIndex), sqText);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsOneWidget);
+      await tester.tap(find.text('I understand'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing);
+      final sqCtrl = tester
+          .widget<TextFormField>(find.byType(TextFormField).at(sqIndex))
+          .controller!;
+      expect(sqCtrl.text, sqText);
+    },
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 2 no-fire path ───────────────────
+  testWidgets(
+    'Photo Safety Case 2 — typing in SQ does NOT show the dialog when no '
+    'photos are attached',
+    (tester) async {
+      await _navigateToForm(tester, profile: _testUser);
+
+      final fields = find.byType(TextFormField);
+      final sqIndex = fields.evaluate().length - 2;
+      await tester.enterText(fields.at(sqIndex), 'Anything');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing);
+    },
   );
 }

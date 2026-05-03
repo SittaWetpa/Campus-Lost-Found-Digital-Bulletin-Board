@@ -12,6 +12,11 @@ import 'package:campus_lost_found/features/auth/presentation/providers/otp_provi
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
@@ -24,6 +29,23 @@ class _FakeOtpNotifier extends OtpNotifier {
 
   @override
   Future<void> verifyOtp(String code) async {}
+}
+
+// Stub for tests that pump PostFormScreen — keeps `_loadEditItem` from
+// hitting an uninitialised Firestore.
+class _FakeItemRepository implements ItemRepository {
+  @override
+  Stream<List<Item>> watchFeed() => Stream.value(const []);
+  @override
+  Stream<Item?> watchItem(String itemId) => Stream.value(null);
+  @override
+  Stream<List<Item>> watchMyItems(String userId) => Stream.value(const []);
+  @override
+  Future<Item?> getItemById(String itemId) async => null;
+  @override
+  Future<List<Item>> searchItems(String keyword) async => const [];
+  @override
+  Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
 }
 
 // ---------------------------------------------------------------------------
@@ -102,13 +124,14 @@ void main() {
             authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
             currentUserProvider
                 .overrideWith((ref) => Stream.value(_verifiedUser)),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -152,12 +175,13 @@ void main() {
           overrides: [
             authStateProvider.overrideWith((ref) => authCtrl.stream),
             currentUserProvider.overrideWith((ref) => userCtrl.stream),
+            feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
           ],
           child: const CampusLostFoundApp(),
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
 
       // Simulate sign-out: emit null from both streams.
       authCtrl.add(null);
@@ -181,6 +205,7 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
+          itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
         ],
       );
     });
@@ -202,7 +227,7 @@ void main() {
     });
 
     testWidgets(
-        'navigate to /post/:id/edit renders Edit Post with correct id',
+        'navigate to /post/:id/edit renders the post form in edit mode',
         (tester) async {
       await _buildApp(tester, container);
 
@@ -228,7 +253,7 @@ void main() {
     });
 
     testWidgets(
-        'EditPostRoute value object navigates to correct screen',
+        'EditPostRoute value object navigates to the post form',
         (tester) async {
       await _buildApp(tester, container);
 
@@ -252,13 +277,14 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
+          itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
         ],
       );
     });
 
     tearDown(() => container.dispose());
 
-    testWidgets('navigate to /post renders Post Form placeholder',
+    testWidgets('navigate to /post renders the post form',
         (tester) async {
       await _buildApp(tester, container);
 
@@ -357,6 +383,7 @@ void main() {
           authStateProvider.overrideWith((ref) => Stream.value(_authUser)),
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
+          feedItemsProvider.overrideWith((ref) => Stream.value(<Item>[])),
         ],
       );
       addTearDown(container.dispose);
@@ -367,7 +394,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Guard pushes verified users away from /otp-verify back to /feed.
-      expect(find.text('Feed — WBS 1.2'), findsOneWidget);
+      expect(find.byType(FeedScreen), findsOneWidget);
       expect(find.byType(OtpVerifyScreen), findsNothing);
     });
 

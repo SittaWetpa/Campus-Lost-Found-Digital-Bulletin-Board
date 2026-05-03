@@ -1,29 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'providers.dart';
+part of 'post_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$postRemoteDatasourceHash() =>
-    r'1dcbe264ddc934d83d98373424fbe97df2e484b1';
-
-/// See also [postRemoteDatasource].
-@ProviderFor(postRemoteDatasource)
-final postRemoteDatasourceProvider =
-    AutoDisposeProvider<PostRemoteDatasource>.internal(
-  postRemoteDatasource,
-  name: r'postRemoteDatasourceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$postRemoteDatasourceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef PostRemoteDatasourceRef = AutoDisposeProviderRef<PostRemoteDatasource>;
-String _$postRepositoryHash() => r'9a7748ee33ec96db25003b03914c97613621ada9';
+String _$postRepositoryHash() => r'7598690c7a5e4a94b42f2969c2804f204571a3c0';
 
 /// See also [postRepository].
 @ProviderFor(postRepository)

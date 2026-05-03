@@ -130,9 +130,12 @@ class PostDraft {
       source: ItemSource.web,
       isSensitive: sensitive,
       title: title.trim(),
-      description: sensitive ? null : description.trim(),
+      // For sensitive items the UI hides description/contact; the schema
+      // keeps them as required `String` (per develop's convention) and
+      // we write '' so the field is present but empty.
+      description: sensitive ? '' : description.trim(),
       location: location.trim(),
-      contact: sensitive ? null : contact.trim(),
+      contact: sensitive ? '' : contact.trim(),
       occurredAt: occurredAt,
       imageUrls: imageUrls,
       expiresAt:

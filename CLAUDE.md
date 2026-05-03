@@ -94,7 +94,7 @@ Each feature follows this internal structure:
 | Collection | Owner WBS | Notes |
 |---|---|---|
 | `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt |
-| `items/{itemId}` | 2.1 | title, description, category (seeker/founder), status (active/resolved), location, contact, imageUrls, userId, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false) |
+| `items/{itemId}` | 2.1 | title, description, category (seeker/founder), status (active/resolved), location, contact, imageUrls, userId, occurredAt, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false) |
 | `items/{itemId}/requests/{requestId}` | 2.4 | requesterId, requesterName, requesterContact, message, status (pending/approved/rejected/cancelled), createdAt, visitorAnswer? |
 | `otp_verifications/{uid}` | 0.5 | code, expiresAt, attempts, createdAt |
 | `mail/{docId}` | 0.5 | Watched by Firebase Extension to send OTP emails |
@@ -176,6 +176,26 @@ Each feature follows this internal structure:
 - ❌ Commit secrets, API keys, or `google-services.json` to a public repo
 - ❌ Use `StreamBuilder` for routing — GoRouter handles auth redirects
 - ❌ Write business logic in `presentation/` — use cases belong in `domain/`
+- ❌ Skip writing tests after implementing a WBS work package — see Testing Rules above
+- ❌ Call `Firebase.initializeApp()` inside a test — use `ProviderScope(overrides: [...])` instead
+- ❌ Forget to update `test_scripts.md` after adding a new test file
+- ❌ Forget to update the Weekly Orchestration Log in `ORCHESTRATION.md` after completing a work package
+
+---
+
+## Testing Rules — Always Follow
+
+After implementing any WBS work package:
+
+1. **Write the tests** listed in that WP's **Testing** section in `wbs_dictionary.md`. No exceptions.
+2. **Place the test file** under `test/` mirroring the `lib/` path — e.g. `lib/features/auth/presentation/screens/login_screen.dart` → `test/features/auth/presentation/screens/login_screen_test.dart`.
+3. **Update `test_scripts.md`** — add a row to the traceability matrix for the new test file and set its status to ✅.
+4. **Run `flutter test`** and confirm zero failures before committing.
+5. **Update the Weekly Orchestration Log** in `ORCHESTRATION.md` — fill in the current week's row: what was planned, which agent tasks ran, key handoffs, and anything the human reviewer caught.
+
+Widget test rules (never break these):
+- Always wrap in `ProviderScope(overrides: [...])` — never call `Firebase.initializeApp()` in a test.
+- Use `mocktail` for fakes — it is already in `pubspec.yaml` dev dependencies.
 
 ---
 
@@ -189,6 +209,7 @@ Each feature follows this internal structure:
 | `firestore.rules` | Firestore security rules |
 | `storage.rules` | Storage security rules |
 | `functions/index.js` | REST API endpoint (`GET /items`) |
+| `test_scripts.md` | Test run commands, file structure, traceability matrix |
 | `SETUP.md` | Full setup guide from scratch |
 | `README.md` | Project overview, team, branching strategy |
 

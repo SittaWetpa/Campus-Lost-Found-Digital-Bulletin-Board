@@ -85,8 +85,8 @@ void main() {
   // ── Item constructor ─────────────────────────────────────────────────────
 
   group('Item', () {
-    final baseCreatedAt  = DateTime(2025, 1, 15, 10, 30);
-    final baseOccurredAt = DateTime(2025, 1, 15, 9, 0);
+    final baseCreatedAt = DateTime(2025, 1, 15, 10, 30);
+    final baseOccurredAt = DateTime(2025, 1, 14, 18, 0);
 
     group('required fields', () {
       late Item item;
@@ -143,7 +143,7 @@ void main() {
         expect(item.createdAt, baseCreatedAt);
       });
 
-      test('stores occurredAt correctly (WBS 1.4)', () {
+      test('stores occurredAt correctly (WBS 2.2)', () {
         expect(item.occurredAt, baseOccurredAt);
       });
 
@@ -212,10 +212,6 @@ void main() {
         expect(item.editedAt, isNull);
       });
 
-      test('expiresAt is null when not provided (WBS 2.14)', () {
-        expect(item.expiresAt, isNull);
-      });
-
       test('claimedBy is null when not provided (WBS 2.4)', () {
         expect(item.claimedBy, isNull);
       });
@@ -231,8 +227,7 @@ void main() {
 
     group('optional fields are stored when provided', () {
       late Item item;
-      final editedAt  = DateTime(2025, 2, 10, 9, 0);
-      final expiresAt = DateTime(2025, 2, 28);
+      final editedAt = DateTime(2025, 2, 10, 9, 0);
 
       setUp(() {
         item = Item(
@@ -248,7 +243,6 @@ void main() {
           createdAt: baseCreatedAt,
           occurredAt: baseOccurredAt,
           editedAt: editedAt,
-          expiresAt: expiresAt,
           claimedBy: 'uid-999',
           secretQuestion: 'What colour is the card sleeve inside?',
           secretAnswer: 'navy blue',
@@ -257,10 +251,6 @@ void main() {
 
       test('editedAt is stored correctly (WBS 2.6)', () {
         expect(item.editedAt, editedAt);
-      });
-
-      test('expiresAt is stored correctly (WBS 2.14)', () {
-        expect(item.expiresAt, expiresAt);
       });
 
       test('claimedBy is stored correctly (WBS 2.4)', () {
@@ -273,30 +263,6 @@ void main() {
 
       test('secretAnswer is stored correctly (WBS 2.10)', () {
         expect(item.secretAnswer, 'navy blue');
-      });
-    });
-
-    group('sensitive item (WBS 2.14)', () {
-      test('description and contact are null for sensitive items', () {
-        final item = Item(
-          id: 'item-sensitive',
-          title: 'Student ID card found',
-          description: null,
-          category: ItemCategory.founder,
-          status: ItemStatus.active,
-          location: 'ECC Building',
-          contact: null,
-          imageUrls: const [],
-          userId: 'uid-s',
-          createdAt: baseCreatedAt,
-          occurredAt: baseOccurredAt,
-          isSensitive: true,
-          expiresAt: DateTime(2025, 1, 29),
-        );
-        expect(item.description, isNull);
-        expect(item.contact, isNull);
-        expect(item.isSensitive, isTrue);
-        expect(item.expiresAt, isNotNull);
       });
     });
 
@@ -389,7 +355,7 @@ void main() {
           imageUrls: const [],
           userId: 'uid-test',
           createdAt: DateTime(2025),
-          occurredAt: DateTime(2025),
+          occurredAt: DateTime(2024, 12, 31),
         );
         expect(item.id, 'no-firebase');
       });

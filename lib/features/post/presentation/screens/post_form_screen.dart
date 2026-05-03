@@ -5,9 +5,9 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
-import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
-import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/post/presentation/providers/post_providers.dart';
 
 const _kAmber = Color(0xFFCA8A04);
@@ -43,6 +43,18 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
   bool _isLoadingEdit = false;
   bool _isUploadingPhoto = false;
 
+  // Feature: "Use my number" / "Use different" — defaults to Use my number
+  // whenever the user's profile has a telephone, falls back to Use different
+  // when the profile telephone is empty/null.
+  bool _useMyNumber = true;
+  String _myTelephone = '';
+
+  // Feature: Photo Safety Guard, Case 2 (review after SQ entered with photos
+  // already present). Tracks the previous secret-question text so the listener
+  // can detect the empty → non-empty transition without false-firing on the
+  // programmatic prefill done by _populateFromItem.
+  String _sqLastValue = '';
+
   bool get _isEdit => widget.editId != null;
 
   @override
@@ -55,9 +67,13 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     _sqCtrl = TextEditingController();
     _saCtrl = TextEditingController();
     _titleCtrl.addListener(_onTitleChanged);
+    _sqCtrl.addListener(_onSecretQuestionChanged);
     if (_isEdit) {
       _isLoadingEdit = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadEditItem());
+    } else {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _initContactFromProfile());
     }
   }
 
@@ -69,7 +85,9 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     _descCtrl.dispose();
     _locationCtrl.dispose();
     _contactCtrl.dispose();
-    _sqCtrl.dispose();
+    _sqCtrl
+      ..removeListener(_onSecretQuestionChanged)
+      ..dispose();
     _saCtrl.dispose();
     super.dispose();
   }
@@ -77,6 +95,61 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
   void _onTitleChanged() {
     if (_category == ItemCategory.founder) {
       ref.read(similarPostsNotifierProvider.notifier).search(_titleCtrl.text);
+    }
+  }
+
+  /// Photo Safety Guard, Case 2: when the secret-question field transitions
+  /// from empty → non-empty AND photos are already attached, prompt the
+  /// poster to verify the existing photos do not reveal the answer. Cancel
+  /// clears the secret-question text so the user can fix the photos first.
+  void _onSecretQuestionChanged() {
+    final current = _sqCtrl.text;
+    final wasEmpty = _sqLastValue.trim().isEmpty;
+    final nowFilled = current.trim().isNotEmpty;
+    _sqLastValue = current;
+    if (wasEmpty && nowFilled && _imageUrls.isNotEmpty) {
+      // Schedule out of the listener callback so we don't mutate the
+      // controller while it's notifying.
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final confirmed = await _showPhotoSafetyDialog(isReview: true);
+        if (!mounted) return;
+        if (confirmed != true) {
+          // Revert: clear the SQ so the user can scrub photos first.
+          _sqCtrl.clear();
+        }
+      });
+    }
+  }
+
+  /// Reads the signed-in user's profile telephone and prefills the contact
+  /// field. Falls back to the "Use different" mode when the profile has no
+  /// telephone, so the form doesn't trap the user with an empty read-only
+  /// field they can't fix.
+  ///
+  /// Awaits `currentUserProvider.future` so we don't race the stream's first
+  /// emission — `valueOrNull` would otherwise be `null` on the immediate
+  /// post-frame tick.
+  Future<void> _initContactFromProfile() async {
+    final user = await ref.read(currentUserProvider.future);
+    final tel = user?.telephone ?? '';
+    if (!mounted) return;
+    setState(() {
+      _myTelephone = tel;
+      _useMyNumber = tel.isNotEmpty;
+    });
+    if (tel.isNotEmpty) {
+      _contactCtrl.text = tel;
+    }
+  }
+
+  void _onContactSourceChanged(bool useMyNumber) {
+    setState(() => _useMyNumber = useMyNumber);
+    if (useMyNumber) {
+      _contactCtrl.text = _myTelephone;
+    } else {
+      // Clear so the user can type a different number from scratch.
+      _contactCtrl.clear();
     }
   }
 
@@ -100,11 +173,56 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
       _imageUrls = List.from(item.imageUrls);
     });
     _titleCtrl.text = item.title;
-    _descCtrl.text = item.description ?? '';
+    _descCtrl.text = item.description;
     _locationCtrl.text = item.location;
-    _contactCtrl.text = item.contact ?? '';
+    _contactCtrl.text = item.contact;
+    // Match the SQ baseline BEFORE setting the controller text so the
+    // listener's empty→non-empty check doesn't false-fire on prefill.
+    _sqLastValue = item.secretQuestion ?? '';
     _sqCtrl.text = item.secretQuestion ?? '';
     _saCtrl.text = item.secretAnswer ?? '';
+
+    // Compute "Use my number" from the existing post's contact so toggle
+    // state matches reality. Also stash the user's profile telephone so
+    // toggling back to "Use my number" works.
+    final user = ref.read(currentUserProvider).valueOrNull;
+    final tel = user?.telephone ?? '';
+    setState(() {
+      _myTelephone = tel;
+      _useMyNumber = tel.isNotEmpty && item.contact == tel;
+    });
+  }
+
+  /// Shared Photo Safety dialog used by both Case 1 (gating Add Photo when
+  /// SQ is filled) and Case 2 (review prompt fired by [_onSecretQuestionChanged]).
+  /// Returns `true` if the poster confirmed they understand, `false`/`null`
+  /// otherwise.
+  Future<bool?> _showPhotoSafetyDialog({required bool isReview}) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Photo Safety'),
+        content: Text(
+          isReview
+              ? 'You attached photos before setting the Secret Question. Make '
+                  'sure the photos do NOT reveal the answer — anyone with a '
+                  'photo could bypass verification. Confirm or remove the '
+                  'photos before proceeding.'
+              : 'Make sure your photos do NOT show the answer to your Secret '
+                  'Question. Anyone with a photo could bypass verification.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('I understand'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickDateTime() async {
@@ -134,6 +252,16 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
         const SnackBar(content: Text('Maximum 3 photos per post')),
       );
       return;
+    }
+
+    // Photo Safety Guard, Case 1: when the secret question is already
+    // filled, gate the file picker behind an explicit "I understand"
+    // confirmation. Re-prompts on every Add Photo tap by design — each
+    // photo is a fresh chance to leak the answer.
+    if (_sqCtrl.text.trim().isNotEmpty) {
+      final confirmed = await _showPhotoSafetyDialog(isReview: false);
+      if (confirmed != true) return;
+      if (!mounted) return;
     }
 
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -192,11 +320,11 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     final item = Item(
       id: widget.editId ?? '',
       title: _titleCtrl.text.trim(),
-      description: sensitive ? null : _descCtrl.text.trim(),
+      description: sensitive ? '' : _descCtrl.text.trim(),
       category: _category,
       status: ItemStatus.active,
       location: _locationCtrl.text.trim(),
-      contact: sensitive ? null : _contactCtrl.text.trim(),
+      contact: sensitive ? '' : _contactCtrl.text.trim(),
       imageUrls: _imageUrls,
       userId: _editItem?.userId ?? authUser.uid,
       createdAt: _editItem?.createdAt ?? DateTime.now(),
@@ -376,13 +504,23 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
                 // ── Contact ───────────────────────────────────────
                 if (!sensitive) ...[
                   _FieldLabel('CONTACT'),
+                  if (_myTelephone.isNotEmpty) ...[
+                    _ContactSourceSelector(
+                      useMyNumber: _useMyNumber,
+                      onChanged: _onContactSourceChanged,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   TextFormField(
                     controller: _contactCtrl,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
+                    readOnly: _useMyNumber && _myTelephone.isNotEmpty,
+                    decoration: InputDecoration(
                       hintText: '08x-xxx-xxxx',
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: (_useMyNumber && _myTelephone.isNotEmpty)
+                          ? const Color(0xFFF3F4F6)
+                          : Colors.white,
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'Contact number is required.'
@@ -852,6 +990,75 @@ class _PhotosSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _ContactSourceSelector extends StatelessWidget {
+  const _ContactSourceSelector({
+    required this.useMyNumber,
+    required this.onChanged,
+  });
+
+  final bool useMyNumber;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: _ContactSourceButton(
+              label: 'Use my number',
+              selected: useMyNumber,
+              onTap: () => onChanged(true),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _ContactSourceButton(
+              label: 'Use different',
+              selected: !useMyNumber,
+              onTap: () => onChanged(false),
+            ),
+          ),
+        ],
+      );
+}
+
+class _ContactSourceButton extends StatelessWidget {
+  const _ContactSourceButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? _kAmber : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: selected ? _kAmber : Colors.grey.shade300),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.grey.shade700,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 13,
+          ),
+        ),
+      ),
     );
   }
 }

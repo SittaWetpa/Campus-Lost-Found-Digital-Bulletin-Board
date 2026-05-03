@@ -34,35 +34,31 @@ enum ItemSource {
 class Item {
   final String id;
   final String title;
-
-  // Null when isSensitive == true (hidden from public view)
-  final String? description;
-
+  final String description;
   final ItemCategory category;
   final ItemStatus status;
   final String location;
-
-  // Null when isSensitive == true (hidden from public view)
-  final String? contact;
-
+  final String contact;
   final List<String> imageUrls;
   final String userId;
 
   // WBS 2.15 — walk-in QR registration badge on ItemCard
   final ItemSource source;
 
-  // WBS 2.14 — hides description & contact; directs seekers to Security Office
+  // WBS 2.14 — hides photo & description in the UI; sensitive Founder posts
+  // also get an auto-expiring `expiresAt` (14 days from createdAt).
   final bool isSensitive;
 
   final DateTime createdAt;
 
-  // When the item was lost (seeker) or found (founder) — drives the datetime picker
+  // WBS 2.2 — when the item was lost (Seeker) or found (Founder), user-provided
   final DateTime occurredAt;
 
   // WBS 2.6 — null until post has been edited
   final DateTime? editedAt;
 
-  // Sensitive Founder Posts auto-expire after 14 days; null for all other posts
+  // WBS 2.14 — sensitive Founder posts auto-expire after 14 days; null for
+  // all other posts. Server-side enforcement is a known future concern.
   final DateTime? expiresAt;
 
   // WBS 2.4 — null until a request is approved
@@ -112,7 +108,8 @@ class Item {
     String? claimedBy,
     String? secretQuestion,
     String? secretAnswer,
-  }) => Item(
+  }) =>
+      Item(
         id: id ?? this.id,
         title: title ?? this.title,
         description: description ?? this.description,

@@ -137,11 +137,13 @@ void main() {
       final sensitiveItem = Item(
         id: '',
         title: 'Student ID card found',
-        description: null,
+        // Per develop's schema, description/contact are required `String`.
+        // Sensitive items write `''` (handled by the post form).
+        description: '',
         category: ItemCategory.founder,
         status: ItemStatus.active,
         location: 'ECC Building',
-        contact: null,
+        contact: '',
         imageUrls: const [],
         userId: 'user-001',
         createdAt: DateTime(2024, 6, 1),
@@ -157,8 +159,8 @@ void main() {
       final captured =
           verify(() => repository.createItem(captureAny())).captured.single as Item;
       expect(captured.isSensitive, isTrue);
-      expect(captured.description, isNull);
-      expect(captured.contact, isNull);
+      expect(captured.description, isEmpty);
+      expect(captured.contact, isEmpty);
       expect(captured.expiresAt, isNotNull);
     },
   );

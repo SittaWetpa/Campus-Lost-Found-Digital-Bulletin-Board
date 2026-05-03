@@ -6,15 +6,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:campus_lost_found/core/services/storage_repository.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
-import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
-import 'package:campus_lost_found/features/post/data/providers.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/create_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/get_similar_founder_posts_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/update_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
-
-export 'package:campus_lost_found/features/post/data/providers.dart'
-    show postRepositoryProvider, postRemoteDatasourceProvider;
+import 'package:campus_lost_found/features/post/presentation/providers/post_provider.dart';
 
 part 'post_providers.g.dart';
 

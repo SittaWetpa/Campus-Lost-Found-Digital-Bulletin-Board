@@ -3,12 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
-import 'package:campus_lost_found/features/feed/data/datasources/feed_remote_datasource.dart';
+import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/models/item_model.dart';
 import 'package:campus_lost_found/features/feed/data/repositories/item_repository_impl.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 
-class _MockDatasource extends Mock implements FeedRemoteDatasource {}
+class _MockDatasource extends Mock implements ItemRemoteDatasource {}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -138,7 +138,7 @@ void main() {
   group('searchItems() — WBS 1.2', () {
     test('returns mapped entities on success', () async {
       final model = _makeModel(id: 'search-001', title: 'Wallet');
-      when(() => mockDatasource.searchItems('Wallet'))
+      when(() => mockDatasource.searchByTitle('Wallet'))
           .thenAnswer((_) async => [model]);
 
       final items = await repo.searchItems('Wallet');
@@ -147,14 +147,14 @@ void main() {
       expect(items.first.id, 'search-001');
     });
 
-    test('wraps FirebaseException in ServerFailure', () async {
-      when(() => mockDatasource.searchItems(any())).thenThrow(
+    test('wraps FirebaseException in ItemFailure', () async {
+      when(() => mockDatasource.searchByTitle(any())).thenThrow(
         FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
       );
 
       expect(
         () => repo.searchItems('keyword'),
-        throwsA(isA<ServerFailure>()),
+        throwsA(isA<ItemFailure>()),
       );
     });
   });
@@ -164,7 +164,7 @@ void main() {
   group('getSimilarFounderPosts() — WBS 1.2', () {
     test('returns mapped entities on success', () async {
       final model = _makeModel(id: 'sim-001', category: 'founder');
-      when(() => mockDatasource.getSimilarFounderPosts('wallet'))
+      when(() => mockDatasource.findSimilarFounderPosts('wallet'))
           .thenAnswer((_) async => [model]);
 
       final items = await repo.getSimilarFounderPosts('wallet');
@@ -173,14 +173,14 @@ void main() {
       expect(items.first.category, ItemCategory.founder);
     });
 
-    test('wraps FirebaseException in ServerFailure', () async {
-      when(() => mockDatasource.getSimilarFounderPosts(any())).thenThrow(
+    test('wraps FirebaseException in ItemFailure', () async {
+      when(() => mockDatasource.findSimilarFounderPosts(any())).thenThrow(
         FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
       );
 
       expect(
         () => repo.getSimilarFounderPosts('keyword'),
-        throwsA(isA<ServerFailure>()),
+        throwsA(isA<ItemFailure>()),
       );
     });
   });

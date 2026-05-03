@@ -8,7 +8,12 @@ part of 'feed_provider.dart';
 
 String _$feedItemsHash() => r'45d4cbf074ac8bebcd35366fcf86feccd1258628';
 
-/// See also [feedItems].
+/// Filtered view of the feed stream — applies [FeedFilter] on top of the
+/// shared [itemRepositoryProvider] / `watchFeed()` chain defined in
+/// `item_provider.dart`. The data layer (datasource, repository) lives there;
+/// this provider is a thin presentation-layer view-model.
+///
+/// Copied from [feedItems].
 @ProviderFor(feedItems)
 final feedItemsProvider = AutoDisposeStreamProvider<List<Item>>.internal(
   feedItems,
