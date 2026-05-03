@@ -104,7 +104,7 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.4 | Request & approval system | — | Unit + Widget | ⬜ not yet written |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
 | 2.6 | Post edit | `test/features/post/presentation/screens/edit_post_screen_test.dart` | Widget | ✅ 2 tests |
-| 2.7 | Post delete | — | Unit + Widget | ⬜ not yet written |
+| 2.7 | Post delete | `test/features/post/presentation/screens/item_detail_screen_delete_test.dart` | Widget | ✅ 2 tests |
 | 2.8 | Similar posts recommendation | — | Unit + Widget | ⬜ not yet written |
 | 2.9 | REST API | — | Manual | ⬜ not yet written |
 | 2.10 | Secret question | — | Unit + Widget | ⬜ not yet written |
@@ -157,12 +157,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 17 | 16 (1 known issue) |
 | 1.0 Flutter UI | 0 | — |
-| 2.0 Data Layer | 89 + 9 (npm) | 98 |
+| 2.0 Data Layer | 91 + 9 (npm) | 100 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 34 | 33 (1 known issue) |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **140 Dart + 9 npm** | **138 passing** |
+| **Total** | **142 Dart + 9 npm** | **140 passing** |
 
 ---
 
-*Last updated: 2026-05-01 (WBS 2.6 Post Edit — 2 widget tests added)*
+*Last updated: 2026-05-03 (WBS 2.7 Post Delete — 2 widget tests added)*

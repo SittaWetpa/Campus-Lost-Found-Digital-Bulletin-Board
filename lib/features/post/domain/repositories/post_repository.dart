@@ -10,4 +10,7 @@ abstract interface class PostRepository {
 
   /// Deletes item. Caller must verify no pending requests exist first (WBS 2.7).
   Future<void> deleteItem(String itemId);
+
+  /// Returns true if the item has at least one pending request (WBS 2.7).
+  Future<bool> hasPendingRequests(String itemId);
 }

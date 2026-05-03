@@ -11,6 +11,8 @@ abstract interface class ItemRemoteDatasource {
   Future<String> addItem(Map<String, dynamic> data);
   Future<void> updateItem(String itemId, Map<String, dynamic> data);
   Future<void> deleteItem(String itemId);
+  /// Returns true if the item has at least one request with status == "pending".
+  Future<bool> hasPendingRequests(String itemId);
 }
 
 class FirestoreItemDatasource implements ItemRemoteDatasource {
@@ -97,5 +99,16 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
   @override
   Future<void> deleteItem(String itemId) async {
     await _items.doc(itemId).delete();
+  }
+
+  @override
+  Future<bool> hasPendingRequests(String itemId) async {
+    final snap = await _items
+        .doc(itemId)
+        .collection('requests')
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
+    return snap.docs.isNotEmpty;
   }
 }

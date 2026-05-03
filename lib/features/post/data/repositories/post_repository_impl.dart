@@ -49,4 +49,15 @@ class PostRepositoryImpl implements PostRepository {
       throw const ItemFailure('An unexpected error occurred.');
     }
   }
+
+  @override
+  Future<bool> hasPendingRequests(String itemId) async {
+    try {
+      return await _datasource.hasPendingRequests(itemId);
+    } on FirebaseException catch (e) {
+      throw ItemFailure(e.message ?? 'Failed to check pending requests.');
+    } catch (_) {
+      throw const ItemFailure('An unexpected error occurred.');
+    }
+  }
 }
