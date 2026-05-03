@@ -18,4 +18,9 @@ abstract interface class ItemRepository {
 
   /// Stream of all items owned by userId — My Posts Screen (WBS 1.7).
   Stream<List<Item>> watchMyItems(String userId);
+
+  /// Fetches the secret answer from the restricted private sub-document
+  /// `items/{itemId}/private/answer`. Readable by the poster only (enforced
+  /// by Firestore rules). Returns null when no answer has been stored yet.
+  Future<String?> getItemSecretAnswer(String itemId);
 }

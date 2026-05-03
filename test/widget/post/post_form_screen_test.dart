@@ -93,6 +93,8 @@ class _FakeItemRepository implements ItemRepository {
   Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
   @override
   Stream<List<Item>> watchMyItems(String userId) => const Stream.empty();
+  @override
+  Future<String?> getItemSecretAnswer(String itemId) async => null;
 }
 
 const _testUid = 'user-001';

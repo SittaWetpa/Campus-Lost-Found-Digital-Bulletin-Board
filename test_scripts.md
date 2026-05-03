@@ -111,7 +111,8 @@ Run: `flutter test test/features/`
 |---|---|---|---|---|
 | 1.2 | Item listing feed screen + ItemCard | `test/widget/feed/feed_screen_test.dart` | Widget | ✅ 23 tests |
 | 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
-| 1.3 | Item detail screen | — | Widget | ⬜ not yet written |
+| 1.3 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 8 tests |
+| 1.3 | Request detail screen (verification card, action buttons by role/status) | `test/widget/feed/request_detail_screen_test.dart` | Widget | ✅ 5 tests |
 | 1.4 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2 via ImagePickerPlatform mock) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 10 tests (+ 1 skipped — see note) |
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
@@ -137,6 +138,10 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 1.2 | ItemRepositoryImpl (entity↔model mapping + ItemFailure wrapping) | `test/unit/feed/item_repository_impl_test.dart` | Unit | ✅ 12 tests |
 | 2.4 | SubmitClaimRequestUseCase (Seeker → Founder) | `test/unit/requests/submit_claim_request_use_case_test.dart` | Unit | ✅ 10 tests |
 | 2.4 | SubmitFoundReportUseCase (Founder → Seeker) | `test/unit/requests/submit_found_report_use_case_test.dart` | Unit | ✅ 15 tests |
+| 1.3 / 2.4 | ApproveRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/approve_request_use_case_test.dart` | Unit | ✅ 3 tests |
+| 1.3 / 2.4 | RejectRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/reject_request_use_case_test.dart` | Unit | ✅ 3 tests |
+| 1.3 / 2.4 | CancelRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/cancel_request_use_case_test.dart` | Unit | ✅ 3 tests |
+| 1.3 / 2.4 | ItemRequestRepositoryImpl (batch approve, reject, cancel, hasPendingRequests, watchMyRequestForItem, watchSingleRequest) | `test/unit/requests/item_request_repository_impl_test.dart` | Unit | ✅ 8 tests |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
 | 2.6 | Post edit (UpdateItemUseCase + form edit-mode flow) | `test/unit/post/update_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |
@@ -169,7 +174,7 @@ Run: `flutter test test/unit/router/ test/widget/`
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 4.3 | Route constants | `test/unit/router/app_routes_test.dart` | Unit | ✅ 33 tests |
+| 4.3 | Route constants | `test/unit/router/app_routes_test.dart` | Unit | ✅ 36 tests |
 | 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
 | 4.1 | Clean architecture skeleton | — | Unit | ⬜ not yet written |
 | 4.2 | Riverpod state management | — | Unit + Widget | ⬜ not yet written |
@@ -193,15 +198,15 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
-| 1.0 Flutter UI | 64 | 64 |
-| 2.0 Data Layer | 215 + 9 (npm) | 224 |
+| 1.0 Flutter UI | 77 | 77 |
+| 2.0 Data Layer | 232 + 9 (npm) | 241 |
 | 3.0 Cross-Platform | 0 | — |
-| 4.0 Architecture | 34 | 34 |
+| 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **368 Dart + 9 npm** | **376 passing + 9 npm** |
+| **Total** | **401 Dart + 9 npm** | **417 passing + 9 npm** |
 
-> Phase totals add to 368; `flutter test` reports 376 passing + 4 skipped (manual integration placeholder + WBS 1.4-04 photo-cap). The ~8-test discrepancy is accounting drift — some files cover multiple WBS rows. **`flutter test` is the source of truth.**
+> Phase totals add to 401; `flutter test` reports 417 passing + 4 skipped (manual integration placeholder + WBS 1.4-04 photo-cap). The ~16-test discrepancy is accounting drift — some files cover multiple WBS rows. **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-02 (post-PR-#10 hardening — added 2 widget tests for Photo Safety Guard Case 1 by mocking `ImagePickerPlatform.instance`. WBS 1.4 widget coverage is now 10 active tests. Only WBS 1.4-04 remains skipped at widget level, covered at unit level by `upload_post_photos_use_case_test.dart`.)*
+*Last updated: 2026-05-03 (Security fixes applied — 3 new repository tests added for watchMyRequestForItem / watchSingleRequest; all fake ItemRepository implementations updated with getItemSecretAnswer; item_model_test.dart updated: secretAnswer excluded from toFirestore() output per private sub-document security fix. flutter test: 417 passing + 4 skipped.)*

@@ -11,6 +11,9 @@ class FeatureFlagService {
 
   // WBS 2.10 / 2.13 — gates the Secret Question feature on Founder Posts
   bool get secretQuestionEnabled => true;
+
+  // WBS 1.3 / 2.14 — security office phone number for sensitive items
+  String get securityOfficeContact => '02-470-9999';
 }
 
 @riverpod

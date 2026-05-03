@@ -95,6 +95,28 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
+  // RequestDetailRoute — typed value object (WBS 1.3)
+  // -------------------------------------------------------------------------
+  group('RequestDetailRoute', () {
+    test('location builds /item/:itemId/request/:reqId', () {
+      const route = RequestDetailRoute(itemId: 'item-1', reqId: 'req-1');
+      expect(route.location, '/item/item-1/request/req-1');
+    });
+
+    test('two routes with same params have equal locations', () {
+      const a = RequestDetailRoute(itemId: 'i', reqId: 'r');
+      const b = RequestDetailRoute(itemId: 'i', reqId: 'r');
+      expect(a.location, equals(b.location));
+    });
+
+    test('routes with different reqId have different locations', () {
+      const a = RequestDetailRoute(itemId: 'i', reqId: 'r1');
+      const b = RequestDetailRoute(itemId: 'i', reqId: 'r2');
+      expect(a.location, isNot(equals(b.location)));
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // EditPostRoute — typed value object
   // -------------------------------------------------------------------------
   group('EditPostRoute', () {
