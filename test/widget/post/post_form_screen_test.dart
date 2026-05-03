@@ -45,11 +45,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 // ── fakes / mocks ─────────────────────────────────────────────────────────
 
 class _MockPostRepository extends Mock implements PostRepository {}
+
+/// Test double for `image_picker`'s platform interface. Lets us count
+/// how many times the picker would have been opened, without going to a
+/// real native dialog. Returns `null` (the "user cancelled" outcome) so
+/// the rest of `_pickAndUploadPhoto` short-circuits cleanly.
+class _MockImagePickerPlatform extends ImagePickerPlatform
+    with MockPlatformInterfaceMixin {
+  int callCount = 0;
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async {
+    callCount++;
+    return null;
+  }
+}
 
 /// No-op `ItemRepository` so the `SimilarPostsNotifier`'s downstream calls
 /// (triggered by the title field's `addListener`) resolve immediately and
@@ -370,21 +390,105 @@ void main() {
 
   // WBS 2.10 — Photo Safety Guard, Case 1 ────────────────────────────────
   // Tap "Add Photo" with secret question already filled → dialog appears,
-  // gating the file picker behind explicit confirmation.
-  test(
-    'Photo Safety Case 1 — tapping Add Photo with SQ filled shows the '
-    'safety dialog before opening the picker',
-    () => fail(
-      'Expected an AlertDialog with title "Photo Safety" to render before '
-      '`ImagePicker().pickImage` is invoked.',
-    ),
-    skip:
-        'Verifies that _pickAndUploadPhoto in post_form_screen.dart shows '
-        'the dialog gate when _sqCtrl.text is non-empty before invoking '
-        'the picker. Mocking image_picker in widget tests is brittle (same '
-        'reason WBS 1.4-04 is skipped); the gate is wired at '
-        'lib/features/post/presentation/screens/post_form_screen.dart in '
-        '_pickAndUploadPhoto. Manual smoke test recommended.',
+  // gating the file picker behind explicit confirmation. We swap
+  // `ImagePickerPlatform.instance` with a counting mock so we can assert
+  // whether the picker was actually opened — no real OS dialog ever runs.
+  testWidgets(
+    'Photo Safety Case 1 — Cancel does NOT open the picker; "I understand" '
+    'opens it',
+    (tester) async {
+      // Restore the original picker after the test so we don't leak a
+      // mock into other tests (test runner may reuse the isolate).
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Founder Post (default) — fields rendered: title, desc, location,
+      // contact, sq, sa. Fill the SQ field WITHOUT photos present so
+      // the Case 2 listener doesn't fire (no photos → no review prompt).
+      final fields = find.byType(TextFormField);
+      final sqIndex = fields.evaluate().length - 2;
+      await tester.enterText(
+        fields.at(sqIndex),
+        'What colour is the lining?',
+      );
+      await tester.pumpAndSettle();
+      // Sanity: no Case 2 dialog yet (no photos → no review prompt).
+      expect(find.text('Photo Safety'), findsNothing);
+
+      // ── First attempt: tap Add Photo, then Cancel ────────────────────
+      // Scroll the photos placeholder into view first; in the test
+      // viewport the form scrolls and the button can be off-screen.
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      // Case 1 dialog should be visible.
+      expect(find.text('Photo Safety'), findsOneWidget);
+      expect(find.text('I understand'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+
+      // Picker not invoked yet — gate is intercepting.
+      expect(mockPicker.callCount, 0,
+          reason: 'Picker must NOT be opened until the user confirms.');
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing);
+      expect(mockPicker.callCount, 0,
+          reason: 'Cancel must short-circuit before opening the picker.');
+
+      // ── Second attempt: tap Add Photo, confirm with "I understand" ──
+      // Per the spec, the dialog re-prompts on EVERY Add Photo tap (Case
+      // 1 is a per-action gate, not a one-shot session flag).
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsOneWidget,
+          reason: 'Dialog must re-prompt on each Add Photo tap.');
+
+      await tester.tap(find.text('I understand'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing);
+      expect(mockPicker.callCount, 1,
+          reason: 'Picker must open once the user confirms.');
+    },
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 1 no-fire path ──────────────────
+  // No SQ → no dialog, picker opens immediately.
+  testWidgets(
+    'Photo Safety Case 1 — no dialog when secret question is empty; picker '
+    'opens directly',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Photos section is inside a SingleChildScrollView and may be off-
+      // screen at the test viewport's default height. Scroll it into
+      // view before tapping.
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      // Tap Add Photo without filling the secret question.
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing,
+          reason: 'No SQ filled → no safety dialog.');
+      expect(mockPicker.callCount, 1,
+          reason: 'Picker should open directly when SQ is empty.');
+    },
   );
 
   // WBS 2.10 — Photo Safety Guard, Case 2 ────────────────────────────────
