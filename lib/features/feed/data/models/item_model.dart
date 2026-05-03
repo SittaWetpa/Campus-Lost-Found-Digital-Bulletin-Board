@@ -112,7 +112,9 @@ class ItemModel {
         if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
-        if (secretAnswer != null) 'secretAnswer': secretAnswer,
+        // secretAnswer is intentionally excluded — it is written to
+        // items/{id}/private/answer (poster-only sub-document) by the
+        // datasource, never to the main item document.
       };
 
   Item toEntity() => Item(

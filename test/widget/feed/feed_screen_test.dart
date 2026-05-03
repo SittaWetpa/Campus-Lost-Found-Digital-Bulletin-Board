@@ -42,6 +42,9 @@ class _FakeItemRepository implements ItemRepository {
 
   @override
   Stream<List<Item>> watchMyItems(String userId) => Stream.value([]);
+
+  @override
+  Future<String?> getItemSecretAnswer(String itemId) async => null;
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────

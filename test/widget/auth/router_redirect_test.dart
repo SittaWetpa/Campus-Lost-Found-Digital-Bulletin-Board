@@ -48,6 +48,8 @@ class _FakeItemRepository implements ItemRepository {
   Future<List<Item>> searchItems(String keyword) async => const [];
   @override
   Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
+  @override
+  Future<String?> getItemSecretAnswer(String itemId) async => null;
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +225,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Item Detail — id: abc123 — WBS 1.3'),
+        find.text('Post not found.'),
         findsOneWidget,
       );
     });
@@ -249,7 +251,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Item Detail — id: deep-link-id — WBS 1.3'),
+        find.text('Post not found.'),
         findsOneWidget,
       );
     });

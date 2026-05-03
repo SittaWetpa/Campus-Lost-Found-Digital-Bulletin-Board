@@ -327,6 +327,136 @@ class _WatchMyItemsProviderElement
   String get userId => (origin as WatchMyItemsProvider).userId;
 }
 
+String _$getItemSecretAnswerHash() =>
+    r'746eb2fccf7508d4c7c63dbd61c29d0652764681';
+
+/// See also [getItemSecretAnswer].
+@ProviderFor(getItemSecretAnswer)
+const getItemSecretAnswerProvider = GetItemSecretAnswerFamily();
+
+/// See also [getItemSecretAnswer].
+class GetItemSecretAnswerFamily extends Family<AsyncValue<String?>> {
+  /// See also [getItemSecretAnswer].
+  const GetItemSecretAnswerFamily();
+
+  /// See also [getItemSecretAnswer].
+  GetItemSecretAnswerProvider call(
+    String itemId,
+  ) {
+    return GetItemSecretAnswerProvider(
+      itemId,
+    );
+  }
+
+  @override
+  GetItemSecretAnswerProvider getProviderOverride(
+    covariant GetItemSecretAnswerProvider provider,
+  ) {
+    return call(
+      provider.itemId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getItemSecretAnswerProvider';
+}
+
+/// See also [getItemSecretAnswer].
+class GetItemSecretAnswerProvider extends AutoDisposeFutureProvider<String?> {
+  /// See also [getItemSecretAnswer].
+  GetItemSecretAnswerProvider(
+    String itemId,
+  ) : this._internal(
+          (ref) => getItemSecretAnswer(
+            ref as GetItemSecretAnswerRef,
+            itemId,
+          ),
+          from: getItemSecretAnswerProvider,
+          name: r'getItemSecretAnswerProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getItemSecretAnswerHash,
+          dependencies: GetItemSecretAnswerFamily._dependencies,
+          allTransitiveDependencies:
+              GetItemSecretAnswerFamily._allTransitiveDependencies,
+          itemId: itemId,
+        );
+
+  GetItemSecretAnswerProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.itemId,
+  }) : super.internal();
+
+  final String itemId;
+
+  @override
+  Override overrideWith(
+    FutureOr<String?> Function(GetItemSecretAnswerRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetItemSecretAnswerProvider._internal(
+        (ref) => create(ref as GetItemSecretAnswerRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        itemId: itemId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<String?> createElement() {
+    return _GetItemSecretAnswerProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetItemSecretAnswerProvider && other.itemId == itemId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, itemId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin GetItemSecretAnswerRef on AutoDisposeFutureProviderRef<String?> {
+  /// The parameter `itemId` of this provider.
+  String get itemId;
+}
+
+class _GetItemSecretAnswerProviderElement
+    extends AutoDisposeFutureProviderElement<String?>
+    with GetItemSecretAnswerRef {
+  _GetItemSecretAnswerProviderElement(super.provider);
+
+  @override
+  String get itemId => (origin as GetItemSecretAnswerProvider).itemId;
+}
+
 String _$searchNotifierHash() => r'bd39a6b8430ed693086027b47e1708850adcaab6';
 
 /// See also [SearchNotifier].

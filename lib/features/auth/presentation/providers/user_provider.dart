@@ -24,3 +24,8 @@ Stream<User?> currentUser(CurrentUserRef ref) {
   if (authUser == null) return Stream.value(null);
   return ref.watch(userRepositoryProvider).watchUser(authUser.uid);
 }
+
+@riverpod
+Future<User?> getUserById(GetUserByIdRef ref, String uid) {
+  return ref.watch(userRepositoryProvider).getUserById(uid);
+}

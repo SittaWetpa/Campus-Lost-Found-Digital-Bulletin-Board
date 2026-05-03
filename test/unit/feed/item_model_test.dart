@@ -275,7 +275,9 @@ void main() {
       expect((map['occurredAt'] as Timestamp).toDate(), createdAt);
       expect(map['claimedBy'], 'uid-c');
       expect(map['secretQuestion'], 'Q');
-      expect(map['secretAnswer'], 'A');
+      // secretAnswer is intentionally excluded from toFirestore() — it is
+      // written to items/{id}/private/answer by the datasource instead.
+      expect(map.containsKey('secretAnswer'), isFalse);
     });
 
     test('omits null optional fields', () {

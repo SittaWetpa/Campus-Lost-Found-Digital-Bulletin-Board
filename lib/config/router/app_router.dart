@@ -9,7 +9,9 @@ import 'package:campus_lost_found/features/auth/presentation/screens/login_scree
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
+import 'package:campus_lost_found/features/requests/presentation/screens/request_detail_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 
@@ -112,10 +114,14 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.itemDetail,
-        builder: (context, state) => Scaffold(
-          body: Center(
-            child: Text('Item Detail — id: ${state.pathParameters['id']} — WBS 1.3'),
-          ),
+        builder: (context, state) =>
+            ItemDetailScreen(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/item/:itemId/request/:reqId',
+        builder: (context, state) => RequestDetailScreen(
+          itemId: state.pathParameters['itemId']!,
+          reqId: state.pathParameters['reqId']!,
         ),
       ),
       GoRoute(
@@ -166,6 +172,16 @@ final class EditPostRoute {
   const EditPostRoute({required this.id});
 
   String get location => AppRoutes.editPostPath(id);
+  void go(BuildContext context) => context.go(location);
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+}
+
+final class RequestDetailRoute {
+  final String itemId;
+  final String reqId;
+  const RequestDetailRoute({required this.itemId, required this.reqId});
+
+  String get location => '/item/$itemId/request/$reqId';
   void go(BuildContext context) => context.go(location);
   Future<T?> push<T>(BuildContext context) => context.push<T>(location);
 }

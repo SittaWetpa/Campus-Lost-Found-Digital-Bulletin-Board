@@ -33,6 +33,14 @@ Stream<List<Item>> watchMyItems(WatchMyItemsRef ref, String userId) {
 }
 
 @riverpod
+Future<String?> getItemSecretAnswer(
+  GetItemSecretAnswerRef ref,
+  String itemId,
+) {
+  return ref.watch(itemRepositoryProvider).getItemSecretAnswer(itemId);
+}
+
+@riverpod
 class SearchNotifier extends _$SearchNotifier {
   @override
   AsyncValue<List<Item>> build() => const AsyncData([]);
