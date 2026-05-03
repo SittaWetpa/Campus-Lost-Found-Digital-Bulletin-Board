@@ -10,6 +10,8 @@ import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -133,15 +135,11 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Settings — WBS 1.6')),
-        ),
+        builder: (context, state) => const SettingsScreen(),
         routes: [
           GoRoute(
             path: 'edit-profile',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Edit Profile — WBS 1.8')),
-            ),
+            builder: (context, state) => const EditProfileScreen(),
           ),
         ],
       ),

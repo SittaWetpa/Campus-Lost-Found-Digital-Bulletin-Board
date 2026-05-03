@@ -18,6 +18,8 @@ import 'package:campus_lost_found/features/feed/presentation/providers/feed_prov
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
 class _FakeOtpNotifier extends OtpNotifier {
@@ -311,7 +313,7 @@ void main() {
       container.read(appRouterProvider).go(AppRoutes.settings);
       await tester.pumpAndSettle();
 
-      expect(find.text('Settings — WBS 1.6'), findsOneWidget);
+      expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -322,7 +324,7 @@ void main() {
       container.read(appRouterProvider).go(AppRoutes.editProfile);
       await tester.pumpAndSettle();
 
-      expect(find.text('Edit Profile — WBS 1.8'), findsOneWidget);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
     });
   });
 

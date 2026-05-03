@@ -27,3 +27,7 @@ final class OtpFailure extends Failure {
 final class ItemFailure extends Failure {
   const ItemFailure(super.message);
 }
+
+final class ProfileFailure extends Failure {
+  const ProfileFailure(super.message);
+}

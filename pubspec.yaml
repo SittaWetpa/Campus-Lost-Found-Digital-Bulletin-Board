@@ -71,6 +71,9 @@ dependencies:
   image_picker: ^1.1.2
   image_picker_for_web: ^3.0.5
 
+  # Typography — Fraunces (serif titles) + Plus Jakarta Sans (body)
+  google_fonts: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
