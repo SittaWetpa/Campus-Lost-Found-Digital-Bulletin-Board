@@ -16,6 +16,7 @@ class ItemModel {
   final DateTime createdAt;
   final DateTime occurredAt;
   final DateTime? editedAt;
+  final DateTime? expiresAt;
   final String? claimedBy;
   final String? secretQuestion;
   final String? secretAnswer;
@@ -35,6 +36,7 @@ class ItemModel {
     this.source = 'web',
     this.isSensitive = false,
     this.editedAt,
+    this.expiresAt,
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
@@ -62,6 +64,7 @@ class ItemModel {
         // user-supplied; never null on a well-formed doc — let it throw if missing
         occurredAt: (data['occurredAt'] as Timestamp).toDate(),
         editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
+        expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
         claimedBy: data['claimedBy'] as String?,
         secretQuestion: data['secretQuestion'] as String?,
         secretAnswer: data['secretAnswer'] as String?,
@@ -85,6 +88,7 @@ class ItemModel {
         createdAt: item.createdAt,
         occurredAt: item.occurredAt,
         editedAt: item.editedAt,
+        expiresAt: item.expiresAt,
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
         secretAnswer: item.secretAnswer,
@@ -105,6 +109,7 @@ class ItemModel {
         'source': source,
         'isSensitive': isSensitive,
         'occurredAt': Timestamp.fromDate(occurredAt),
+        if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
         if (secretAnswer != null) 'secretAnswer': secretAnswer,
@@ -125,6 +130,7 @@ class ItemModel {
         createdAt: createdAt,
         occurredAt: occurredAt,
         editedAt: editedAt,
+        expiresAt: expiresAt,
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,
         secretAnswer: secretAnswer,
