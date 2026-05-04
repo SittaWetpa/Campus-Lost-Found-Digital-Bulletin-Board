@@ -68,6 +68,11 @@ class Item {
   final String? secretQuestion;
   final String? secretAnswer;
 
+  // Denormalized poster display info so visitors always see the real poster
+  // without a separate user-collection lookup that may return null.
+  final String? posterName;
+  final String? posterAvatarUrl;
+
   const Item({
     required this.id,
     required this.title,
@@ -87,6 +92,8 @@ class Item {
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
+    this.posterName,
+    this.posterAvatarUrl,
   });
 
   Item copyWith({
@@ -108,6 +115,8 @@ class Item {
     String? claimedBy,
     String? secretQuestion,
     String? secretAnswer,
+    String? posterName,
+    String? posterAvatarUrl,
   }) =>
       Item(
         id: id ?? this.id,
@@ -128,5 +137,7 @@ class Item {
         claimedBy: claimedBy ?? this.claimedBy,
         secretQuestion: secretQuestion ?? this.secretQuestion,
         secretAnswer: secretAnswer ?? this.secretAnswer,
+        posterName: posterName ?? this.posterName,
+        posterAvatarUrl: posterAvatarUrl ?? this.posterAvatarUrl,
       );
 }

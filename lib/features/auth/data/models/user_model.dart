@@ -28,11 +28,11 @@ class UserModel {
     final data = doc.data() as Map<String, dynamic>;
     return UserModel(
       uid: doc.id,
-      email: data['email'] as String,
-      firstName: data['firstName'] as String,
-      lastName: data['lastName'] as String,
-      studentId: data['studentId'] as String,
-      telephone: data['telephone'] as String,
+      email: data['email'] as String? ?? '',
+      firstName: data['firstName'] as String? ?? '',
+      lastName: data['lastName'] as String? ?? '',
+      studentId: data['studentId'] as String? ?? '',
+      telephone: data['telephone'] as String? ?? '',
       avatarUrl: data['avatarUrl'] as String?,
       emailVerified: data['emailVerified'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),

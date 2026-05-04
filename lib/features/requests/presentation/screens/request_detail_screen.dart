@@ -54,6 +54,14 @@ class _RequestDetailView extends ConsumerWidget {
     final isMyRequest = req.requesterId == authUser?.uid;
     final actionState = ref.watch(itemDetailActionNotifierProvider);
 
+    // Count other pending requests so the approve dialog can warn the poster.
+    final allRequests = isPoster
+        ? (ref.watch(watchRequestsForItemProvider(item.id)).valueOrNull ?? [])
+        : <ItemRequest>[];
+    final otherPendingCount = allRequests
+        .where((r) => r.status == RequestStatus.pending && r.id != req.id)
+        .length;
+
     // Fetch secretAnswer from the private sub-document (poster-only access).
     // Falls back to item.secretAnswer for legacy items not yet migrated to
     // the private sub-document.
@@ -144,7 +152,7 @@ class _RequestDetailView extends ConsumerWidget {
                       ),
                       onPressed: actionState.isLoading
                           ? null
-                          : () => _approve(context, ref),
+                          : () => _approve(context, ref, otherPendingCount),
                       child: const Text('Approve'),
                     ),
                   ),
@@ -172,7 +180,35 @@ class _RequestDetailView extends ConsumerWidget {
     );
   }
 
-  Future<void> _approve(BuildContext context, WidgetRef ref) async {
+  Future<void> _approve(
+      BuildContext context, WidgetRef ref, int otherPendingCount) async {
+    final typeLabel =
+        req.type == RequestType.found ? 'found report' : 'claim';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Approve ${req.requesterName}'s $typeLabel?"),
+        content: _ApproveDialogBody(
+          itemTitle: item.title,
+          requesterName: req.requesterName,
+          otherPendingCount: otherPendingCount,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF16A34A),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, approve'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).approve(
           itemId: item.id,
           requestId: req.id,
@@ -187,6 +223,29 @@ class _RequestDetailView extends ConsumerWidget {
   }
 
   Future<void> _reject(BuildContext context, WidgetRef ref) async {
+    final typeLabel =
+        req.type == RequestType.found ? 'found report' : 'claim';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Reject ${req.requesterName}'s $typeLabel?"),
+        content: _RejectDialogBody(requesterName: req.requesterName),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).reject(
           itemId: item.id,
           requestId: req.id,
@@ -200,6 +259,30 @@ class _RequestDetailView extends ConsumerWidget {
   }
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cancel your request?'),
+        content: const Text(
+          "The poster will see this request as cancelled and won't be able to approve it. "
+          'You can submit a new request later if needed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, cancel it'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).cancel(
           itemId: item.id,
           requestId: req.id,
@@ -518,6 +601,132 @@ class _VerificationCard extends StatelessWidget {
               color: valueColor ?? const Color(0xFF111827),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApproveDialogBody extends StatelessWidget {
+  const _ApproveDialogBody({
+    required this.itemTitle,
+    required this.requesterName,
+    required this.otherPendingCount,
+  });
+
+  final String itemTitle;
+  final String requesterName;
+  final int otherPendingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('Once approved:', style: TextStyle(fontSize: 14)),
+        const SizedBox(height: 8),
+        _Bullet(child: RichText(
+          text: TextSpan(
+            style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+            children: [
+              const TextSpan(text: 'Your post '),
+              TextSpan(text: '"$itemTitle"', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const TextSpan(text: ' will be marked '),
+              const TextSpan(text: 'resolved', style: TextStyle(fontWeight: FontWeight.bold)),
+              const TextSpan(text: ' and removed from the public feed.'),
+            ],
+          ),
+        )),
+        if (otherPendingCount > 0)
+          _Bullet(child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+              children: [
+                TextSpan(
+                  text: '$otherPendingCount other pending request${otherPendingCount == 1 ? '' : 's'}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: ' on this post will be automatically rejected.'),
+              ],
+            ),
+          )),
+        _Bullet(child: Text(
+          '$requesterName will be notified to contact you and arrange a handover.',
+          style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+        )),
+        _Bullet(child: RichText(
+          text: const TextSpan(
+            style: TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+            children: [
+              TextSpan(text: 'This action '),
+              TextSpan(text: 'cannot be undone', style: TextStyle(fontWeight: FontWeight.bold)),
+              TextSpan(text: ' from the app.'),
+            ],
+          ),
+        )),
+        const SizedBox(height: 10),
+        const Text(
+          "Make sure you've verified the requester's identity before approving.",
+          style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.45),
+        ),
+      ],
+    );
+  }
+}
+
+class _RejectDialogBody extends StatelessWidget {
+  const _RejectDialogBody({required this.requesterName});
+
+  final String requesterName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$requesterName will be notified that their request was declined. '
+          'Your post stays open and other people can still submit requests.',
+          style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'The requester may submit again with more detail.',
+          style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.45),
+        ),
+      ],
+    );
+  }
+}
+
+class _Bullet extends StatelessWidget {
+  const _Bullet({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 6, right: 8),
+            child: SizedBox(
+              width: 5,
+              height: 5,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Color(0xFF6B7280),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: child),
         ],
       ),
     );

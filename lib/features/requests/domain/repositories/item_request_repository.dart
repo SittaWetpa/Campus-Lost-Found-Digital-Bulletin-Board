@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
 
 abstract interface class ItemRequestRepository {
@@ -39,4 +41,7 @@ abstract interface class ItemRequestRepository {
 
   /// Returns true if any pending request exists — used by delete guard (WBS 2.7).
   Future<bool> hasPendingRequests(String itemId);
+
+  /// Uploads a photo for a Found Report. Returns the download URL (WBS 2.4).
+  Future<String> uploadRequestPhoto(File imageFile);
 }

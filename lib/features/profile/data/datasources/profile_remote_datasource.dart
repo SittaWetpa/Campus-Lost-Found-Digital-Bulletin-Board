@@ -46,7 +46,9 @@ class FirebaseProfileDatasource implements ProfileRemoteDatasource {
     required Uint8List bytes,
     required String extension,
   }) async {
-    final ref = _storage.ref('avatars/$uid.$extension');
+    // Path intentionally has no extension — content-type is declared via
+    // SettableMetadata and Storage rules match on the uid segment exactly.
+    final ref = _storage.ref('avatars/$uid');
     final contentType = extension == 'png' ? 'image/png' : 'image/jpeg';
     await ref.putData(bytes, SettableMetadata(contentType: contentType));
     final downloadUrl = await ref.getDownloadURL();

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/requests/data/datasources/item_request_remote_datasource.dart';
@@ -97,6 +99,17 @@ class ItemRequestRepositoryImpl implements ItemRequestRepository {
       return await _datasource.hasPendingRequests(itemId);
     } on FirebaseException catch (e) {
       throw RequestFailure(e.message ?? 'Failed to check pending requests.');
+    } catch (_) {
+      throw const RequestFailure('An unexpected error occurred.');
+    }
+  }
+
+  @override
+  Future<String> uploadRequestPhoto(File imageFile) async {
+    try {
+      return await _datasource.uploadRequestPhoto(imageFile);
+    } on FirebaseException catch (e) {
+      throw RequestFailure(e.message ?? 'Failed to upload photo.');
     } catch (_) {
       throw const RequestFailure('An unexpected error occurred.');
     }

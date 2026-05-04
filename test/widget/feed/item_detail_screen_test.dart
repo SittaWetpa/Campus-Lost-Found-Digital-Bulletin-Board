@@ -313,5 +313,29 @@ void main() {
         expect(find.textContaining('Edited ·'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '09 WBS 2.4 — Poster taps delete with pending requests — '
+      '"Resolve requests first" warning dialog shown, Delete button absent',
+      (tester) async {
+        final item           = _makeItem(userId: _posterUid);
+        final pendingRequest = _makeRequest(requesterId: _visitorUid);
+
+        await tester.pumpWidget(
+          _buildApp(
+            item: item,
+            currentUserId: _posterUid,
+            requests: [pendingRequest],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.delete_outline));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Resolve requests first'), findsOneWidget);
+        expect(find.text('Delete'), findsNothing);
+      },
+    );
   });
 }

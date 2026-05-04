@@ -6,16 +6,19 @@ class RequestCard extends StatelessWidget {
     super.key,
     required this.request,
     required this.onTap,
+    this.showDecideHint = false,
   });
 
   final ItemRequest request;
   final VoidCallback onTap;
+  final bool showDecideHint;
 
   @override
   Widget build(BuildContext context) {
     final msg = request.message ?? request.visitorAnswer ?? '';
     final truncated = msg.length > 90 ? '${msg.substring(0, 90)}…' : msg;
     final isFound = request.type == RequestType.found;
+    final isPending = request.status == RequestStatus.pending;
 
     return GestureDetector(
       onTap: onTap,
@@ -68,8 +71,7 @@ class RequestCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'ID ${request.studentId} · ${_relativeTime(request.createdAt)}',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                     ),
                     if (isFound && request.photoUrl != null) ...[
                       const SizedBox(height: 6),
@@ -114,18 +116,51 @@ class RequestCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (msg.length > 90)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'Read more →',
+                    // Footer row — always visible
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isPending ? 'View & decide →' : 'Read more →',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue.shade600,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: isPending
+                                ? const Color(0xFFB45309)
+                                : const Color(0xFF6B7280),
                           ),
                         ),
-                      ),
+                        if (showDecideHint && isPending)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Action needed',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFA96C00),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Chevron — affordance that the card drills in
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.grey.shade400,
                 ),
               ),
             ],

@@ -317,6 +317,15 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     final isFounder = _category == ItemCategory.founder;
     final sensitive = isFounder && _isSensitive;
 
+    // Embed poster display info so visitors can see the real poster without
+    // a separate user-collection lookup that may return null.
+    final profile = await ref.read(currentUserProvider.future);
+    if (!mounted) return;
+    final embeddedPosterName = profile != null
+        ? '${profile.firstName} ${profile.lastName}'.trim()
+        : null;
+    final embeddedPosterAvatarUrl = profile?.avatarUrl;
+
     final item = Item(
       id: widget.editId ?? '',
       title: _titleCtrl.text.trim(),
@@ -341,6 +350,8 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
           isFounder && !sensitive && _saCtrl.text.trim().isNotEmpty
               ? _saCtrl.text.trim()
               : null,
+      posterName: _editItem?.posterName ?? embeddedPosterName,
+      posterAvatarUrl: _editItem?.posterAvatarUrl ?? embeddedPosterAvatarUrl,
     );
 
     if (_isEdit) {

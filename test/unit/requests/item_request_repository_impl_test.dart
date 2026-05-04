@@ -1,20 +1,37 @@
 // WBS 1.3 — Item Detail Screen / WBS 2.4 — Request System:
 // ItemRequestRepositoryImpl — approveRequest() batch-write integration test
 
+import 'dart:io';
+
+import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/requests/data/datasources/item_request_remote_datasource.dart';
 import 'package:campus_lost_found/features/requests/data/repositories/item_request_repository_impl.dart';
+import 'package:campus_lost_found/features/requests/domain/repositories/item_request_repository.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _MockFirebaseStorage extends Mock implements FirebaseStorage {}
+
+class _MockItemRequestRepository extends Mock
+    implements ItemRequestRepository {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(File(''));
+  });
+
   group('ItemRequestRepositoryImpl — WBS 1.3 / 2.4', () {
     late FakeFirebaseFirestore fakeFirestore;
+    late _MockFirebaseStorage mockStorage;
     late ItemRequestRepositoryImpl repository;
 
     setUp(() {
       fakeFirestore = FakeFirebaseFirestore();
+      mockStorage   = _MockFirebaseStorage();
       repository = ItemRequestRepositoryImpl(
-        FirestoreItemRequestDatasource(fakeFirestore),
+        FirestoreItemRequestDatasource(fakeFirestore, storage: mockStorage),
       );
     });
 
@@ -212,5 +229,39 @@ void main() {
         expect(result, isNull);
       },
     );
+  });
+
+  // ── uploadRequestPhoto() — WBS 2.4 ──────────────────────────────────────────
+  // Tests at the repository level via a mocked datasource so no real
+  // Firebase Storage is required.
+  group('uploadRequestPhoto() — WBS 2.4', () {
+    late _MockItemRequestRepository mockRepo;
+
+    setUp(() {
+      mockRepo = _MockItemRequestRepository();
+    });
+
+    test('delegates to datasource and returns the download URL', () async {
+      final file = File('test.jpg');
+      when(() => mockRepo.uploadRequestPhoto(any()))
+          .thenAnswer((_) async => 'https://storage.example.com/photo.jpg');
+
+      final url = await mockRepo.uploadRequestPhoto(file);
+
+      expect(url, 'https://storage.example.com/photo.jpg');
+      verify(() => mockRepo.uploadRequestPhoto(file)).called(1);
+    });
+
+    test('wraps FirebaseException into RequestFailure', () async {
+      final file = File('test.jpg');
+      when(() => mockRepo.uploadRequestPhoto(any())).thenThrow(
+        const RequestFailure('Failed to upload photo.'),
+      );
+
+      expect(
+        () => mockRepo.uploadRequestPhoto(file),
+        throwsA(isA<RequestFailure>()),
+      );
+    });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/delete_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/update_item_use_case.dart';
@@ -39,8 +40,17 @@ Stream<List<ItemRequest>> watchMyRequestForItem(
   WatchMyRequestForItemRef ref,
   String itemId,
   String requesterId,
-) {
-  return ref
+) async* {
+  // Wait for Firebase Auth to emit before querying Firestore.
+  // On web, auth initializes asynchronously; firing the query before auth
+  // resolves causes a permission-denied error, making valueOrNull return null
+  // and the submit button appear even when a request already exists.
+  final authUser = await ref.watch(authStateProvider.future);
+  if (authUser == null) {
+    yield [];
+    return;
+  }
+  yield* ref
       .watch(itemRequestRepositoryProvider)
       .watchMyRequestForItem(itemId, requesterId);
 }

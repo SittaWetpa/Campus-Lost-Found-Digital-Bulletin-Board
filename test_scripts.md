@@ -111,7 +111,7 @@ Run: `flutter test test/features/`
 |---|---|---|---|---|
 | 1.2 | Item listing feed screen + ItemCard | `test/widget/feed/feed_screen_test.dart` | Widget | ✅ 23 tests |
 | 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
-| 1.3 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 8 tests |
+| 1.3 / 2.4 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label, delete guard with pending requests) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 9 tests |
 | 1.3 | Request detail screen (verification card, action buttons by role/status) | `test/widget/feed/request_detail_screen_test.dart` | Widget | ✅ 5 tests |
 | 1.4 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2 via ImagePickerPlatform mock) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 10 tests (+ 1 skipped — see note) |
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
@@ -198,15 +198,15 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
-| 1.0 Flutter UI | 77 | 77 |
+| 1.0 Flutter UI | 78 | 78 |
 | 2.0 Data Layer | 232 + 9 (npm) | 241 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **401 Dart + 9 npm** | **417 passing + 9 npm** |
+| **Total** | **402 Dart + 9 npm** | **418 passing + 9 npm** |
 
 > Phase totals add to 401; `flutter test` reports 417 passing + 4 skipped (manual integration placeholder + WBS 1.4-04 photo-cap). The ~16-test discrepancy is accounting drift — some files cover multiple WBS rows. **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-03 (Security fixes applied — 3 new repository tests added for watchMyRequestForItem / watchSingleRequest; all fake ItemRepository implementations updated with getItemSecretAnswer; item_model_test.dart updated: secretAnswer excluded from toFirestore() output per private sub-document security fix. flutter test: 417 passing + 4 skipped.)*
+*Last updated: 2026-05-04 (WBS 2.4 delete-guard test added — test 09 in item_detail_screen_test.dart covers "Poster taps delete with pending requests → Resolve requests first dialog, Delete button absent". flutter test: 418 passing + 4 skipped.)*

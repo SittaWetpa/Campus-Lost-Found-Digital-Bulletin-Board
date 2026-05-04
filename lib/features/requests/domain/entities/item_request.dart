@@ -58,4 +58,33 @@ class ItemRequest {
     this.visitorAnswer,
     this.photoUrl,
   });
+
+  ItemRequest copyWith({
+    String? id,
+    String? itemId,
+    String? requesterId,
+    String? requesterName,
+    String? requesterContact,
+    String? studentId,
+    RequestType? type,
+    RequestStatus? status,
+    DateTime? createdAt,
+    String? message,
+    String? visitorAnswer,
+    String? photoUrl,
+  }) =>
+      ItemRequest(
+        id: id ?? this.id,
+        itemId: itemId ?? this.itemId,
+        requesterId: requesterId ?? this.requesterId,
+        requesterName: requesterName ?? this.requesterName,
+        requesterContact: requesterContact ?? this.requesterContact,
+        studentId: studentId ?? this.studentId,
+        type: type ?? this.type,
+        status: status ?? this.status,
+        createdAt: createdAt ?? this.createdAt,
+        message: message ?? this.message,
+        visitorAnswer: visitorAnswer ?? this.visitorAnswer,
+        photoUrl: photoUrl ?? this.photoUrl,
+      );
 }

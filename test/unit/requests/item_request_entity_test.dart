@@ -272,6 +272,70 @@ void main() {
       });
     });
 
+    group('copyWith()', () {
+      late ItemRequest base;
+
+      setUp(() {
+        base = ItemRequest(
+          id: 'req-cw',
+          itemId: 'item-cw',
+          requesterId: 'uid-cw',
+          requesterName: 'Copy User',
+          requesterContact: '0800000099',
+          studentId: '63099999',
+          type: RequestType.claim,
+          status: RequestStatus.pending,
+          createdAt: baseCreatedAt,
+        );
+      });
+
+      test('returns an equal object when no fields are overridden', () {
+        final copy = base.copyWith();
+        expect(copy.id, base.id);
+        expect(copy.itemId, base.itemId);
+        expect(copy.requesterId, base.requesterId);
+        expect(copy.requesterName, base.requesterName);
+        expect(copy.requesterContact, base.requesterContact);
+        expect(copy.studentId, base.studentId);
+        expect(copy.type, base.type);
+        expect(copy.status, base.status);
+        expect(copy.createdAt, base.createdAt);
+        expect(copy.message, base.message);
+        expect(copy.visitorAnswer, base.visitorAnswer);
+        expect(copy.photoUrl, base.photoUrl);
+      });
+
+      test('overrides status only', () {
+        final copy = base.copyWith(status: RequestStatus.approved);
+        expect(copy.status, RequestStatus.approved);
+        expect(copy.id, base.id);
+      });
+
+      test('overrides multiple fields simultaneously', () {
+        final newDate = DateTime(2025, 6, 1);
+        final copy = base.copyWith(
+          message: 'Updated message',
+          photoUrl: 'https://storage.example.com/photo.jpg',
+          createdAt: newDate,
+        );
+        expect(copy.message, 'Updated message');
+        expect(copy.photoUrl, 'https://storage.example.com/photo.jpg');
+        expect(copy.createdAt, newDate);
+        expect(copy.id, base.id);
+      });
+
+      test('does not mutate the original instance', () {
+        base.copyWith(status: RequestStatus.rejected);
+        expect(base.status, RequestStatus.pending);
+      });
+
+      test('can set visitorAnswer via copyWith', () {
+        final copy = base.copyWith(visitorAnswer: 'Blue with a scratch');
+        expect(copy.visitorAnswer, 'Blue with a scratch');
+        expect(base.visitorAnswer, isNull);
+      });
+    });
+
     group('no Firebase or Flutter imports in domain layer', () {
       // Confirms the entity is constructable without any Firebase initialisation.
       test('ItemRequest can be constructed without Firebase initialisation', () {

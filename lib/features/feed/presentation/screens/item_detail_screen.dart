@@ -73,10 +73,15 @@ class _ItemDetailView extends ConsumerWidget {
 
     final requests = requestsAsync.valueOrNull ?? [];
     final pending = requests.where((r) => r.status == RequestStatus.pending).toList();
+    // Only consider pending/approved requests as "active" — cancelled or
+    // rejected requests should not block the user from submitting a new one.
     final myRequest = authUser == null
         ? null
         : requests.cast<ItemRequest?>().firstWhere(
-              (r) => r?.requesterId == authUser.uid,
+              (r) =>
+                  r?.requesterId == authUser.uid &&
+                  (r?.status == RequestStatus.pending ||
+                      r?.status == RequestStatus.approved),
               orElse: () => null,
             );
 
@@ -177,8 +182,18 @@ class _ItemDetailView extends ConsumerWidget {
                         _VisitorActions(
                           item: item,
                           isSensitive: isSensitive,
+                          isWalkIn: isWalkIn,
                           myRequest: myRequest,
+                          isCheckingRequest: requestsAsync.isLoading,
                           securityPhone: securityPhone,
+                          onCancelRequest: myRequest?.status == RequestStatus.pending
+                              ? () => _confirmCancelRequest(
+                                    context,
+                                    ref,
+                                    item.id,
+                                    myRequest!.id,
+                                  )
+                              : null,
                         ),
                       if (isPoster && isSensitive && item.status == ItemStatus.active) ...[
                         const SizedBox(height: 4),
@@ -205,6 +220,47 @@ class _ItemDetailView extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmCancelRequest(
+    BuildContext context,
+    WidgetRef ref,
+    String itemId,
+    String requestId,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cancel your request?'),
+        content: const Text(
+          "The poster will see this request as cancelled. "
+          'You can submit a new request later if needed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keep'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref
+                  .read(itemDetailActionNotifierProvider.notifier)
+                  .cancel(itemId: itemId, requestId: requestId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Request cancelled')),
+                );
+              }
+            },
+            child: const Text('Yes, cancel it'),
           ),
         ],
       ),
@@ -464,29 +520,59 @@ class _PosterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWalkIn = item.source == ItemSource.qrWalkIn;
+    final isLoading = posterAsync.isLoading;
     final poster = posterAsync.valueOrNull;
-    final name = poster != null
-        ? '${poster.firstName} ${poster.lastName}'
-        : 'Walk-in submission';
+
+    // Prefer live user data; fall back to embedded fields stored at post time.
+    final String? resolvedAvatarUrl =
+        poster?.avatarUrl ?? item.posterAvatarUrl;
+    final String name;
+    if (isLoading && item.posterName == null) {
+      name = '';
+    } else if (poster != null) {
+      name = '${poster.firstName} ${poster.lastName}'.trim();
+    } else if (item.posterName != null && item.posterName!.isNotEmpty) {
+      name = item.posterName!;
+    } else if (isWalkIn) {
+      name = 'Walk-in submission';
+    } else {
+      name = 'Unknown poster';
+    }
+
+    final String avatarInitial;
+    if (poster != null && poster.firstName.isNotEmpty) {
+      avatarInitial = poster.firstName[0].toUpperCase();
+    } else if (item.posterName != null && item.posterName!.isNotEmpty) {
+      avatarInitial = item.posterName![0].toUpperCase();
+    } else if (isWalkIn) {
+      avatarInitial = 'W';
+    } else {
+      avatarInitial = '?';
+    }
 
     return Row(
       children: [
         CircleAvatar(
           radius: 20,
           backgroundColor: const Color(0xFFE5E7EB),
-          backgroundImage: (poster?.avatarUrl != null)
-              ? NetworkImage(poster!.avatarUrl!)
+          backgroundImage: resolvedAvatarUrl != null
+              ? NetworkImage(resolvedAvatarUrl)
               : null,
-          child: poster?.avatarUrl == null
-              ? Text(
-                  poster != null && poster.firstName.isNotEmpty
-                      ? poster.firstName[0].toUpperCase()
-                      : 'Q',
-                  style: const TextStyle(
-                    color: Color(0xFF374151),
-                    fontWeight: FontWeight.w700,
-                  ),
-                )
+          child: resolvedAvatarUrl == null
+              ? isLoading && item.posterName == null
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      avatarInitial,
+                      style: const TextStyle(
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
               : null,
         ),
         const SizedBox(width: 10),
@@ -579,18 +665,24 @@ class _VisitorActions extends StatelessWidget {
   const _VisitorActions({
     required this.item,
     required this.isSensitive,
+    required this.isWalkIn,
     required this.myRequest,
+    required this.isCheckingRequest,
     required this.securityPhone,
+    this.onCancelRequest,
   });
 
   final Item item;
   final bool isSensitive;
+  final bool isWalkIn;
   final ItemRequest? myRequest;
+  final bool isCheckingRequest;
   final String securityPhone;
+  final VoidCallback? onCancelRequest;
 
   @override
   Widget build(BuildContext context) {
-    if (isSensitive) {
+    if (isSensitive || isWalkIn) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: SizedBox(
@@ -647,6 +739,22 @@ class _VisitorActions extends StatelessWidget {
                   child: const Text('View my request'),
                 ),
               ),
+              if (onCancelRequest != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    onPressed: onCancelRequest,
+                    child: const Text('Cancel request'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -664,16 +772,27 @@ class _VisitorActions extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 13),
             shape: const StadiumBorder(),
           ),
-          onPressed: () => context.push(
-            item.category == ItemCategory.founder
-                ? '/claim/${item.id}'
-                : '/found-report/${item.id}',
-          ),
-          child: Text(
-            item.category == ItemCategory.founder
-                ? 'Submit Claim Request'
-                : 'Submit Found Report',
-          ),
+          onPressed: isCheckingRequest
+              ? null
+              : () => context.push(
+                    item.category == ItemCategory.founder
+                        ? '/claim/${item.id}'
+                        : '/found-report/${item.id}',
+                  ),
+          child: isCheckingRequest
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  item.category == ItemCategory.founder
+                      ? 'Submit Claim Request'
+                      : 'Submit Found Report',
+                ),
         ),
       ),
     );
@@ -742,6 +861,38 @@ class _RequestsInbox extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 4),
+        const Text(
+          'Tap a request to review and approve or reject.',
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
+        if (pending.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF59E0B)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.notifications_active,
+                    size: 16, color: Color(0xFFD97706)),
+                const SizedBox(width: 8),
+                Text(
+                  'Action needed · ${pending.length} request${pending.length > 1 ? 's' : ''} waiting',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         if (requests.isEmpty)
           Card(
@@ -761,6 +912,7 @@ class _RequestsInbox extends StatelessWidget {
           ...requests.map(
             (r) => RequestCard(
               request: r,
+              showDecideHint: r.status == RequestStatus.pending,
               onTap: () =>
                   RequestDetailRoute(itemId: item.id, reqId: r.id).push(context),
             ),

@@ -20,6 +20,8 @@ class ItemModel {
   final String? claimedBy;
   final String? secretQuestion;
   final String? secretAnswer;
+  final String? posterName;
+  final String? posterAvatarUrl;
 
   const ItemModel({
     required this.id,
@@ -40,6 +42,8 @@ class ItemModel {
     this.claimedBy,
     this.secretQuestion,
     this.secretAnswer,
+    this.posterName,
+    this.posterAvatarUrl,
   });
 
   factory ItemModel.fromMap(String id, Map<String, dynamic> data) => ItemModel(
@@ -68,6 +72,8 @@ class ItemModel {
         claimedBy: data['claimedBy'] as String?,
         secretQuestion: data['secretQuestion'] as String?,
         secretAnswer: data['secretAnswer'] as String?,
+        posterName: data['posterName'] as String?,
+        posterAvatarUrl: data['posterAvatarUrl'] as String?,
       );
 
   factory ItemModel.fromFirestore(DocumentSnapshot doc) =>
@@ -92,6 +98,8 @@ class ItemModel {
         claimedBy: item.claimedBy,
         secretQuestion: item.secretQuestion,
         secretAnswer: item.secretAnswer,
+        posterName: item.posterName,
+        posterAvatarUrl: item.posterAvatarUrl,
       );
 
   /// Returns the mutable fields to write to Firestore.
@@ -115,6 +123,8 @@ class ItemModel {
         // secretAnswer is intentionally excluded — it is written to
         // items/{id}/private/answer (poster-only sub-document) by the
         // datasource, never to the main item document.
+        if (posterName != null) 'posterName': posterName,
+        if (posterAvatarUrl != null) 'posterAvatarUrl': posterAvatarUrl,
       };
 
   Item toEntity() => Item(
@@ -136,5 +146,7 @@ class ItemModel {
         claimedBy: claimedBy,
         secretQuestion: secretQuestion,
         secretAnswer: secretAnswer,
+        posterName: posterName,
+        posterAvatarUrl: posterAvatarUrl,
       );
 }

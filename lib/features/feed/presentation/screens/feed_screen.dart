@@ -45,7 +45,7 @@ class FeedScreen extends ConsumerWidget {
                               item: item,
                               isOwner: item.userId == currentAuthUser?.uid,
                               onTap: () =>
-                                  ItemDetailRoute(id: item.id).go(context),
+                                  ItemDetailRoute(id: item.id).push(context),
                             ),
                           );
                         },
