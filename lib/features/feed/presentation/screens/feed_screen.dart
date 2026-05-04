@@ -125,18 +125,46 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends ConsumerState<_SearchBar> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: TextField(
-        readOnly: true,
-        onTap: () {},
+        controller: _controller,
+        onChanged: (value) =>
+            ref.read(searchQueryNotifierProvider.notifier).update(value),
         decoration: InputDecoration(
           hintText: 'Search items, places...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+          suffixIcon: ValueListenableBuilder(
+            valueListenable: _controller,
+            builder: (_, value, __) => value.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      _controller.clear();
+                      ref
+                          .read(searchQueryNotifierProvider.notifier)
+                          .update('');
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
           filled: true,
           fillColor: Colors.white,
           contentPadding:

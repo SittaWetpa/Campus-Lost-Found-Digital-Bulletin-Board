@@ -12,13 +12,20 @@ part 'feed_provider.g.dart';
 @riverpod
 Stream<List<Item>> feedItems(FeedItemsRef ref) {
   final filter = ref.watch(feedFilterNotifierProvider);
+  final query = ref.watch(searchQueryNotifierProvider).toLowerCase().trim();
   return ref.watch(itemRepositoryProvider).watchFeed().map((items) {
-    return switch (filter) {
+    var result = switch (filter) {
       FeedFilter.all => items,
       FeedFilter.found =>
         items.where((i) => i.category == ItemCategory.founder).toList(),
       FeedFilter.lost =>
         items.where((i) => i.category == ItemCategory.seeker).toList(),
     };
+    if (query.isNotEmpty) {
+      result = result
+          .where((i) => i.title.toLowerCase().contains(query))
+          .toList();
+    }
+    return result;
   });
 }
