@@ -21,6 +21,15 @@ class SubmitClaimRequestNotifier
       () => SubmitClaimRequestUseCase(ref.read(itemRequestRepositoryProvider))
           .call(params),
     );
+    if (!state.hasError) {
+      // Force a fresh subscription so the just-written doc surfaces immediately.
+      // Without this, the existing snapshot can briefly exclude the new request
+      // while its serverTimestamp is still resolving against orderBy('createdAt').
+      ref.invalidate(
+        watchMyRequestForItemProvider(params.itemId, params.requesterId),
+      );
+      ref.invalidate(watchRequestsForItemProvider(params.itemId));
+    }
   }
 }
 
@@ -42,5 +51,11 @@ class SubmitFoundReportNotifier
       () => SubmitFoundReportUseCase(ref.read(itemRequestRepositoryProvider))
           .call(params),
     );
+    if (!state.hasError) {
+      ref.invalidate(
+        watchMyRequestForItemProvider(params.itemId, params.requesterId),
+      );
+      ref.invalidate(watchRequestsForItemProvider(params.itemId));
+    }
   }
 }
