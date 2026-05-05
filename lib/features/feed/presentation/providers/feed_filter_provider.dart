@@ -11,3 +11,11 @@ class FeedFilterNotifier extends _$FeedFilterNotifier {
 
   void select(FeedFilter filter) => state = filter;
 }
+
+@riverpod
+class SearchQueryNotifier extends _$SearchQueryNotifier {
+  @override
+  String build() => '';
+
+  void update(String query) => state = query;
+}
