@@ -8,9 +8,14 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/auth/presentation/screens/login_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
-import 'package:campus_lost_found/features/post/presentation/screens/edit_post_screen.dart';
-
+import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
+import 'package:campus_lost_found/features/requests/presentation/screens/claim_request_screen.dart';
+import 'package:campus_lost_found/features/requests/presentation/screens/found_report_screen.dart';
+import 'package:campus_lost_found/features/requests/presentation/screens/request_detail_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 part 'app_router.g.dart';
 
 abstract final class AppRoutes {
@@ -31,6 +36,10 @@ abstract final class AppRoutes {
   static const myPosts     = '/my-posts';
   static const settings    = '/settings';
   static const editProfile = '/settings/edit-profile';
+
+  // Request flows (WBS 2.4)
+  static String claimPath(String itemId)       => '/claim/$itemId';
+  static String foundReportPath(String itemId) => '/found-report/$itemId';
 
   // Typed path builders for parameterised routes
   static String itemDetailPath(String id) => '/item/$id';
@@ -106,25 +115,40 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.feed,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Feed — WBS 1.2')),
-        ),
+        builder: (context, state) => const FeedScreen(),
       ),
       GoRoute(
         path: AppRoutes.itemDetail,
         builder: (context, state) =>
-            ItemDetailScreen(itemId: state.pathParameters['id']!),
+            ItemDetailScreen(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/item/:itemId/request/:reqId',
+        builder: (context, state) => RequestDetailScreen(
+          itemId: state.pathParameters['itemId']!,
+          reqId: state.pathParameters['reqId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/claim/:itemId',
+        builder: (context, state) => ClaimRequestScreen(
+          itemId: state.pathParameters['itemId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/found-report/:itemId',
+        builder: (context, state) => FoundReportScreen(
+          itemId: state.pathParameters['itemId']!,
+        ),
       ),
       GoRoute(
         path: AppRoutes.post,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Post Form — WBS 1.4')),
-        ),
+        builder: (context, state) => const PostFormScreen(),
       ),
       GoRoute(
         path: AppRoutes.editPost,
         builder: (context, state) =>
-            EditPostScreen(itemId: state.pathParameters['id']!),
+            PostFormScreen(editId: state.pathParameters['id']),
       ),
       GoRoute(
         path: AppRoutes.myPosts,
@@ -134,15 +158,11 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Settings — WBS 1.6')),
-        ),
+        builder: (context, state) => const SettingsScreen(),
         routes: [
           GoRoute(
             path: 'edit-profile',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Edit Profile — WBS 1.8')),
-            ),
+            builder: (context, state) => const EditProfileScreen(),
           ),
         ],
       ),
@@ -169,6 +189,34 @@ final class EditPostRoute {
   const EditPostRoute({required this.id});
 
   String get location => AppRoutes.editPostPath(id);
+  void go(BuildContext context) => context.go(location);
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+}
+
+final class RequestDetailRoute {
+  final String itemId;
+  final String reqId;
+  const RequestDetailRoute({required this.itemId, required this.reqId});
+
+  String get location => '/item/$itemId/request/$reqId';
+  void go(BuildContext context) => context.go(location);
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+}
+
+final class ClaimRequestRoute {
+  final String itemId;
+  const ClaimRequestRoute({required this.itemId});
+
+  String get location => AppRoutes.claimPath(itemId);
+  void go(BuildContext context) => context.go(location);
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+}
+
+final class FoundReportRoute {
+  final String itemId;
+  const FoundReportRoute({required this.itemId});
+
+  String get location => AppRoutes.foundReportPath(itemId);
   void go(BuildContext context) => context.go(location);
   Future<T?> push<T>(BuildContext context) => context.push<T>(location);
 }

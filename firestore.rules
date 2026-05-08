@@ -3,9 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: own profile only; emailVerified and createdAt are server-managed
+    // Users: any authenticated user may read (needed to display poster names);
+    // writes are still restricted to the owner only.
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
       allow create: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.emailVerified == false
@@ -34,13 +35,23 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
                             && resource.data.userId == request.auth.uid;
 
+      // Private sub-collection: secret answer — poster only
+      match /private/{doc} {
+        allow read, write: if request.auth != null
+                           && get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid;
+      }
+
       // Requests sub-collection
       match /requests/{requestId} {
         allow create: if request.auth != null
                       && request.resource.data.requesterId == request.auth.uid;
-        allow read, update: if request.auth != null
-                            && (resource.data.requesterId == request.auth.uid
-                                || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+        allow read: if request.auth != null
+                    && (resource.data.requesterId == request.auth.uid
+                        || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+        allow update: if request.auth != null
+                      && (resource.data.requesterId == request.auth.uid
+                          || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid)
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       }
     }
   }

@@ -46,7 +46,7 @@ class EditPostNotifier extends _$EditPostNotifier {
         description: formData.description,
         category: formData.category,
         location: formData.location,
-        occurredAt: formData.occurredAt,
+        occurredAt: formData.occurredAt ?? original.occurredAt,
         contact: formData.contact,
         imageUrls: [...formData.keptImageUrls, ...newUrls],
       );

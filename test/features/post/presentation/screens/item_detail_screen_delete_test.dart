@@ -3,37 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
-import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
+import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
-import 'package:campus_lost_found/features/post/domain/repositories/post_repository.dart';
-import 'package:campus_lost_found/features/post/presentation/providers/post_provider.dart';
-
-// ─── fakes ───────────────────────────────────────────────────────────────────
-
-class _FakePostRepository extends Fake implements PostRepository {
-  final bool pendingResult;
-  _FakePostRepository({required this.pendingResult});
-
-  @override
-  Future<bool> hasPendingRequests(String itemId) async => pendingResult;
-
-  @override
-  Future<void> deleteItem(String itemId) async {}
-
-  @override
-  Future<Item> createItem(Item item) async => item;
-
-  @override
-  Future<void> updateItem(Item item) async {}
-}
+import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
+import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
 
 // ─── fixtures ────────────────────────────────────────────────────────────────
 
 const _itemId = 'item-xyz';
 const _ownerId = 'user-owner';
+
+final _authUser = AuthUser(uid: _ownerId, email: 'owner@mail.kmutt.ac.th');
 
 final _fakeItem = Item(
   id: _itemId,
@@ -46,32 +30,37 @@ final _fakeItem = Item(
   imageUrls: const [],
   userId: _ownerId,
   createdAt: DateTime(2026, 5, 1),
+  occurredAt: DateTime(2026, 5, 1),
 );
 
-final _fakeOwner = User(
-  uid: _ownerId,
-  email: 'owner@mail.kmutt.ac.th',
-  firstName: 'Own',
-  lastName: 'Er',
-  studentId: '64000001',
-  telephone: '081-000-0001',
-  emailVerified: true,
+final _pendingRequest = ItemRequest(
+  id: 'req-001',
+  itemId: _itemId,
+  requesterId: 'user-other',
+  requesterName: 'Other User',
+  requesterContact: '081-000-0002',
+  studentId: '64000002',
+  type: RequestType.claim,
+  status: RequestStatus.pending,
+  createdAt: DateTime(2026, 5, 1),
 );
 
 // ─── helper ──────────────────────────────────────────────────────────────────
 
-Widget _buildScreen({required bool hasPendingRequests}) {
+Widget _buildScreen({required List<ItemRequest> requests}) {
   return ProviderScope(
     overrides: [
       watchItemProvider(_itemId)
           .overrideWith((ref) => Stream.value(_fakeItem)),
-      currentUserProvider
-          .overrideWith((ref) => Stream.value(_fakeOwner)),
-      postRepositoryProvider.overrideWith(
-        (_) => _FakePostRepository(pendingResult: hasPendingRequests),
-      ),
+      authStateProvider
+          .overrideWith((ref) => Stream.value(_authUser)),
+      watchRequestsForItemProvider(_itemId)
+          .overrideWith((ref) => Stream.value(requests)),
+      // Poster display — null is acceptable; _PosterRow handles it gracefully.
+      getUserByIdProvider(_ownerId)
+          .overrideWith((ref) async => null),
     ],
-    child: const MaterialApp(home: ItemDetailScreen(itemId: _itemId)),
+    child: const MaterialApp(home: ItemDetailScreen(id: _itemId)),
   );
 }
 
@@ -82,29 +71,28 @@ void main() {
     testWidgets(
       '01 tapping delete with pending requests shows warning dialog',
       (tester) async {
-        await tester.pumpWidget(_buildScreen(hasPendingRequests: true));
+        await tester.pumpWidget(_buildScreen(requests: [_pendingRequest]));
         await tester.pumpAndSettle();
 
         await tester.tap(find.byIcon(Icons.delete_outline));
         await tester.pumpAndSettle();
 
-        expect(find.text('Cannot delete'), findsOneWidget);
-        expect(find.text('View requests'), findsOneWidget);
-        expect(find.text('Delete post?'), findsNothing);
+        expect(find.text('Resolve requests first'), findsOneWidget);
+        expect(find.text('Delete this post?'), findsNothing);
       },
     );
 
     testWidgets(
       '02 tapping delete with no pending requests shows confirmation dialog',
       (tester) async {
-        await tester.pumpWidget(_buildScreen(hasPendingRequests: false));
+        await tester.pumpWidget(_buildScreen(requests: const []));
         await tester.pumpAndSettle();
 
         await tester.tap(find.byIcon(Icons.delete_outline));
         await tester.pumpAndSettle();
 
-        expect(find.text('Delete post?'), findsOneWidget);
-        expect(find.text('Cannot delete'), findsNothing);
+        expect(find.text('Delete this post?'), findsOneWidget);
+        expect(find.text('Resolve requests first'), findsNothing);
       },
     );
   });

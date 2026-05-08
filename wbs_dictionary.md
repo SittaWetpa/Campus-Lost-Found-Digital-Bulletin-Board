@@ -521,7 +521,7 @@ Create and configure the Firebase project, connect it to Flutter, and define the
 
 **Deliverables**
 - Firebase project connected to Flutter via `google-services.json` / `GoogleService-Info.plist`
-- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `createdAt`, `userId`
+- Firestore `items` schema (baseline): `title`, `description`, `category` (seeker/founder), `status` (active/resolved), `location`, `contact`, `imageUrls`, `occurredAt` (when the item was lost/found — user-supplied), `createdAt`, `userId`
 - Firestore `items` schema (fields added by later tasks — documented here for completeness):
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
@@ -757,6 +757,14 @@ Allow Posters to delete their own posts. If the post has pending requests in its
 
 ---
 
+# WBS 2.8 (Revised) — Similar Posts Recommendation (Category-based)
+
+> **Drop-in replacement** for the existing WBS 2.8 in `wbs_dictionary.md`, Phase 2.0 — Data Layer.
+> **Replaces** the prefix-query implementation entirely with category-based filtering.
+> Numbering preserved as **2.8** so all existing cross-references remain valid.
+
+---
+
 ### 2.8 Similar Posts Recommendation
 
 | Field | Detail |
@@ -766,28 +774,149 @@ Allow Posters to delete their own posts. If the post has pending requests in its
 | **Requirement** | Data Storage · Pages & Navigation |
 
 **Scope / Statement of Work**
-When a user is about to create a new **Seeker Post** (lost item), the app proactively queries Firestore for Active Founder Posts with similar keywords in the title or description. Results are shown in a recommendation panel on the Post Form Screen so the user can check existing posts before creating a duplicate. If a match is found, the user can navigate to that post directly. The goal is to reduce clutter and help users find their item faster.
+
+When a Visitor is composing a new **Seeker Post** (lost item) on the Post Form Screen, the app surfaces recently posted **Active Founder Posts** in the same item category, so the user can check whether their item has already been found before submitting a duplicate. This reduces feed clutter and helps users find their item faster.
+
+Matching uses a single signal: the `itemCategory` field. When the Visitor selects a category from a fixed dropdown (e.g. `electronics`, `bag_wallet`, `documents_cards`), the panel queries Firestore for Active Founder Posts in that same category, sorted by `createdAt` descending, limited to 5 results. There is no keyword matching, no synonym handling, no scoring, and no AI/ML component — the algorithm is intentionally a simple bucket filter.
+
+The category taxonomy is defined as a hard-coded enum in Dart (single source of truth in `lib/features/post/domain/entities/item_category.dart`). Adding or removing categories requires a code change and re-release.
+
+When the Visitor selects category = "Founder Post" instead of "Seeker Post", the panel is hidden — recommendations are only shown to users searching for their lost items.
+
+Sensitive items (per WBS 2.14) are always excluded from results regardless of category match.
 
 **Deliverables**
-- `getSimilarFounderPosts(String keyword)` method in `ItemService` — queries Active Founder Posts by keyword prefix match on `title`
-- Recommendation panel widget on Post Form Screen: appears below the title field after the user has typed ≥ 3 characters, shows up to 3 matching Founder Post cards
-- Each card in the panel shows: title, location, date, thumbnail (if any)
-- "View post" tap on a card navigates to that post's Detail Screen
-- Panel is hidden when no matches are found or when category is "Founder Post"
-- Panel updates with debounce (500 ms) as user types
+
+- `ItemCategory` enum in `lib/features/post/domain/entities/item_category.dart` with the agreed taxonomy:
+  - `electronics`, `bag_wallet`, `clothing`, `stationery`, `documents_cards`, `keys`, `accessory`, `other`
+  - Each value carries a `displayNameTh` and `displayNameEn` (English shown in UI per CLAUDE.md rule)
+- New Firestore field on `items/{itemId}`: `itemCategory: String` — required on every new post; stores the enum's `id`
+- `ItemModel.fromJson` / `toJson` updated to round-trip the new field
+- Category dropdown widget on Post Form Screen (`lib/features/post/presentation/widgets/category_picker.dart`) — required field, blocks submission if not selected
+- `ItemRepository.getRecentInCategory({required String categoryId, int limit = 5})` method that returns Active Founder Posts in the given category, sorted by `createdAt` desc, with `isSensitive == false` filter mandatory
+- `SimilarPostsPanel` widget (`lib/features/post/presentation/widgets/similar_posts_panel.dart`) that:
+  - Renders nothing when post type is "Founder Post"
+  - Renders nothing when no category selected
+  - Renders nothing when query returns empty
+  - Renders up to 5 cards with title, location, image thumbnail, and "Posted X minutes/hours/days ago" label
+  - Tapping a card navigates to Detail Screen
+- `similarItemsProvider` Riverpod provider (`@riverpod` codegen) wrapping the repository call, reactive to category selection changes
+- Composite Firestore index: `(category ASC, itemCategory ASC, isSensitive ASC, status ASC, createdAt DESC)` deployed via `firestore.indexes.json`
+- Backfill: existing items in Firestore (created before this WP) are missing `itemCategory`. Treat them as `other` via a one-shot lazy backfill — when an old item is read by any service, set its `itemCategory` to `other` if missing. No admin script needed at the project's current scale.
+- Migration guard: `ItemService.createItem()` rejects writes that omit `itemCategory` (assertion in code; also enforced by Firestore rule)
+- Firestore security rule: writes to `items/{itemId}` require `itemCategory` to be present and to be one of the enum values
+- `wbs_dictionary.md` updated; `test_scripts.md` matrix gains rows for new tests
 
 **Associated Activities**
-- Implement `getSimilarFounderPosts(keyword)` in `item_service.dart` using prefix range query filtered to `category == "founder"` and `status == "active"`
-- Build `SimilarPostsPanel` widget in `shared/widgets/`
-- Integrate `SimilarPostsPanel` into Post Form Screen below the title field
-- Apply 500 ms debounce before triggering the query
-- Show panel only when category selection is "Seeker Post" and keyword length ≥ 3
-- Navigate to Detail Screen when user taps a recommended card
+
+- Define `ItemCategory` enum with `id`, `displayNameTh`, `displayNameEn` per value; commit to `domain/entities/`
+- Add `itemCategory` field to `ItemModel` (`fromJson` reading the string, `toJson` writing the string)
+- Build `CategoryPicker` widget — `DropdownButtonFormField<ItemCategory>` with validation
+- Wire the category picker into Post Form Screen as a required field above the Description field
+- Implement `ItemRepository.getRecentInCategory()` in the data layer with the four-filter query: `category == 'founder'`, `itemCategory == <selected>`, `isSensitive == false`, `status == 'active'`, ordered by `createdAt` desc, limit 5
+- Implement `similarItemsProvider` using `@riverpod` codegen — re-fetches whenever the category dropdown value changes (no debounce needed; dropdown is discrete, not text input)
+- Implement `SimilarPostsPanel` widget with the four conditional render rules above
+- Deploy the composite Firestore index via `firebase deploy --only firestore:indexes`
+- Update Firestore security rules to assert `itemCategory in [...]` on create
+- Update Post Form widget tests to cover the required-field validation
+- Implement lazy backfill in `ItemRepository.getById()` and `ItemRepository.getItems()`: if a returned item lacks `itemCategory`, write `itemCategory: 'other'` via a fire-and-forget update; this happens once per legacy item naturally as users browse
+- Delete the old prefix-query implementation from the codebase
+- Update `CROSS_PLATFORM.md` with screenshots of the category picker on Android and Web
+- Update Weekly Orchestration Log in `ORCHESTRATION.md`
 
 **Testing**
-- Unit test: `getSimilarFounderPosts("wallet")` — verify only Active Founder Posts returned
-- Widget test: type "wall" in title field with category = Seeker Post — verify panel appears with matching cards
-- Widget test: switch category to Founder Post — verify panel is hidden
+
+Unit tests:
+- `test/features/post/data/repositories/item_repository_impl_test.dart` — `getRecentInCategory()` builds the correct Firestore query (verify `where` clauses include `category == 'founder'`, `itemCategory == <param>`, `isSensitive == false`, `status == 'active'`, `orderBy('createdAt', descending: true)`, `limit(5)`)
+- `test/features/post/data/repositories/item_repository_impl_test.dart` — `getRecentInCategory()` with empty result → returns empty list, no exception
+- `test/features/post/data/models/item_model_test.dart` — `ItemModel.fromJson` parses `itemCategory` correctly; `toJson` writes it correctly
+- `test/features/post/data/models/item_model_test.dart` — `ItemModel.fromJson` with missing `itemCategory` → defaults to `other` (lazy backfill behavior)
+
+Widget tests:
+- `test/features/post/presentation/widgets/category_picker_test.dart` — submit Post Form without selecting category → validation error blocks submission
+- `test/features/post/presentation/widgets/category_picker_test.dart` — select a category → form value updates and validation passes
+- `test/features/post/presentation/widgets/similar_posts_panel_test.dart` — post type = Founder → panel returns `SizedBox.shrink()` regardless of category
+- `test/features/post/presentation/widgets/similar_posts_panel_test.dart` — post type = Seeker, no category selected → panel hidden
+- `test/features/post/presentation/widgets/similar_posts_panel_test.dart` — post type = Seeker, category selected, query returns empty → panel hidden
+- `test/features/post/presentation/widgets/similar_posts_panel_test.dart` — post type = Seeker, category selected, query returns 3 items → panel renders 3 cards in `createdAt` desc order
+- `test/features/post/presentation/widgets/similar_posts_panel_test.dart` — tap a card → navigates to Detail Screen with correct item id
+
+Provider tests:
+- `test/features/post/presentation/providers/similar_items_provider_test.dart` — when category provider value changes, `getRecentInCategory()` is called once with the new category
+- `test/features/post/presentation/providers/similar_items_provider_test.dart` — when post type is Founder, provider returns empty without calling the repository
+
+Firestore rules tests:
+- `test/firestore_rules/item_category.test.js` — create item without `itemCategory` field → denied
+- `test/firestore_rules/item_category.test.js` — create item with `itemCategory: "invalid_value"` → denied
+- `test/firestore_rules/item_category.test.js` — create item with valid `itemCategory: "electronics"` → allowed
+
+Sensitive item integration:
+- `test/features/post/data/repositories/item_repository_impl_test.dart` — `getRecentInCategory()` always filters `isSensitive == false`, even when the candidate category contains sensitive items (e.g. `documents_cards`)
+
+---
+
+## Cross-references to update in other WBS documents
+
+Because this is a **revision in place** (still WBS 2.8), no other WBS numbering changes. However:
+
+- **WBS 1.4 (Post Form Screen)** — add bullet to Deliverables: "Category dropdown (required) above Description field; values from `ItemCategory` enum"
+- **WBS 2.1 (Firestore Schema)** — add `itemCategory: String (required)` to the `items/{itemId}` schema documentation
+- **WBS 2.2 (Firestore CRUD)** — note that `addItem()` now requires `itemCategory` in the data map; assertion added
+- **WBS 2.14 (Sensitive Items)** — confirm the `getRecentInCategory()` query filters `isSensitive == false`. The mandatory test in WBS 2.14 (sensitive items never appear) now also covers similar-posts results. No taxonomy change — sensitive subcategories are not part of the new enum; the existing `isSensitive` boolean remains the source of truth.
+- **WBS 7.1 (Test Scripts & Traceability Matrix)** — add 4 unit tests + 7 widget tests + 2 provider tests + 3 rules tests = **16 new test files** to the matrix under Phase 2.0
+- **`CLAUDE.md`** — no change needed; no new flags, no new services, no new layer rules
+
+---
+
+## What changed from the previous WBS 2.8
+
+| Aspect | Old WBS 2.8 | New WBS 2.8 |
+|---|---|---|
+| Match algorithm | Firestore prefix range query on `title` field | Category-based filter (`itemCategory` field equality) |
+| Required user input | Just type a title | Type title + select category from dropdown |
+| Cross-language match | ❌ | ✅ (same category regardless of language) |
+| Match quality | Low (string-based) | Medium (category bucket — wide net) |
+| False positive rate | Medium | Higher — all items in category appear, no narrowing |
+| Sensitive item filter | Not enforced | Mandatory, server-side |
+| Cloud Functions added | 0 | 0 |
+| New Firestore fields | 0 | 1 (`itemCategory`) |
+| New Remote Config keys | 0 | 0 |
+| Cost | $0 | $0 |
+| Effort estimate | 2-3 days (original) | **0.5-1 day** |
+
+---
+
+## Counts (for v5.x change summary)
+
+- Existing work package revised in place: 1 (WBS 2.8)
+- New Cloud Functions: 0
+- New Firestore fields on `items`: 1 (`itemCategory`)
+- New Remote Config keys: 0
+- New Flutter files: 4 (1 enum, 1 picker widget, 1 panel widget, 1 provider)
+- New tests: 4 unit + 7 widget + 2 provider + 3 rules = **16**
+- Estimated effort: **0.5-1 day** for one developer
+- WBS total work-package count: **unchanged at 37**
+
+---
+
+## Suggested taxonomy (subject to team review)
+
+```dart
+enum ItemCategory {
+  electronics(id: 'electronics',      th: 'อุปกรณ์อิเล็กทรอนิกส์',     en: 'Electronics'),
+  bagWallet(id: 'bag_wallet',         th: 'กระเป๋าและกระเป๋าสตางค์',  en: 'Bag & Wallet'),
+  clothing(id: 'clothing',            th: 'เสื้อผ้า',                  en: 'Clothing'),
+  stationery(id: 'stationery',        th: 'เครื่องเขียนและหนังสือ',    en: 'Stationery & Books'),
+  documentsCards(id: 'documents_cards', th: 'เอกสารและบัตร',           en: 'Documents & Cards'),
+  keys(id: 'keys',                    th: 'กุญแจ',                    en: 'Keys'),
+  accessory(id: 'accessory',          th: 'เครื่องประดับและของใช้',    en: 'Accessory'),
+  other(id: 'other',                  th: 'อื่นๆ',                    en: 'Other');
+}
+```
+
+8 categories — small enough that the dropdown does not need search, large enough to give meaningful narrowing.
+
+**Note on sensitive categories:** `documents_cards` and `keys` are commonly sensitive (per WBS 2.14 default list), but `itemCategory` and `isSensitive` are independent fields. The user can still select `documents_cards` for a non-sensitive subset (e.g., a notebook with handwritten notes that happens to be in the documents bucket), and the post-form's "is sensitive" toggle (WBS 2.14) controls the sensitive flag separately.
 
 ---
 

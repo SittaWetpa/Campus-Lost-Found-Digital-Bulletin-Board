@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
 
 class CampusLostFoundApp extends ConsumerWidget {
@@ -14,6 +15,16 @@ class CampusLostFoundApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFCA8A04)),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5EDE0),
+        // Plus Jakarta Sans — sans-serif สำหรับ body text ทั้งหมด
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+        // Fraunces — serif สำหรับ AppBar title (ชื่อหน้า)
+        appBarTheme: AppBarTheme(
+          titleTextStyle: GoogleFonts.fraunces(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1B1610),
+          ),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,

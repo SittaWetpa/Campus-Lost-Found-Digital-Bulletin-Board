@@ -11,6 +11,15 @@ abstract interface class ItemRemoteDatasource {
   Future<String> addItem(Map<String, dynamic> data);
   Future<void> updateItem(String itemId, Map<String, dynamic> data);
   Future<void> deleteItem(String itemId);
+
+  /// Writes [answer] to `items/{itemId}/private/answer` — a sub-document
+  /// restricted to the poster. Never writes to the main item document.
+  Future<void> writeSecretAnswer(String itemId, String answer);
+
+  /// Reads the secret answer from the private sub-document.
+  /// Returns null when no answer has been stored (new item without SQ, or
+  /// legacy item not yet migrated).
+  Future<String?> readSecretAnswer(String itemId);
   /// Returns true if the item has at least one request with status == "pending".
   Future<bool> hasPendingRequests(String itemId);
 }
@@ -80,25 +89,63 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
 
   @override
   Future<String> addItem(Map<String, dynamic> data) async {
+    // Extract secretAnswer before writing to main document — it lives in the
+    // private sub-collection so only the poster can read it.
+    final secretAnswer = data['secretAnswer'] as String?;
+    final mainData = Map<String, dynamic>.from(data)..remove('secretAnswer');
+
     final ref = await _items.add({
-      ...data,
+      ...mainData,
       'status': 'active',
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    if (secretAnswer != null) {
+      await writeSecretAnswer(ref.id, secretAnswer);
+    }
     return ref.id;
   }
 
   @override
   Future<void> updateItem(String itemId, Map<String, dynamic> data) async {
+    final secretAnswer = data['secretAnswer'] as String?;
+    final mainData = Map<String, dynamic>.from(data)..remove('secretAnswer');
+
     await _items.doc(itemId).update({
-      ...data,
+      ...mainData,
       'editedAt': FieldValue.serverTimestamp(),
     });
+
+    if (secretAnswer != null) {
+      await writeSecretAnswer(itemId, secretAnswer);
+    }
   }
 
   @override
   Future<void> deleteItem(String itemId) async {
     await _items.doc(itemId).delete();
+  }
+
+  @override
+  Future<void> writeSecretAnswer(String itemId, String answer) async {
+    await _firestore
+        .collection('items')
+        .doc(itemId)
+        .collection('private')
+        .doc('answer')
+        .set({'secretAnswer': answer});
+  }
+
+  @override
+  Future<String?> readSecretAnswer(String itemId) async {
+    final doc = await _firestore
+        .collection('items')
+        .doc(itemId)
+        .collection('private')
+        .doc('answer')
+        .get();
+    if (!doc.exists) return null;
+    return doc.data()!['secretAnswer'] as String?;
   }
 
   @override

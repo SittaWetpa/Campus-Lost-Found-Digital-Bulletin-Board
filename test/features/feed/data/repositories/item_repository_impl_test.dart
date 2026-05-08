@@ -21,6 +21,7 @@ void main() {
       'location': 'Library',
       'contact': '081-111-0001',
       'imageUrls': <String>[],
+      'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
       'userId': 'user-a',
       'createdAt': Timestamp.now(),
     });
@@ -32,6 +33,7 @@ void main() {
       'location': 'Gate B',
       'contact': '081-111-0002',
       'imageUrls': <String>[],
+      'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
       'userId': 'user-b',
       'createdAt': Timestamp.now(),
     });
@@ -43,6 +45,7 @@ void main() {
       'location': 'Office',
       'contact': '081-111-0003',
       'imageUrls': <String>[],
+      'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
       'userId': 'user-c',
       'createdAt': Timestamp.now(),
     });
@@ -54,6 +57,7 @@ void main() {
       'location': 'Canteen',
       'contact': '081-111-0004',
       'imageUrls': <String>[],
+      'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
       'userId': 'user-d',
       'createdAt': Timestamp.now(),
     });

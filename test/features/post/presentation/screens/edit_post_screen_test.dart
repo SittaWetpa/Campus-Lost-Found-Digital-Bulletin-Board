@@ -39,6 +39,7 @@ final _fakeItem = Item(
   imageUrls: const [],
   userId: 'user-abc',
   createdAt: DateTime(2026, 5, 1),
+  occurredAt: DateTime(2026, 5, 1),
 );
 
 // ─── helper ──────────────────────────────────────────────────────────────────
