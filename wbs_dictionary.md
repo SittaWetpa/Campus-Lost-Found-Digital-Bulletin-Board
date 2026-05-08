@@ -1379,6 +1379,67 @@ Notification text is in English only, matching the app language. For sensitive p
 
 ---
 
+### 2.17 Request Edit — Requester Updates Their Pending Request
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.17 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage |
+
+**Scope / Statement of Work**
+
+Allow a Visitor to edit their own pending Claim Request (Founder Post) or Found Report (Seeker Post) after submission, so they can correct typos, update contact info, attach a photo they forgot, or revise their message — without having to cancel and resubmit. Editing is restricted to requests where `status == "pending"` and `requesterId == currentUser.uid`. Once a Poster approves, rejects, or the requester cancels, the request becomes immutable. Each save writes an `editedAt` timestamp on the request document, displayed to the Poster as "Edited · [time]" so they know the content changed since they last looked.
+
+The "one active Claim Request per Visitor per post" rule from **2.10** is unaffected — editing reuses the same request document, so no new request is created. The `requesterId`, `requesterName`, `createdAt`, and `status` fields are never editable.
+
+**Deliverables**
+- Edit button on Request Detail screen, visible only when `status == "pending"` and `requesterId == currentUser.uid`
+- Edit Request screen (reuses Claim Request / Found Report form layout, pre-filled with existing data; the form variant matches the parent post type)
+- Editable fields:
+  - **Claim Request** (Founder Post): `requesterContact`, `message` (optional), `visitorAnswer` (when the parent post has a `secretQuestion` — see **2.10**)
+  - **Found Report** (Seeker Post): `requesterContact`, `message` (description of item found), photo attachment (replace / remove, max 1)
+- Non-editable fields (read-only display): `requesterId`, `requesterName`, `createdAt`, `status`
+- `RequestService.editRequest(String itemId, String requestId, Map data)` method that writes the update plus `editedAt: FieldValue.serverTimestamp()`
+- Firestore rule update on `items/{itemId}/requests/{requestId}`: allow `update` only when the caller is the request owner, the existing `status == "pending"`, and the diff touches only the editable field allowlist (`requesterContact`, `message`, `visitorAnswer`, photo URL field) plus `editedAt`
+- Photo handling for Found Reports: upload replacement to Firebase Storage and delete the previous file; if the requester removes the photo, delete the Storage object
+- Poster's request inbox card and Request Detail (Poster view) display "Edited · [relative time]" when `editedAt` is present
+- Disabled-state UX: when `status != "pending"` (approved / rejected / cancelled), the Edit button is hidden; if a stale screen still shows it, the save call is rejected by both client check and Firestore rules
+
+**Associated Activities**
+- Add `editedAt: Timestamp?` to the `requests` sub-collection schema documentation (cross-reference update in **2.1** and **2.4**)
+- Add Edit button to Request Detail screen with the visibility guard above
+- Build Edit Request screen by reusing the existing Claim Request / Found Report form widgets, branching on the parent post category to pick the right variant
+- Pre-populate form fields from the existing request document, including `visitorAnswer` when applicable
+- Implement `RequestService.editRequest()` using `.doc(requestId).update(data)` with `editedAt` server timestamp
+- Implement photo replacement flow for Found Reports (upload new → update URL → delete old Storage object)
+- Update Firestore security rules: tighten `allow update` on `requests/{requestId}` to enforce owner + pending status + editable-field allowlist
+- Update Poster's inbox card and Request Detail (Poster view) to render the "Edited · [time]" label when `editedAt` is present
+- Confirm interaction with **2.10**: editing `visitorAnswer` is permitted on a pending Claim Request; the Verification section the Poster sees re-renders with the new answer
+
+**Testing**
+- Unit test: `RequestService.editRequest()` — verify the update payload includes `editedAt: FieldValue.serverTimestamp()` and only the editable field allowlist
+- Unit test: `RequestService.editRequest()` rejects writes that include `requesterId`, `requesterName`, `createdAt`, or `status` (defensive client-side guard)
+- Widget test: render Request Detail as the requester with `status == "pending"` — verify Edit button is visible and tapping it opens the Edit Request screen
+- Widget test: render Request Detail as a different user with `status == "pending"` — verify Edit button is hidden
+- Widget test: render Request Detail as the requester with `status == "approved"` (and `"rejected"`, `"cancelled"`) — verify Edit button is hidden
+- Widget test: open Edit Request screen for a Claim Request — verify all editable fields pre-populated, including `visitorAnswer` when the parent post has a secret question
+- Widget test: open Edit Request screen for a Found Report — verify message and photo pre-populated; replacing the photo updates the preview
+- Widget test: save with empty `requesterContact` — verify validation error appears
+- Widget test: render request inbox card / detail (Poster view) for an edited request — verify "Edited · [time]" label appears
+- Firestore rules test: requester updates their own pending request with allowed fields → allowed
+- Firestore rules test: requester tries to update `status` or `requesterId` → denied
+- Firestore rules test: non-owner tries to update the request → denied
+- Firestore rules test: requester tries to update an `approved` / `rejected` / `cancelled` request → denied
+
+**Cross-references to update**
+- **2.1 (Firestore Schema)** — add `editedAt: Timestamp?` to the `requests` sub-collection schema
+- **2.4 (Request & Approval System)** — note that Visitors can now edit pending requests in addition to cancelling; mention that `editedAt` is added to the schema; clarify the approve/reject flow does not modify `editedAt`
+- **2.10 (Secret Question)** — `visitorAnswer` is an editable field while the request is pending; the Poster's Verification section reflects the latest answer; the "one active request per Visitor per post" rule is preserved (edit reuses the same doc)
+- **CLAUDE.md** — add `editedAt?` to the `items/{itemId}/requests/{requestId}` row in the Firestore Collections table
+
+---
+
 ## Phase 3.0 — Cross-Platform
 
 ---
