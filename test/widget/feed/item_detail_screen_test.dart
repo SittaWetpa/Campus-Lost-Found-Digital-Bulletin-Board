@@ -85,6 +85,9 @@ class _FakeFeatureFlags implements FeatureFlagService {
   final bool secretQuestionEnabled;
 
   @override
+  bool get sensitiveItemEnabled => true;
+
+  @override
   String get securityOfficeContact => '02-470-9999';
 }
 

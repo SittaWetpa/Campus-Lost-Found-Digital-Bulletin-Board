@@ -729,4 +729,93 @@ void main() {
       verifyNever(() => mockRepo.updateItem(any()));
     },
   );
+
+  // WBS 2.14 — Sensitive Item selector ───────────────────────────────────
+
+  // Test case from wbs_dictionary.md §2.14:
+  // "Widget test: Post Form with category = Founder Post → select Sensitive
+  //  type → verify description, contact, and Secret Question fields are hidden"
+  testWidgets(
+    'WBS 2.14 — Founder Post: selecting "Sensitive Item" hides description, '
+    'contact, and Secret Question fields',
+    (tester) async {
+      // Profile with a telephone so "Use my number" appears and we can confirm
+      // the full CONTACT section (label + selector + field) is hidden.
+      await _navigateToForm(tester, profile: _testUser);
+
+      // ── Sanity: default Founder Post shows all fields ──────────────────
+      // The form opens as Founder (PostFormScreen._category = founder).
+      expect(find.text('DESCRIPTION'), findsOneWidget);
+      expect(find.text('CONTACT'), findsOneWidget);
+      expect(find.text('SECRET QUESTION (optional)'), findsOneWidget);
+
+      // ── Tap "Sensitive Item" ───────────────────────────────────────────
+      await tester.ensureVisible(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+
+      // ── Sensitive mode: hidden fields ─────────────────────────────────
+      expect(find.text('DESCRIPTION'), findsNothing,
+          reason: 'Description label must vanish for sensitive items');
+      expect(find.text('CONTACT'), findsNothing,
+          reason: 'Contact label must vanish for sensitive items');
+      expect(find.text('SECRET QUESTION (optional)'), findsNothing,
+          reason: 'Secret Question label must vanish for sensitive items');
+
+      // LOCATION and PHOTOS must still be present (always shown).
+      expect(find.text('LOCATION'), findsOneWidget);
+      expect(find.text('PHOTOS'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WBS 2.14 — switching back to "General Item" restores description and '
+    'contact fields',
+    (tester) async {
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Select Sensitive first.
+      await tester.ensureVisible(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('DESCRIPTION'), findsNothing);
+
+      // Switch back to General.
+      await tester.ensureVisible(find.text('General Item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('General Item'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('DESCRIPTION'), findsOneWidget,
+          reason: 'Description must reappear when General Item is re-selected');
+      expect(find.text('CONTACT'), findsOneWidget,
+          reason: 'Contact must reappear when General Item is re-selected');
+    },
+  );
+
+  testWidgets(
+    'WBS 2.14 — switching category to Seeker hides the Sensitive selector entirely',
+    (tester) async {
+      await _navigateToForm(tester);
+
+      // Default: Founder — Sensitive Item button is in the widget tree.
+      // (SingleChildScrollView renders all children; find works even off-screen.)
+      expect(find.text('Sensitive Item'), findsOneWidget);
+      expect(find.text('General Item'), findsOneWidget);
+
+      // Category selector is at the top of the form — scroll to it and tap Seeker.
+      await tester.ensureVisible(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      // Sensitive selector must vanish (only shown for Founder posts).
+      expect(find.text('Sensitive Item'), findsNothing,
+          reason: 'Sensitive selector must not appear on Seeker posts');
+      expect(find.text('General Item'), findsNothing);
+    },
+  );
 }

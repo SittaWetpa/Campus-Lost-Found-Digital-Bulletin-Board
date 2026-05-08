@@ -1,4 +1,5 @@
 const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {initializeApp} = require("firebase-admin/app");
 const {getFirestore} = require("firebase-admin/firestore");
 const {getAuth} = require("firebase-admin/auth");
@@ -36,23 +37,58 @@ exports.items = onRequest(
             }
             if (keyword) {
                 q = q.where("title", ">=", keyword)
-                    .where("title", "<=", keyword + "");
+                    .where("title", "<=", keyword + "");
             }
 
             q = q.limit(max);
 
             const snap = await q.get();
-            const items = snap.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate().toISOString() ?? null,
-            }));
+            const items = snap.docs.map((doc) => {
+                const data = doc.data();
+                const item = {
+                    id: doc.id,
+                    title: data.title,
+                    category: data.category,
+                    status: data.status,
+                    location: data.location,
+                    imageUrls: data.imageUrls ?? [],
+                    isSensitive: data.isSensitive ?? false,
+                    createdAt: data.createdAt?.toDate().toISOString() ?? null,
+                    expiresAt: data.expiresAt?.toDate().toISOString() ?? null,
+                };
+                if (!data.isSensitive) {
+                    item.description = data.description;
+                    item.contact = data.contact;
+                }
+                return item;
+            });
 
             return res.status(200).json(items);
         } catch (err) {
             console.error(err);
             return res.status(500).json({error: "Internal server error"});
         }
+    },
+);
+
+// WBS 2.14 — daily Cloud Function that expires sensitive posts after 14 days.
+// Requires composite index: isSensitive ASC, status ASC, expiresAt ASC.
+exports.autoExpireSensitivePosts = onSchedule(
+    {schedule: "every 24 hours", region: "asia-southeast1"},
+    async () => {
+        const db = getFirestore();
+        const now = new Date();
+        const snap = await db.collection("items")
+            .where("isSensitive", "==", true)
+            .where("status", "==", "active")
+            .where("expiresAt", "<=", now)
+            .get();
+
+        if (snap.empty) return;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.update(doc.ref, {status: "expired"}));
+        await batch.commit();
+        console.log(`Expired ${snap.size} sensitive posts.`);
     },
 );
 

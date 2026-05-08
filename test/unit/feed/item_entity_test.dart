@@ -36,6 +36,15 @@ void main() {
       expect(ItemStatus.fromString('resolved'), ItemStatus.resolved);
     });
 
+    // WBS 2.14 — Cloud Function sets status to 'expired' after 14 days
+    test('parses "expired"', () {
+      expect(ItemStatus.fromString('expired'), ItemStatus.expired);
+    });
+
+    test('byName resolves "expired" without error', () {
+      expect(ItemStatus.values.byName('expired'), ItemStatus.expired);
+    });
+
     test('throws on unknown status', () {
       expect(
         () => ItemStatus.fromString('unknown'),
