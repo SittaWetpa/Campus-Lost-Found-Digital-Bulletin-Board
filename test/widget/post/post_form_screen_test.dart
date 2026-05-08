@@ -31,6 +31,8 @@
 //        Marked `skip:` here with a reason so it activates as soon as
 //        the picker UI is wired to the use case.
 
+import 'package:campus_lost_found/core/domain/entities/feature_flags.dart';
+import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
@@ -52,6 +54,28 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 // ── fakes / mocks ─────────────────────────────────────────────────────────
 
 class _MockPostRepository extends Mock implements PostRepository {}
+
+class _FakeFeatureFlags implements FeatureFlagService {
+  const _FakeFeatureFlags({this.secretQuestionEnabled = true});
+
+  @override
+  final bool secretQuestionEnabled;
+  @override
+  bool get sensitiveItemEnabled => true;
+  @override
+  String get securityOfficeContact => '02-470-9999';
+  @override
+  Future<void> fetchAndActivate() async {}
+  @override
+  FeatureFlags get currentFlags => FeatureFlags(
+        secretQuestionEnabled: secretQuestionEnabled,
+        sensitiveItemEnabled: true,
+        securityOfficeContact: '02-470-9999',
+        sensitiveCategories: const [
+          'credit_card', 'id_card', 'passport', 'key', 'document'
+        ],
+      );
+}
 
 /// Test double for `image_picker`'s platform interface. Lets us count
 /// how many times the picker would have been opened, without going to a
@@ -173,6 +197,7 @@ Widget _app({
         (_) => _FakeItemRepository(seededItem: editingItem),
       ),
       postRepositoryProvider.overrideWith((_) => postRepository),
+      featureFlagsProvider.overrideWith((_) => const _FakeFeatureFlags()),
     ],
     child: MaterialApp.router(routerConfig: _router(home)),
   );
