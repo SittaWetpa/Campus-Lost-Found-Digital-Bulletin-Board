@@ -258,4 +258,18 @@ describe('WBS 2.14 — isSensitive and expiresAt are immutable after creation', 
       }),
     );
   });
+
+  test('poster CAN delete a sensitive item they own', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertSucceeds(
+      authDb.collection('items').doc('sensitive-item-001').delete(),
+    );
+  });
+
+  test('non-owner cannot delete a sensitive item', async () => {
+    const authDb = testEnv.authenticatedContext('uid-attacker').firestore();
+    await assertFails(
+      authDb.collection('items').doc('sensitive-item-001').delete(),
+    );
+  });
 });

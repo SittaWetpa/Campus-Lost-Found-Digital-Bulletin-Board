@@ -39,10 +39,12 @@ service cloud.firestore {
                         && request.resource.data.expiresAt is timestamp
                       )
                     );
-      allow update, delete: if request.auth != null
-                            && resource.data.userId == request.auth.uid
-                            && !request.resource.data.diff(resource.data)
-                                .affectedKeys().hasAny(['isSensitive', 'expiresAt']);
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && !request.resource.data.diff(resource.data)
+                        .affectedKeys().hasAny(['isSensitive', 'expiresAt']);
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
 
       // Private sub-collection: secret answer — poster only
       match /private/{doc} {
