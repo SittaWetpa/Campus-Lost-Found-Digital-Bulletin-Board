@@ -24,7 +24,7 @@ A Flutter mobile app for reporting and finding lost items on campus. Students po
 | File storage | Firebase Storage |
 | Offline cache | Hive (with `hive_generator`) |
 | Preferences | shared_preferences |
-| REST API | Firebase Cloud Functions (Node.js 20, `asia-southeast1`) |
+| REST API | Firebase Cloud Functions (Node.js 22, `asia-southeast1`) |
 | OTP email | Firebase Extension — Trigger Email from Firestore |
 | Error reporting | Firebase Crashlytics (Android only — never on Web) |
 | Feature flags | Firebase Remote Config |
@@ -93,8 +93,8 @@ Each feature follows this internal structure:
 
 | Collection | Owner WBS | Notes |
 |---|---|---|
-| `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt |
-| `items/{itemId}` | 2.1 | title, description, category (seeker/founder), status (active/resolved), location, contact, imageUrls, userId, occurredAt, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false) |
+| `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt; plus `fcmTokens: [String]` and `notificationsEnabled: bool` (default `true`) — added in WBS 2.16 |
+| `items/{itemId}` | 2.1 | title, description, category (seeker/founder), itemCategory (taxonomy bucket — required, WBS 2.8), status (active/resolved/expired), location, contact, imageUrls, userId, occurredAt, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false), expiresAt? (Timestamp, set on sensitive items — WBS 2.14) |
 | `items/{itemId}/requests/{requestId}` | 2.4 | requesterId, requesterName, requesterContact, message, status (pending/approved/rejected/cancelled), createdAt, visitorAnswer?, editedAt? (set on requester edit — WBS 2.17) |
 | `otp_verifications/{uid}` | 0.5 | code, expiresAt, attempts, createdAt |
 | `mail/{docId}` | 0.5 | Watched by Firebase Extension to send OTP emails |
@@ -156,9 +156,11 @@ Each feature follows this internal structure:
 
 ## Feature Flags (Remote Config)
 
-- All flags accessed via `FeatureFlagService` in `core/services/`
-- Current flags:
+- All flags and Remote Config values accessed via `FeatureFlagService` in `core/services/`
+- Current keys:
   - `secret_question_enabled` (bool, default `true`) — gates WBS 2.10 Secret Question feature
+  - `sensitive_categories` (string[], e.g. `["credit_card","id_card","passport","key","document"]`) — taxonomy of sensitive item types, WBS 2.14
+  - `security_office_contact` (string) — phone number rendered on sensitive item posts, WBS 2.14
 - Never read Remote Config directly in UI — always go through `FeatureFlagService`
 
 ---
@@ -208,7 +210,7 @@ Widget test rules (never break these):
 | `lib/config/router/app_router.dart` | All routes + auth guards |
 | `firestore.rules` | Firestore security rules |
 | `storage.rules` | Storage security rules |
-| `functions/index.js` | REST API endpoint (`GET /items`) |
+| `functions/index.js` | REST API endpoints (`GET /items` — WBS 2.9; `POST /items` — WBS 2.15 walk-in submissions) plus scheduled / Firestore-trigger Cloud Functions (`autoExpireSensitivePosts` — WBS 2.14; `onNewRequest`, `onRequestStatusChange` — WBS 2.16) |
 | `test_scripts.md` | Test run commands, file structure, traceability matrix |
 | `SETUP.md` | Full setup guide from scratch |
 | `README.md` | Project overview, team, branching strategy |
@@ -223,12 +225,14 @@ Quick map of features to WBS codes:
 - Auth + OTP: 0.1, 0.2, 0.3, 0.5
 - Feed + Detail: 1.2, 1.3, 2.2, 2.3
 - Post Form + Similar Posts: 1.4, 2.6, 2.7, 2.8
-- Request System: 2.4, 2.10
+- Request System: 2.4, 2.10, 2.17
 - Profile: 1.6, 1.7, 1.8
-- REST API: 2.9
+- REST API & Walk-in: 2.9, 2.15
 - Offline Cache: 2.11
 - Observability: 2.12
 - Feature Flags: 2.13
+- Sensitive Items & Auto-Expire: 2.14
+- Push Notifications: 2.16
 - Architecture: 4.1, 4.2, 4.3
 
 ---
