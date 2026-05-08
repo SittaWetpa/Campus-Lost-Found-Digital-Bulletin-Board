@@ -156,7 +156,8 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.10 | Secret question (Photo Safety Case 2 in post form widget tests) | _see WBS 1.4 row above_ | Widget | ✅ covered |
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
 | 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
-| 2.13 | FeatureFlagService (Remote Config wrapper, hardcoded defaults) | `test/unit/post/post_draft_test.dart` (covered indirectly via secretQuestionEnabled gating) | Unit | ⏭️ direct test pending |
+| 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
+| 2.13 | PostFormScreen — secretQuestionEnabled flag hides/shows SECRET QUESTION section | `test/features/post/presentation/screens/post_form_screen_test.dart` | Widget | ✅ 2 tests |
 | 2.14 | Sensitive Item entity invariants (source / isSensitive / expiresAt) + `ItemStatus.expired` parsing | `test/unit/feed/item_entity_test.dart` | Unit | ✅ 16 tests |
 | 2.14 | `autoExpireSensitivePosts` Cloud Function (expired doc → status:'expired'; non-expired → unchanged; multiple docs) | `test/functions/auto_expire_test.js` | Node.js | ✅ 4 tests |
 | 2.14 | REST API redaction (sensitive → omits contact/description; general → includes; auth + method guards; mixed feed) | `test/functions/items_api_test.js` | Node.js | ✅ 5 tests |
@@ -208,7 +209,7 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 78 | 78 |
-| 2.0 Data Layer | 232 + 9 (npm) | 241 |
+| 2.0 Data Layer | 238 + 9 (npm) | 247 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
@@ -218,4 +219,4 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 ---
 
-*Last updated: 2026-05-04 (WBS 2.4 delete-guard test added — test 09 in item_detail_screen_test.dart covers "Poster taps delete with pending requests → Resolve requests first dialog, Delete button absent". flutter test: 418 passing + 4 skipped.)*
+*Last updated: 2026-05-08 (WBS 2.13 — FeatureFlagService unit tests U1–U4 added to `test/core/services/feature_flag_service_test.dart`; widget tests W1–W2 added to `test/features/post/presentation/screens/post_form_screen_test.dart`. flutter test: 424 passing + 4 skipped.)*

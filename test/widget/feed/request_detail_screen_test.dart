@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:campus_lost_found/core/domain/entities/feature_flags.dart';
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
@@ -87,6 +88,19 @@ class _FakeFeatureFlags implements FeatureFlagService {
 
   @override
   String get securityOfficeContact => '02-470-9999';
+
+  @override
+  Future<void> fetchAndActivate() async {}
+
+  @override
+  FeatureFlags get currentFlags => FeatureFlags(
+        secretQuestionEnabled: secretQuestionEnabled,
+        sensitiveItemEnabled: true,
+        securityOfficeContact: '02-470-9999',
+        sensitiveCategories: const [
+          'credit_card', 'id_card', 'passport', 'key', 'document'
+        ],
+      );
 }
 
 GoRouter _makeRouter({required String currentUserId}) => GoRouter(
