@@ -557,7 +557,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
                 const SizedBox(height: 12),
 
                 // ── Founder-only options ───────────────────────────
-                if (isFounder) ...[
+                if (isFounder && featureFlags.sensitiveItemEnabled) ...[
                   _FieldLabel('SENSITIVE ITEM'),
                   _SensitiveSelector(
                     value: _isSensitive,
