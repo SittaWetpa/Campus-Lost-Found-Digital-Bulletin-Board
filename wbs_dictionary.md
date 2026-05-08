@@ -421,6 +421,7 @@ Build the Settings and Profile screen where users can view their profile info (f
 - "Edit profile" button navigating to Edit Profile & Avatar Screen
 - Preferences persist across app restarts via `shared_preferences`
 - Sign-out button
+- **Developer section** — rendered only when `currentUser.isAdmin == true` (see **2.18**); contains links to Remote Config viewer and Rollback Plan screens
 
 **Associated Activities**
 - Build settings screen layout based on wireframe
@@ -526,7 +527,7 @@ Create and configure the Firebase project, connect it to Flutter, and define the
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
   - `secretQuestion`, `secretAnswer` — String?, added in **2.10** (Secret Question), only on Founder Posts
-- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`
+- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`, `isAdmin: bool` (default `false`, granted manually via Firebase Console — see **2.18**)
 - Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**) and `editedAt` (Timestamp?, added in **2.17** — Request Edit)
 - Firestore security rules: read/write for authenticated users only (field-level rules for `secretAnswer` and `visitorAnswer` are defined in **2.10**)
 
@@ -1184,6 +1185,7 @@ Gate at least one major feature behind a Firebase Remote Config boolean flag so 
   - Expected propagation time (depends on min-fetch-interval)
   - Post-rollback verification checklist
   - On-call contact list
+- **In-app surfaces** — the `RemoteConfigViewerScreen` (read-only viewer) and `RollbackPlanScreen` (interactive runbook mirroring `ROLLBACK_PLAN.md`) are scoped under **2.18** and gated by the admin role. The Firebase Console remains the only place Remote Config values can be **edited**; the in-app screen exists for visibility, not for writing.
 
 **Associated Activities**
 - Enable Remote Config in Firebase Console; create `secret_question_enabled` parameter
@@ -1439,6 +1441,81 @@ The "one active Claim Request per Visitor per post" rule from **2.10** is unaffe
 - **2.4 (Request & Approval System)** — note that Visitors can now edit pending requests in addition to cancelling; mention that `editedAt` is added to the schema; clarify the approve/reject flow does not modify `editedAt`
 - **2.10 (Secret Question)** — `visitorAnswer` is an editable field while the request is pending; the Poster's Verification section reflects the latest answer; the "one active request per Visitor per post" rule is preserved (edit reuses the same doc)
 - **CLAUDE.md** — add `editedAt?` to the `items/{itemId}/requests/{requestId}` row in the Firestore Collections table
+
+---
+
+### 2.18 Admin Role & In-App Admin Screens
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.18 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation · Reliability |
+
+**Scope / Statement of Work**
+
+Introduce an admin role so the Remote Config viewer and Rollback Plan screens designed in the Figma prototype (under Settings → Developer) can ship to the Flutter app behind proper access control. Admin status is a single boolean on the user document — granted **manually** by an existing admin editing `users/{uid}.isAdmin = true` in the Firebase Console. There is no in-app flow to grant or revoke admin; this matches the small-team admin pool and keeps the auth surface area minimal.
+
+The in-app Remote Config screen is **read-only**. It surfaces the currently-fetched values of `secret_question_enabled`, `sensitive_categories`, and `security_office_contact`, plus the last-fetched timestamp, so on-call admins can confirm what the app is actually using without opening the Firebase Console. To **change** a value, the screen links out to the Firebase Console — the source of truth for Remote Config remains the console, and there is no app-to-Remote-Config write path. This avoids needing a Cloud Function with Remote Config admin credentials and removes the risk of a stolen admin device flipping flags.
+
+The in-app Rollback Plan screen is the interactive equivalent of `ROLLBACK_PLAN.md` (WBS 2.13): it shows the current flag state, when to invoke the plan, the 5-step procedure, propagation timing, an interactive post-rollback verification checklist (local UI state only), and on-call contacts.
+
+**Deliverables**
+- `isAdmin: bool` field added to `users/{uid}` (default `false`); admin granted manually by editing the user document in Firebase Console
+- `currentUserProvider` (in `features/auth/presentation/providers/`) exposes `isAdmin` so UI and route guards can read it
+- GoRouter routes:
+  - `/admin/remote-config`
+  - `/admin/rollback-plan`
+- Route guard: any `/admin/*` route redirects non-admin users to `/feed` with a snackbar "Admin access required"
+- Settings & Profile screen (1.6): a **Developer** section is rendered only when `currentUser.isAdmin == true`; rows link to the two admin screens
+- `RemoteConfigViewerScreen` (read-only):
+  - Header card: last fetched timestamp, min-fetch-interval reminder
+  - Feature flags section: `secret_question_enabled` with current value badge (no toggle)
+  - Configuration values section: `security_office_contact`, `sensitive_categories` (chips)
+  - "Edit in Firebase Console" button — opens `console.firebase.google.com/.../config` in an external browser
+  - "Fetch & activate now" button — calls `FeatureFlagService.fetchAndActivate()` and refreshes displayed values
+- `RollbackPlanScreen`:
+  - Current flag status banner (ENABLED / DISABLED) — derived from live `FeatureFlagService` state
+  - "When to invoke" criteria list
+  - Numbered rollback procedure (mirrors `ROLLBACK_PLAN.md`)
+  - Propagation time table (Production / Debug / Force-fetch)
+  - Post-rollback verification checklist with local checked state (state is screen-local; no persistence)
+  - On-call contacts (Tech Lead handle, Firebase Console URL, Crashlytics URL)
+- Firestore security rules:
+  - `users/{uid}.isAdmin` is writable **only** by another admin or via Firebase Console (i.e. not by the user themselves) — clients cannot self-elevate
+  - Rule helper `function isAdmin() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; }` available for any future admin-gated writes
+- A short `ADMIN_ROLE.md` runbook in the repo root documenting how to grant `isAdmin` via Firebase Console (click-path) and how to revoke it
+
+**Associated Activities**
+- Add `isAdmin: bool` (default `false`) to the user model (`UserModel.fromJson`/`toJson`) and `User` entity
+- Update `UserService.createUserProfile()` to set `isAdmin: false` on new accounts
+- Update `currentUserProvider` to expose `isAdmin` from the user document
+- Add the two routes to `lib/config/router/app_router.dart` with the admin guard
+- Build `RemoteConfigViewerScreen` reusing tokens and components from the Figma prototype (`screens-admin.jsx`); replace the prototype's toggle with a value badge + "Edit in Firebase Console" deep link
+- Build `RollbackPlanScreen` mirroring the prototype design (`screens-admin.jsx` `RollbackPlanScreen`); rollback step content sourced from `ROLLBACK_PLAN.md` (single source of truth — keep the markdown and the screen text in sync)
+- Add the Developer section to Settings (1.6) gated on `currentUser.isAdmin`
+- Update Firestore security rules: `isAdmin` cannot be written by the user themselves; add `isAdmin()` helper for future use
+- Write `ADMIN_ROLE.md` with the manual-grant procedure
+- Update `ROLLBACK_PLAN.md` (WBS 2.13) to cross-reference the in-app Rollback Plan screen
+
+**Testing**
+- Unit test: `currentUserProvider` returns `isAdmin: true` when the user doc has `isAdmin: true` — verify
+- Unit test: `currentUserProvider` returns `isAdmin: false` when the field is missing (default behaviour)
+- Widget test: render Settings screen with `currentUser.isAdmin == false` — verify Developer section is **not** rendered
+- Widget test: render Settings screen with `currentUser.isAdmin == true` — verify Developer section is rendered with two rows linking to `/admin/remote-config` and `/admin/rollback-plan`
+- Widget test: navigate to `/admin/remote-config` as a non-admin user — verify redirect to `/feed` and "Admin access required" snackbar
+- Widget test: render `RemoteConfigViewerScreen` with mocked `FeatureFlagService` — verify all three keys render with current values and last-fetched relative time
+- Widget test: tap "Fetch & activate now" — verify `FeatureFlagService.fetchAndActivate()` is called
+- Widget test: render `RollbackPlanScreen` with `secret_question_enabled == true` — verify status banner shows ENABLED; with `false` — verify DISABLED banner
+- Widget test: tap a checklist item — verify the row toggles to the checked state
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on their own document — verify denied
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on another user's document — verify denied
+
+**Cross-references to update**
+- **2.1 (Firestore Schema)** — add `isAdmin: bool` (default `false`) to the `users/{uid}` schema
+- **2.13 (Feature Flag & Rollback Plan)** — note that the in-app `RemoteConfigViewerScreen` and `RollbackPlanScreen` are implemented in **2.18** behind the admin role; `ROLLBACK_PLAN.md` remains the source of truth for rollback step content
+- **1.6 (Settings & Profile Screen)** — note that an admin-gated Developer section appears in Settings when `currentUser.isAdmin == true`
+- **CLAUDE.md** — add `isAdmin?: bool (default false)` to the `users/{uid}` row in the Firestore Collections table; mention `ADMIN_ROLE.md` in Key Files
 
 ---
 

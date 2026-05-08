@@ -93,7 +93,7 @@ Each feature follows this internal structure:
 
 | Collection | Owner WBS | Notes |
 |---|---|---|
-| `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt; plus `fcmTokens: [String]` and `notificationsEnabled: bool` (default `true`) — added in WBS 2.16 |
+| `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt; `fcmTokens: [String]` and `notificationsEnabled: bool` (default `true`) — added in WBS 2.16; `isAdmin: bool` (default `false`, manually granted via Firebase Console — WBS 2.18) |
 | `items/{itemId}` | 2.1 | title, description, category (seeker/founder), itemCategory (taxonomy bucket — required, WBS 2.8), status (active/resolved/expired), location, contact, imageUrls, userId, occurredAt, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false), expiresAt? (Timestamp, set on sensitive items — WBS 2.14) |
 | `items/{itemId}/requests/{requestId}` | 2.4 | requesterId, requesterName, requesterContact, message, status (pending/approved/rejected/cancelled), createdAt, visitorAnswer?, editedAt? (set on requester edit — WBS 2.17) |
 | `otp_verifications/{uid}` | 0.5 | code, expiresAt, attempts, createdAt |
@@ -214,6 +214,8 @@ Widget test rules (never break these):
 | `test_scripts.md` | Test run commands, file structure, traceability matrix |
 | `SETUP.md` | Full setup guide from scratch |
 | `README.md` | Project overview, team, branching strategy |
+| `ROLLBACK_PLAN.md` | Remote Config rollback runbook (WBS 2.13); kept in sync with the in-app `RollbackPlanScreen` |
+| `ADMIN_ROLE.md` | How to grant/revoke admin via Firebase Console (WBS 2.18) |
 
 ---
 
@@ -233,6 +235,7 @@ Quick map of features to WBS codes:
 - Feature Flags: 2.13
 - Sensitive Items & Auto-Expire: 2.14
 - Push Notifications: 2.16
+- Admin Role & Admin Screens: 2.18
 - Architecture: 4.1, 4.2, 4.3
 
 ---
