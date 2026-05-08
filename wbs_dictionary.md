@@ -421,6 +421,7 @@ Build the Settings and Profile screen where users can view their profile info (f
 - "Edit profile" button navigating to Edit Profile & Avatar Screen
 - Preferences persist across app restarts via `shared_preferences`
 - Sign-out button
+- **Developer section** — rendered only when `currentUser.isAdmin == true` (see **2.18**); contains links to Remote Config viewer and Rollback Plan screens
 
 **Associated Activities**
 - Build settings screen layout based on wireframe
@@ -526,8 +527,8 @@ Create and configure the Firebase project, connect it to Flutter, and define the
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
   - `secretQuestion`, `secretAnswer` — String?, added in **2.10** (Secret Question), only on Founder Posts
-- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`
-- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**)
+- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`, `isAdmin: bool` (default `false`, granted manually via Firebase Console — see **2.18**)
+- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**) and `editedAt` (Timestamp?, added in **2.17** — Request Edit)
 - Firestore security rules: read/write for authenticated users only (field-level rules for `secretAnswer` and `visitorAnswer` are defined in **2.10**)
 
 **Associated Activities**
@@ -623,7 +624,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 
 **Deliverables**
 - Firestore `requests` sub-collection under each item document:
-  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**)
+  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**), `editedAt` (Timestamp?, set when the requester edits a pending request — see **2.17**; approve/reject/cancel flows do not modify `editedAt`)
 - Parent `items` document gains a `claimedBy` (requesterId) field when a request is approved (status → "resolved")
 - `RequestService` Dart class: `submitRequest()`, `getRequestsForItem()`, `approveRequest()`, `rejectRequest()`, **`cancelRequest()`**
 - "Claim Request" button on Founder Post Detail Screen (Visitors only)
@@ -635,6 +636,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 - Poster's request inbox on Detail Screen: list of pending requests with approve/reject buttons
 - Approving a request sets item `status` to "resolved" and stores `claimedBy` (requesterId)
 - **Visitor can cancel their own pending request**: "Cancel Request" button shown on the request detail view if `status == "pending"` and `requesterId == currentUser.uid`
+- **Visitor can edit their own pending request** — see **2.17** (Request Edit) for full details; the Edit button shares the same visibility guard as Cancel
 
 **Associated Activities**
 - Design `requests` sub-collection schema in Firestore (including `visitorAnswer` for secret-question verification — see **2.10**)
@@ -1004,6 +1006,7 @@ Both cases use the same `PhotoSafetyWarningDialog` widget. The guard applies on 
 - `secretQuestion` is displayed on the Claim Request form when the target Founder Post has one set, requiring the Visitor to fill in their own answer before submitting — no hints or expected answer shown
 - **One active Claim Request per Visitor per post enforced** — if a Visitor already has a pending or approved request on a post, the Claim Request button is replaced with a "Cancel Request" option. A new request can only be submitted after cancellation
 - Visitor's submitted answer stored as `visitorAnswer` in the requests sub-collection document
+- `visitorAnswer` is editable by the requester while `status == "pending"` (see **2.17** — Request Edit). The Verification section the Poster sees re-renders with the latest answer, and the request's `editedAt` timestamp signals that the answer changed since the Poster last looked. Editing reuses the same request document, so the "one active Claim Request per Visitor per post" rule is preserved
 - Request Detail screen (Poster view only) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison. A note in the UI reminds the Poster that comparison is manual
 - `secretQuestion` and `secretAnswer` are hidden from all Visitor-facing views (Feed, Detail Screen, Claim Request form result)
 - Found Report form on Seeker Posts has no answer field — Secret Question does not apply
@@ -1182,6 +1185,7 @@ Gate at least one major feature behind a Firebase Remote Config boolean flag so 
   - Expected propagation time (depends on min-fetch-interval)
   - Post-rollback verification checklist
   - On-call contact list
+- **In-app surfaces** — the `RemoteConfigViewerScreen` (read-only viewer) and `RollbackPlanScreen` (interactive runbook mirroring `ROLLBACK_PLAN.md`) are scoped under **2.18** and gated by the admin role. The Firebase Console remains the only place Remote Config values can be **edited**; the in-app screen exists for visibility, not for writing.
 
 **Associated Activities**
 - Enable Remote Config in Firebase Console; create `secret_question_enabled` parameter
@@ -1376,6 +1380,142 @@ Notification text is in English only, matching the app language. For sensitive p
 - Widget test: Settings Screen — toggle "Receive notifications" off → verify `UserService.updateUserProfile()` called with `notificationsEnabled: false`
 - Integration test: submit a Claim Request → verify the Poster's device receives a push notification with correct title and body
 - Integration test: tap incoming notification → verify app navigates to the correct Detail Screen (`/items/{itemId}`)
+
+---
+
+### 2.17 Request Edit — Requester Updates Their Pending Request
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.17 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage |
+
+**Scope / Statement of Work**
+
+Allow a Visitor to edit their own pending Claim Request (Founder Post) or Found Report (Seeker Post) after submission, so they can correct typos, update contact info, attach a photo they forgot, or revise their message — without having to cancel and resubmit. Editing is restricted to requests where `status == "pending"` and `requesterId == currentUser.uid`. Once a Poster approves, rejects, or the requester cancels, the request becomes immutable. Each save writes an `editedAt` timestamp on the request document, displayed to the Poster as "Edited · [time]" so they know the content changed since they last looked.
+
+The "one active Claim Request per Visitor per post" rule from **2.10** is unaffected — editing reuses the same request document, so no new request is created. The `requesterId`, `requesterName`, `createdAt`, and `status` fields are never editable.
+
+**Deliverables**
+- Edit button on Request Detail screen, visible only when `status == "pending"` and `requesterId == currentUser.uid`
+- Edit Request screen (reuses Claim Request / Found Report form layout, pre-filled with existing data; the form variant matches the parent post type)
+- Editable fields:
+  - **Claim Request** (Founder Post): `requesterContact`, `message` (optional), `visitorAnswer` (when the parent post has a `secretQuestion` — see **2.10**)
+  - **Found Report** (Seeker Post): `requesterContact`, `message` (description of item found), photo attachment (replace / remove, max 1)
+- Non-editable fields (read-only display): `requesterId`, `requesterName`, `createdAt`, `status`
+- `RequestService.editRequest(String itemId, String requestId, Map data)` method that writes the update plus `editedAt: FieldValue.serverTimestamp()`
+- Firestore rule update on `items/{itemId}/requests/{requestId}`: allow `update` only when the caller is the request owner, the existing `status == "pending"`, and the diff touches only the editable field allowlist (`requesterContact`, `message`, `visitorAnswer`, photo URL field) plus `editedAt`
+- Photo handling for Found Reports: upload replacement to Firebase Storage and delete the previous file; if the requester removes the photo, delete the Storage object
+- Poster's request inbox card and Request Detail (Poster view) display "Edited · [relative time]" when `editedAt` is present
+- Disabled-state UX: when `status != "pending"` (approved / rejected / cancelled), the Edit button is hidden; if a stale screen still shows it, the save call is rejected by both client check and Firestore rules
+
+**Associated Activities**
+- Add `editedAt: Timestamp?` to the `requests` sub-collection schema documentation (cross-reference update in **2.1** and **2.4**)
+- Add Edit button to Request Detail screen with the visibility guard above
+- Build Edit Request screen by reusing the existing Claim Request / Found Report form widgets, branching on the parent post category to pick the right variant
+- Pre-populate form fields from the existing request document, including `visitorAnswer` when applicable
+- Implement `RequestService.editRequest()` using `.doc(requestId).update(data)` with `editedAt` server timestamp
+- Implement photo replacement flow for Found Reports (upload new → update URL → delete old Storage object)
+- Update Firestore security rules: tighten `allow update` on `requests/{requestId}` to enforce owner + pending status + editable-field allowlist
+- Update Poster's inbox card and Request Detail (Poster view) to render the "Edited · [time]" label when `editedAt` is present
+- Confirm interaction with **2.10**: editing `visitorAnswer` is permitted on a pending Claim Request; the Verification section the Poster sees re-renders with the new answer
+
+**Testing**
+- Unit test: `RequestService.editRequest()` — verify the update payload includes `editedAt: FieldValue.serverTimestamp()` and only the editable field allowlist
+- Unit test: `RequestService.editRequest()` rejects writes that include `requesterId`, `requesterName`, `createdAt`, or `status` (defensive client-side guard)
+- Widget test: render Request Detail as the requester with `status == "pending"` — verify Edit button is visible and tapping it opens the Edit Request screen
+- Widget test: render Request Detail as a different user with `status == "pending"` — verify Edit button is hidden
+- Widget test: render Request Detail as the requester with `status == "approved"` (and `"rejected"`, `"cancelled"`) — verify Edit button is hidden
+- Widget test: open Edit Request screen for a Claim Request — verify all editable fields pre-populated, including `visitorAnswer` when the parent post has a secret question
+- Widget test: open Edit Request screen for a Found Report — verify message and photo pre-populated; replacing the photo updates the preview
+- Widget test: save with empty `requesterContact` — verify validation error appears
+- Widget test: render request inbox card / detail (Poster view) for an edited request — verify "Edited · [time]" label appears
+- Firestore rules test: requester updates their own pending request with allowed fields → allowed
+- Firestore rules test: requester tries to update `status` or `requesterId` → denied
+- Firestore rules test: non-owner tries to update the request → denied
+- Firestore rules test: requester tries to update an `approved` / `rejected` / `cancelled` request → denied
+
+**Cross-references to update**
+- **2.1 (Firestore Schema)** — add `editedAt: Timestamp?` to the `requests` sub-collection schema
+- **2.4 (Request & Approval System)** — note that Visitors can now edit pending requests in addition to cancelling; mention that `editedAt` is added to the schema; clarify the approve/reject flow does not modify `editedAt`
+- **2.10 (Secret Question)** — `visitorAnswer` is an editable field while the request is pending; the Poster's Verification section reflects the latest answer; the "one active request per Visitor per post" rule is preserved (edit reuses the same doc)
+- **CLAUDE.md** — add `editedAt?` to the `items/{itemId}/requests/{requestId}` row in the Firestore Collections table
+
+---
+
+### 2.18 Admin Role & In-App Admin Screens
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.18 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation · Reliability |
+
+**Scope / Statement of Work**
+
+Introduce an admin role so the Remote Config viewer and Rollback Plan screens designed in the prototype (under Settings → Developer) can ship to the Flutter app behind proper access control. Admin status is a single boolean on the user document — granted **manually** by an existing admin editing `users/{uid}.isAdmin = true` in the Firebase Console. There is no in-app flow to grant or revoke admin; this matches the small-team admin pool and keeps the auth surface area minimal.
+
+The in-app Remote Config screen is **read-only**. It surfaces the currently-fetched values of `secret_question_enabled`, `sensitive_categories`, and `security_office_contact`, plus the last-fetched timestamp, so on-call admins can confirm what the app is actually using without opening the Firebase Console. To **change** a value, the screen links out to the Firebase Console — the source of truth for Remote Config remains the console, and there is no app-to-Remote-Config write path. This avoids needing a Cloud Function with Remote Config admin credentials and removes the risk of a stolen admin device flipping flags.
+
+The in-app Rollback Plan screen is the interactive equivalent of `ROLLBACK_PLAN.md` (WBS 2.13): it shows the current flag state, when to invoke the plan, the 5-step procedure, propagation timing, an interactive post-rollback verification checklist (local UI state only), and on-call contacts.
+
+**Deliverables**
+- `isAdmin: bool` field added to `users/{uid}` (default `false`); admin granted manually by editing the user document in Firebase Console
+- `currentUserProvider` (in `features/auth/presentation/providers/`) exposes `isAdmin` so UI and route guards can read it
+- GoRouter routes:
+  - `/admin/remote-config`
+  - `/admin/rollback-plan`
+- Route guard: any `/admin/*` route redirects non-admin users to `/feed` with a snackbar "Admin access required"
+- Settings & Profile screen (1.6): a **Developer** section is rendered only when `currentUser.isAdmin == true`; rows link to the two admin screens
+- `RemoteConfigViewerScreen` (read-only):
+  - Header card: last fetched timestamp, min-fetch-interval reminder
+  - Feature flags section: `secret_question_enabled` with current value badge (no toggle)
+  - Configuration values section: `security_office_contact`, `sensitive_categories` (chips)
+  - "Edit in Firebase Console" button — opens `console.firebase.google.com/.../config` in an external browser
+  - "Fetch & activate now" button — calls `FeatureFlagService.fetchAndActivate()` and refreshes displayed values
+- `RollbackPlanScreen`:
+  - Current flag status banner (ENABLED / DISABLED) — derived from live `FeatureFlagService` state
+  - "When to invoke" criteria list
+  - Numbered rollback procedure (mirrors `ROLLBACK_PLAN.md`)
+  - Propagation time table (Production / Debug / Force-fetch)
+  - Post-rollback verification checklist with local checked state (state is screen-local; no persistence)
+  - On-call contacts (Tech Lead handle, Firebase Console URL, Crashlytics URL)
+- Firestore security rules:
+  - `users/{uid}.isAdmin` is writable **only** by another admin or via Firebase Console (i.e. not by the user themselves) — clients cannot self-elevate
+  - Rule helper `function isAdmin() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; }` available for any future admin-gated writes
+- A short `ADMIN_ROLE.md` runbook in the repo root documenting how to grant `isAdmin` via Firebase Console (click-path) and how to revoke it
+
+**Associated Activities**
+- Add `isAdmin: bool` (default `false`) to the user model (`UserModel.fromJson`/`toJson`) and `User` entity
+- Update `UserService.createUserProfile()` to set `isAdmin: false` on new accounts
+- Update `currentUserProvider` to expose `isAdmin` from the user document
+- Add the two routes to `lib/config/router/app_router.dart` with the admin guard
+- Build `RemoteConfigViewerScreen` reusing tokens and components from the Figma prototype (`screens-admin.jsx`); replace the prototype's toggle with a value badge + "Edit in Firebase Console" deep link
+- Build `RollbackPlanScreen` mirroring the prototype design (`screens-admin.jsx` `RollbackPlanScreen`); rollback step content sourced from `ROLLBACK_PLAN.md` (single source of truth — keep the markdown and the screen text in sync)
+- Add the Developer section to Settings (1.6) gated on `currentUser.isAdmin`
+- Update Firestore security rules: `isAdmin` cannot be written by the user themselves; add `isAdmin()` helper for future use
+- Write `ADMIN_ROLE.md` with the manual-grant procedure
+- Update `ROLLBACK_PLAN.md` (WBS 2.13) to cross-reference the in-app Rollback Plan screen
+
+**Testing**
+- Unit test: `currentUserProvider` returns `isAdmin: true` when the user doc has `isAdmin: true` — verify
+- Unit test: `currentUserProvider` returns `isAdmin: false` when the field is missing (default behaviour)
+- Widget test: render Settings screen with `currentUser.isAdmin == false` — verify Developer section is **not** rendered
+- Widget test: render Settings screen with `currentUser.isAdmin == true` — verify Developer section is rendered with two rows linking to `/admin/remote-config` and `/admin/rollback-plan`
+- Widget test: navigate to `/admin/remote-config` as a non-admin user — verify redirect to `/feed` and "Admin access required" snackbar
+- Widget test: render `RemoteConfigViewerScreen` with mocked `FeatureFlagService` — verify all three keys render with current values and last-fetched relative time
+- Widget test: tap "Fetch & activate now" — verify `FeatureFlagService.fetchAndActivate()` is called
+- Widget test: render `RollbackPlanScreen` with `secret_question_enabled == true` — verify status banner shows ENABLED; with `false` — verify DISABLED banner
+- Widget test: tap a checklist item — verify the row toggles to the checked state
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on their own document — verify denied
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on another user's document — verify denied
+
+**Cross-references to update**
+- **2.1 (Firestore Schema)** — add `isAdmin: bool` (default `false`) to the `users/{uid}` schema
+- **2.13 (Feature Flag & Rollback Plan)** — note that the in-app `RemoteConfigViewerScreen` and `RollbackPlanScreen` are implemented in **2.18** behind the admin role; `ROLLBACK_PLAN.md` remains the source of truth for rollback step content
+- **1.6 (Settings & Profile Screen)** — note that an admin-gated Developer section appears in Settings when `currentUser.isAdmin == true`
+- **CLAUDE.md** — add `isAdmin?: bool (default false)` to the `users/{uid}` row in the Firestore Collections table; mention `ADMIN_ROLE.md` in Key Files
 
 ---
 
