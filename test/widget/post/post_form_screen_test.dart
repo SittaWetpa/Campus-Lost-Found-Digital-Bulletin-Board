@@ -628,6 +628,108 @@ void main() {
     },
   );
 
+  // WBS 2.6-01 ────────────────────────────────────────────────────────────
+  testWidgets(
+    'WBS 2.6-01 — edit mode pre-populates all fields with existing item values',
+    (tester) async {
+      final existing = Item(
+        id: 'item-edit-01',
+        title: 'Blue Umbrella',
+        description: 'Left at the library entrance',
+        category: ItemCategory.seeker,
+        status: ItemStatus.active,
+        location: 'Library 2nd floor',
+        contact: '081-234-5678',
+        imageUrls: const [],
+        userId: _testUid,
+        createdAt: DateTime(2026, 5, 1),
+        occurredAt: DateTime(2026, 5, 1),
+      );
+
+      final mockRepo = _MockPostRepository();
+      await tester.pumpWidget(_app(
+        postRepository: mockRepo,
+        profile: _testUser,
+        editingItem: existing,
+      ));
+      await tester.pumpAndSettle();
+
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .context
+          .go('/post/${existing.id}/edit');
+      await tester.pumpAndSettle();
+
+      // App bar shows edit title.
+      expect(find.text('Edit Post'), findsOneWidget);
+
+      // All TextFormFields are pre-populated: title, desc, location, contact.
+      expect(
+        find.widgetWithText(TextFormField, existing.title),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextFormField, existing.description),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextFormField, existing.location),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextFormField, existing.contact),
+        findsOneWidget,
+      );
+    },
+  );
+
+  // WBS 2.6-02 ────────────────────────────────────────────────────────────
+  testWidgets(
+    'WBS 2.6-02 — edit mode: save with empty title shows validation error',
+    (tester) async {
+      final existing = Item(
+        id: 'item-edit-02',
+        title: 'Red Jacket',
+        description: 'Left at cafeteria',
+        category: ItemCategory.founder,
+        status: ItemStatus.active,
+        location: 'Cafeteria',
+        contact: '081-000-0099',
+        imageUrls: const [],
+        userId: _testUid,
+        createdAt: DateTime(2026, 5, 1),
+        occurredAt: DateTime(2026, 5, 1),
+      );
+
+      final mockRepo = _MockPostRepository();
+      await tester.pumpWidget(_app(
+        postRepository: mockRepo,
+        profile: _testUser,
+        editingItem: existing,
+      ));
+      await tester.pumpAndSettle();
+
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .context
+          .go('/post/${existing.id}/edit');
+      await tester.pumpAndSettle();
+
+      // Clear the title field.
+      await tester.enterText(
+        find.widgetWithText(TextFormField, existing.title),
+        '',
+      );
+
+      // Tap the app bar POST button to trigger validation.
+      await tester.tap(find.text('POST'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Title is required.'), findsOneWidget);
+      verifyNever(() => mockRepo.updateItem(any()));
+    },
+  );
+
   // WBS 2.14 — Sensitive Item selector ───────────────────────────────────
 
   // Test case from wbs_dictionary.md §2.14:

@@ -16,7 +16,6 @@ import 'package:campus_lost_found/features/requests/presentation/screens/found_r
 import 'package:campus_lost_found/features/requests/presentation/screens/request_detail_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
-
 part 'app_router.g.dart';
 
 abstract final class AppRoutes {

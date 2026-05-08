@@ -20,6 +20,8 @@ abstract interface class ItemRemoteDatasource {
   /// Returns null when no answer has been stored (new item without SQ, or
   /// legacy item not yet migrated).
   Future<String?> readSecretAnswer(String itemId);
+  /// Returns true if the item has at least one request with status == "pending".
+  Future<bool> hasPendingRequests(String itemId);
 }
 
 class FirestoreItemDatasource implements ItemRemoteDatasource {
@@ -144,5 +146,16 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
         .get();
     if (!doc.exists) return null;
     return doc.data()!['secretAnswer'] as String?;
+  }
+
+  @override
+  Future<bool> hasPendingRequests(String itemId) async {
+    final snap = await _items
+        .doc(itemId)
+        .collection('requests')
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
+    return snap.docs.isNotEmpty;
   }
 }

@@ -72,7 +72,8 @@ class _ItemDetailView extends ConsumerWidget {
             watchMyRequestForItemProvider(item.id, authUser?.uid ?? ''));
 
     final requests = requestsAsync.valueOrNull ?? [];
-    final pending = requests.where((r) => r.status == RequestStatus.pending).toList();
+    final pending =
+        requests.where((r) => r.status == RequestStatus.pending).toList();
     // Only consider pending/approved requests as "active" — cancelled or
     // rejected requests should not block the user from submitting a new one.
     final myRequest = authUser == null
@@ -186,16 +187,19 @@ class _ItemDetailView extends ConsumerWidget {
                           myRequest: myRequest,
                           isCheckingRequest: requestsAsync.isLoading,
                           securityPhone: securityPhone,
-                          onCancelRequest: myRequest?.status == RequestStatus.pending
-                              ? () => _confirmCancelRequest(
-                                    context,
-                                    ref,
-                                    item.id,
-                                    myRequest!.id,
-                                  )
-                              : null,
+                          onCancelRequest:
+                              myRequest?.status == RequestStatus.pending
+                                  ? () => _confirmCancelRequest(
+                                        context,
+                                        ref,
+                                        item.id,
+                                        myRequest!.id,
+                                      )
+                                  : null,
                         ),
-                      if (isPoster && isSensitive && item.status == ItemStatus.active) ...[
+                      if (isPoster &&
+                          isSensitive &&
+                          item.status == ItemStatus.active) ...[
                         const SizedBox(height: 4),
                         SizedBox(
                           width: double.infinity,
@@ -203,8 +207,8 @@ class _ItemDetailView extends ConsumerWidget {
                             onPressed: actionState.isLoading
                                 ? null
                                 : () => _confirmResolve(context, ref),
-                            child:
-                                const Text('Mark as resolved (handed to security)'),
+                            child: const Text(
+                                'Mark as resolved (handed to security)'),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -426,8 +430,7 @@ class _CategoryChip extends StatelessWidget {
       child: Text(
         isFounder ? 'FOUND · FOUNDER' : 'LOST · SEEKER',
         style: TextStyle(
-          color:
-              isFounder ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+          color: isFounder ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.3,
@@ -454,8 +457,7 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         status.name.toUpperCase(),
         style: TextStyle(
-          color:
-              isActive ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
+          color: isActive ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.3,
@@ -525,8 +527,7 @@ class _PosterRow extends StatelessWidget {
     final poster = posterAsync.valueOrNull;
 
     // Prefer live user data; fall back to embedded fields stored at post time.
-    final String? resolvedAvatarUrl =
-        poster?.avatarUrl ?? item.posterAvatarUrl;
+    final String? resolvedAvatarUrl = poster?.avatarUrl ?? item.posterAvatarUrl;
     final String name;
     if (isLoading && item.posterName == null) {
       name = '';
@@ -599,8 +600,7 @@ class _PosterRow extends StatelessWidget {
         ),
         if (!isPoster && !isSensitive && item.contact.isNotEmpty)
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(999),
@@ -895,10 +895,10 @@ class _RequestsInbox extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         if (requests.isEmpty)
-          Card(
+          const Card(
             color: Colors.white,
             elevation: 0,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(20),
               child: Center(
                 child: Text(
