@@ -1454,7 +1454,7 @@ The "one active Claim Request per Visitor per post" rule from **2.10** is unaffe
 
 **Scope / Statement of Work**
 
-Introduce an admin role so the Remote Config viewer and Rollback Plan screens designed in the Figma prototype (under Settings → Developer) can ship to the Flutter app behind proper access control. Admin status is a single boolean on the user document — granted **manually** by an existing admin editing `users/{uid}.isAdmin = true` in the Firebase Console. There is no in-app flow to grant or revoke admin; this matches the small-team admin pool and keeps the auth surface area minimal.
+Introduce an admin role so the Remote Config viewer and Rollback Plan screens designed in the prototype (under Settings → Developer) can ship to the Flutter app behind proper access control. Admin status is a single boolean on the user document — granted **manually** by an existing admin editing `users/{uid}.isAdmin = true` in the Firebase Console. There is no in-app flow to grant or revoke admin; this matches the small-team admin pool and keeps the auth surface area minimal.
 
 The in-app Remote Config screen is **read-only**. It surfaces the currently-fetched values of `secret_question_enabled`, `sensitive_categories`, and `security_office_contact`, plus the last-fetched timestamp, so on-call admins can confirm what the app is actually using without opening the Firebase Console. To **change** a value, the screen links out to the Firebase Console — the source of truth for Remote Config remains the console, and there is no app-to-Remote-Config write path. This avoids needing a Cloud Function with Remote Config admin credentials and removes the risk of a stolen admin device flipping flags.
 
