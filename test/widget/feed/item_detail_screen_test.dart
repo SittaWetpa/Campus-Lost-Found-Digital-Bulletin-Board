@@ -95,6 +95,9 @@ class _FakeFeatureFlags implements FeatureFlagService {
   Future<void> fetchAndActivate() async {}
 
   @override
+  DateTime get lastFetchTime => DateTime.fromMillisecondsSinceEpoch(0);
+
+  @override
   FeatureFlags get currentFlags => FeatureFlags(
         secretQuestionEnabled: secretQuestionEnabled,
         sensitiveItemEnabled: true,

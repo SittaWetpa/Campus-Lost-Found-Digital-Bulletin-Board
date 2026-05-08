@@ -51,7 +51,7 @@ final currentUserProvider = AutoDisposeStreamProvider<User?>.internal(
 );
 
 typedef CurrentUserRef = AutoDisposeStreamProviderRef<User?>;
-String _$getUserByIdHash() => r'092f5b8644e2d8c404c09c39ebaa47d4f762a438';
+String _$getUserByIdHash() => r'a62126074de1fa3277f7d6081acd34d1df2bac41';
 
 /// Copied from Dart SDK
 class _SystemHash {

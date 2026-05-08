@@ -166,6 +166,13 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.15 | UploadPostPhotosUseCase (3-photo cap, storage upload) | `test/unit/post/upload_post_photos_use_case_test.dart` | Unit | ✅ 5 tests |
 | 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
 | 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
+| 2.18 | UserModel.fromFirestore reads `isAdmin` (true / false / missing-defaults-to-false; toEntity carries it) | `test/unit/auth/user_model_is_admin_test.dart` | Unit | ✅ 4 tests |
+| 2.18 | `FirestoreUserDatasource.createUser` stamps `isAdmin: false` on new accounts | `test/unit/auth/user_remote_datasource_test.dart` (added row to existing file) | Unit | ✅ 1 test |
+| 2.18 | Settings screen — Developer section gated on `currentUser.isAdmin` | `test/features/profile/presentation/screens/settings_screen_admin_test.dart` | Widget | ✅ 2 tests |
+| 2.18 | RemoteConfigViewerScreen renders all four flags + last-fetched banner + "Fetch & activate" trigger | `test/features/admin/presentation/screens/remote_config_viewer_screen_test.dart` | Widget | ✅ 4 tests |
+| 2.18 | RollbackPlanScreen banner reflects `secret_question_enabled`; checklist toggles on tap | `test/features/admin/presentation/screens/rollback_plan_screen_test.dart` | Widget | ✅ 3 tests |
+| 2.18 | Admin route guard: non-admin → /feed + snackbar; admin → viewer screen | `test/widget/admin/admin_route_guard_test.dart` | Widget | ✅ 2 tests |
+| 2.18 | Firestore rules: client cannot self-elevate `isAdmin` (own doc, others' doc, on create) | `test/firestore_rules/rules.test.js` | Node.js | ✅ 4 tests (requires emulator) |
 
 ---
 
@@ -219,4 +226,4 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 ---
 
-*Last updated: 2026-05-08 (WBS 2.13 — FeatureFlagService unit tests U1–U4 added to `test/core/services/feature_flag_service_test.dart`; widget tests W1–W2 added to `test/features/post/presentation/screens/post_form_screen_test.dart`. flutter test: 424 passing + 4 skipped.)*
+*Last updated: 2026-05-08 (WBS 2.18 — Admin Role & Admin Screens. New: `user_model_is_admin_test.dart`, `settings_screen_admin_test.dart`, `remote_config_viewer_screen_test.dart`, `rollback_plan_screen_test.dart`, `admin_route_guard_test.dart`, plus 4 new rules tests in `rules.test.js` and one new row in `user_remote_datasource_test.dart`. All 14 new admin tests pass. 11 pre-existing failures remain on develop — see PR description.)*

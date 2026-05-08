@@ -6,7 +6,7 @@ part of 'feed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$feedItemsHash() => r'45d4cbf074ac8bebcd35366fcf86feccd1258628';
+String _$feedItemsHash() => r'8f0a9fd5119a2084de86041f238ec0bc36126911';
 
 /// Filtered view of the feed stream — applies [FeedFilter] on top of the
 /// shared [itemRepositoryProvider] / `watchFeed()` chain defined in
