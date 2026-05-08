@@ -189,3 +189,73 @@ describe('WBS 2.1 Test case 3 — Authenticated reads on items are allowed', () 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// WBS 2.14 — isSensitive / expiresAt immutability
+// (wbs_dictionary.md: "Firestore rules test: client tries to update
+//  isSensitive after creation — verify denied")
+// ---------------------------------------------------------------------------
+
+describe('WBS 2.14 — isSensitive and expiresAt are immutable after creation', () => {
+  const POSTER_UID = 'uid-poster-sensitive';
+
+  const sensitiveItem = {
+    title: 'Student ID card found',
+    category: 'founder',
+    status: 'active',
+    location: 'ECC lobby',
+    contact: '',
+    description: '',
+    imageUrls: [],
+    userId: POSTER_UID,
+    isSensitive: true,
+    expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+    createdAt: new Date(),
+  };
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx
+        .firestore()
+        .collection('items')
+        .doc('sensitive-item-001')
+        .set(sensitiveItem);
+    });
+  });
+
+  test('poster cannot flip isSensitive from true to false', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertFails(
+      authDb.collection('items').doc('sensitive-item-001').update({
+        isSensitive: false,
+      }),
+    );
+  });
+
+  test('poster cannot modify expiresAt', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertFails(
+      authDb.collection('items').doc('sensitive-item-001').update({
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      }),
+    );
+  });
+
+  test('visitor cannot flip isSensitive either', async () => {
+    const authDb = testEnv.authenticatedContext('uid-attacker').firestore();
+    await assertFails(
+      authDb.collection('items').doc('sensitive-item-001').update({
+        isSensitive: false,
+      }),
+    );
+  });
+
+  test('poster CAN update allowed fields (e.g. status) without touching isSensitive/expiresAt', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertSucceeds(
+      authDb.collection('items').doc('sensitive-item-001').update({
+        status: 'resolved',
+      }),
+    );
+  });
+});

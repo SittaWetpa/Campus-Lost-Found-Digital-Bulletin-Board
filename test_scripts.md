@@ -14,6 +14,7 @@
 | `flutter test test/features/` | Feature widget tests only | During UI development |
 | `flutter test --coverage` | Full suite + generates `coverage/lcov.info` | For WBS 3.1 / 3.2 submission |
 | `cd test/firestore_rules && npm test` | Firestore security rules (Node.js) | After editing `firestore.rules` |
+| `cd test/functions && npm install && npm test` | Cloud Function + REST API unit tests (Node.js Jest) | After editing `functions/index.js` |
 
 ---
 
@@ -64,6 +65,10 @@ test/
 │           └── item_repository_impl_test.dart        ← WBS 2.3
 ├── integration/                  # Integration tests (require Firebase Emulator)
 │   └── wbs_2_1_firestore_rules_test.dart        ← WBS 2.1 (manual placeholder)
+├── functions/                    # Node.js Cloud Function unit tests
+│   ├── auto_expire_test.js                      ← WBS 2.14 (Cloud Function)
+│   ├── items_api_test.js                        ← WBS 2.14 (REST API redaction)
+│   └── package.json
 └── firestore_rules/              # Node.js Firestore rules tests
     ├── rules.test.js                            ← WBS 2.1
     └── package.json
@@ -113,7 +118,7 @@ Run: `flutter test test/features/`
 | 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
 | 1.3 / 2.4 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label, delete guard with pending requests) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 9 tests |
 | 1.3 | Request detail screen (verification card, action buttons by role/status) | `test/widget/feed/request_detail_screen_test.dart` | Widget | ✅ 5 tests |
-| 1.4 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2 via ImagePickerPlatform mock) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 10 tests (+ 1 skipped — see note) |
+| 1.4 / 2.14 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2, Sensitive selector hides description/contact/SQ) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 13 tests (+ 1 skipped — see note) |
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
 | 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
@@ -152,7 +157,11 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
 | 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
 | 2.13 | FeatureFlagService (Remote Config wrapper, hardcoded defaults) | `test/unit/post/post_draft_test.dart` (covered indirectly via secretQuestionEnabled gating) | Unit | ⏭️ direct test pending |
-| 2.14 | Sensitive Item entity invariants (source / isSensitive / expiresAt) | `test/unit/feed/item_entity_test.dart` | Unit | ✅ 14 tests |
+| 2.14 | Sensitive Item entity invariants (source / isSensitive / expiresAt) + `ItemStatus.expired` parsing | `test/unit/feed/item_entity_test.dart` | Unit | ✅ 16 tests |
+| 2.14 | `autoExpireSensitivePosts` Cloud Function (expired doc → status:'expired'; non-expired → unchanged; multiple docs) | `test/functions/auto_expire_test.js` | Node.js | ✅ 4 tests |
+| 2.14 | REST API redaction (sensitive → omits contact/description; general → includes; auth + method guards; mixed feed) | `test/functions/items_api_test.js` | Node.js | ✅ 5 tests |
+| 2.14 | Firestore rules: `isSensitive` and `expiresAt` immutable after creation (poster + visitor denied; allowed-field update succeeds) | `test/firestore_rules/rules.test.js` | Node.js | ✅ 4 tests (requires emulator) |
+| 2.14 | Post Form: Founder → select Sensitive → description/contact/SQ hidden; General → fields restored; Seeker → selector hidden | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 3 tests |
 | 2.15 | UploadPostPhotosUseCase (3-photo cap, storage upload) | `test/unit/post/upload_post_photos_use_case_test.dart` | Unit | ✅ 5 tests |
 | 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
 | 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |

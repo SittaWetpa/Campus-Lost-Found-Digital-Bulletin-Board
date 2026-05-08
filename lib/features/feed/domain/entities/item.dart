@@ -11,11 +11,13 @@ enum ItemCategory {
 
 enum ItemStatus {
   active,
-  resolved;
+  resolved,
+  expired;
 
   static ItemStatus fromString(String value) => switch (value) {
         'active' => ItemStatus.active,
         'resolved' => ItemStatus.resolved,
+        'expired' => ItemStatus.expired,
         _ => throw ArgumentError('Unknown ItemStatus: $value'),
       };
 }
