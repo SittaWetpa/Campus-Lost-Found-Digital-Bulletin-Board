@@ -95,7 +95,7 @@ Each feature follows this internal structure:
 |---|---|---|
 | `users/{uid}` | 0.2 | Profile: firstName, lastName, studentId, telephone, avatarUrl, emailVerified, createdAt |
 | `items/{itemId}` | 2.1 | title, description, category (seeker/founder), status (active/resolved), location, contact, imageUrls, userId, occurredAt, createdAt, editedAt?, claimedBy?, secretQuestion?, secretAnswer?, source? ('web'\|'qr_walk_in', default 'web'), isSensitive? (bool, default false) |
-| `items/{itemId}/requests/{requestId}` | 2.4 | requesterId, requesterName, requesterContact, message, status (pending/approved/rejected/cancelled), createdAt, visitorAnswer? |
+| `items/{itemId}/requests/{requestId}` | 2.4 | requesterId, requesterName, requesterContact, message, status (pending/approved/rejected/cancelled), createdAt, visitorAnswer?, editedAt? (set on requester edit — WBS 2.17) |
 | `otp_verifications/{uid}` | 0.5 | code, expiresAt, attempts, createdAt |
 | `mail/{docId}` | 0.5 | Watched by Firebase Extension to send OTP emails |
 

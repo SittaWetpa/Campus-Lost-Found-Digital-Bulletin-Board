@@ -527,7 +527,7 @@ Create and configure the Firebase project, connect it to Flutter, and define the
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
   - `secretQuestion`, `secretAnswer` — String?, added in **2.10** (Secret Question), only on Founder Posts
 - Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`
-- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**)
+- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**) and `editedAt` (Timestamp?, added in **2.17** — Request Edit)
 - Firestore security rules: read/write for authenticated users only (field-level rules for `secretAnswer` and `visitorAnswer` are defined in **2.10**)
 
 **Associated Activities**
@@ -623,7 +623,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 
 **Deliverables**
 - Firestore `requests` sub-collection under each item document:
-  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**)
+  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**), `editedAt` (Timestamp?, set when the requester edits a pending request — see **2.17**; approve/reject/cancel flows do not modify `editedAt`)
 - Parent `items` document gains a `claimedBy` (requesterId) field when a request is approved (status → "resolved")
 - `RequestService` Dart class: `submitRequest()`, `getRequestsForItem()`, `approveRequest()`, `rejectRequest()`, **`cancelRequest()`**
 - "Claim Request" button on Founder Post Detail Screen (Visitors only)
@@ -635,6 +635,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 - Poster's request inbox on Detail Screen: list of pending requests with approve/reject buttons
 - Approving a request sets item `status` to "resolved" and stores `claimedBy` (requesterId)
 - **Visitor can cancel their own pending request**: "Cancel Request" button shown on the request detail view if `status == "pending"` and `requesterId == currentUser.uid`
+- **Visitor can edit their own pending request** — see **2.17** (Request Edit) for full details; the Edit button shares the same visibility guard as Cancel
 
 **Associated Activities**
 - Design `requests` sub-collection schema in Firestore (including `visitorAnswer` for secret-question verification — see **2.10**)
@@ -1004,6 +1005,7 @@ Both cases use the same `PhotoSafetyWarningDialog` widget. The guard applies on 
 - `secretQuestion` is displayed on the Claim Request form when the target Founder Post has one set, requiring the Visitor to fill in their own answer before submitting — no hints or expected answer shown
 - **One active Claim Request per Visitor per post enforced** — if a Visitor already has a pending or approved request on a post, the Claim Request button is replaced with a "Cancel Request" option. A new request can only be submitted after cancellation
 - Visitor's submitted answer stored as `visitorAnswer` in the requests sub-collection document
+- `visitorAnswer` is editable by the requester while `status == "pending"` (see **2.17** — Request Edit). The Verification section the Poster sees re-renders with the latest answer, and the request's `editedAt` timestamp signals that the answer changed since the Poster last looked. Editing reuses the same request document, so the "one active Claim Request per Visitor per post" rule is preserved
 - Request Detail screen (Poster view only) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison. A note in the UI reminds the Poster that comparison is manual
 - `secretQuestion` and `secretAnswer` are hidden from all Visitor-facing views (Feed, Detail Screen, Claim Request form result)
 - Found Report form on Seeker Posts has no answer field — Secret Question does not apply
