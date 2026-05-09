@@ -1472,7 +1472,7 @@ Notification text is in English only, matching the app language. For sensitive p
 
 | Field | Detail |
 |---|---|
-| **WBS Code** | 2.18 |
+| **WBS Code** | 2.17 |
 | **Type** | Work Package |
 | **Requirement** | Data Storage · Pages & Navigation · Reliability |
 
@@ -1537,7 +1537,7 @@ The in-app Rollback Plan screen is the interactive equivalent of `ROLLBACK_PLAN.
 
 **Cross-references to update**
 - **2.1 (Firestore Schema)** — add `isAdmin: bool` (default `false`) to the `users/{uid}` schema
-- **2.13 (Feature Flag & Rollback Plan)** — note that the in-app `RemoteConfigViewerScreen` and `RollbackPlanScreen` are implemented in **2.18** behind the admin role; `ROLLBACK_PLAN.md` remains the source of truth for rollback step content
+- **2.13 (Feature Flag & Rollback Plan)** — note that the in-app `RemoteConfigViewerScreen` and `RollbackPlanScreen` are implemented in **2.17** behind the admin role; `ROLLBACK_PLAN.md` remains the source of truth for rollback step content
 - **1.6 (Settings & Profile Screen)** — note that an admin-gated Developer section appears in Settings when `currentUser.isAdmin == true`
 - **CLAUDE.md** — add `isAdmin?: bool (default false)` to the `users/{uid}` row in the Firestore Collections table; mention `ADMIN_ROLE.md` in Key Files
 
