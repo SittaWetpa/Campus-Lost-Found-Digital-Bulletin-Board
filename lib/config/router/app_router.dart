@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
+import 'package:campus_lost_found/features/admin/presentation/screens/remote_config_viewer_screen.dart';
+import 'package:campus_lost_found/features/admin/presentation/screens/rollback_plan_screen.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
@@ -36,6 +39,12 @@ abstract final class AppRoutes {
   static const myPosts     = '/my-posts';
   static const settings    = '/settings';
   static const editProfile = '/settings/edit-profile';
+
+  // Admin (WBS 2.18) — gated by isAdmin
+  static const adminRemoteConfig = '/admin/remote-config';
+  static const adminRollbackPlan = '/admin/rollback-plan';
+  static bool isAdminRoute(String location) =>
+      location.startsWith('/admin/');
 
   // Request flows (WBS 2.4)
   static String claimPath(String itemId)       => '/claim/$itemId';
@@ -94,6 +103,19 @@ GoRouter appRouter(AppRouterRef ref) {
       final user = userValue.valueOrNull;
       if (user != null && !user.emailVerified) {
         return goingToOtp ? null : AppRoutes.otpVerify;
+      }
+
+      // Admin guard (WBS 2.18) — /admin/* requires user.isAdmin
+      if (AppRoutes.isAdminRoute(state.matchedLocation) &&
+          (user == null || !user.isAdmin)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          rootScaffoldMessengerKey.currentState
+            ?..clearSnackBars()
+            ..showSnackBar(const SnackBar(
+              content: Text('Admin access required'),
+            ));
+        });
+        return AppRoutes.feed;
       }
 
       // Verified — push away from login/register/otp screens.
@@ -165,6 +187,14 @@ GoRouter appRouter(AppRouterRef ref) {
             builder: (context, state) => const EditProfileScreen(),
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.adminRemoteConfig,
+        builder: (context, state) => const RemoteConfigViewerScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminRollbackPlan,
+        builder: (context, state) => const RollbackPlanScreen(),
       ),
     ],
   );

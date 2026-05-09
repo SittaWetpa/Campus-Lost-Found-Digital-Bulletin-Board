@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
+import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
 
 class CampusLostFoundApp extends ConsumerWidget {
   const CampusLostFoundApp({super.key});
@@ -11,6 +12,7 @@ class CampusLostFoundApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'Campus Lost & Found',
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFCA8A04)),
         useMaterial3: true,

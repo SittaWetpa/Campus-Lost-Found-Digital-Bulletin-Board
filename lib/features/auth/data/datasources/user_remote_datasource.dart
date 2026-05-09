@@ -33,6 +33,7 @@ class FirestoreUserDatasource implements UserRemoteDatasource {
       ...model.toFirestore(),
       'emailVerified': false,
       'createdAt': FieldValue.serverTimestamp(),
+      'isAdmin': false,
     });
   }
 

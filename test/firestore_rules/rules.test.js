@@ -273,3 +273,70 @@ describe('WBS 2.14 — isSensitive and expiresAt are immutable after creation', 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// WBS 2.18 — isAdmin self-elevation is denied
+// (wbs_dictionary.md: "Firestore rules test: a non-admin user tries to set
+//  isAdmin: true on their own document → denied")
+// ---------------------------------------------------------------------------
+
+describe('WBS 2.18 — isAdmin cannot be self-elevated', () => {
+  const UID = 'uid-self-elevator';
+
+  beforeEach(async () => {
+    // Seed the user document with isAdmin: false (the legitimate post-create state).
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('users').doc(UID).set({
+        email: 'lead@mail.kmutt.ac.th',
+        firstName: 'Reg',
+        lastName: 'User',
+        studentId: '64000000',
+        telephone: '0812345678',
+        emailVerified: true,
+        createdAt: new Date(),
+        isAdmin: false,
+      });
+    });
+  });
+
+  test('user cannot flip their own isAdmin from false to true', async () => {
+    const authDb = testEnv.authenticatedContext(UID).firestore();
+    await assertFails(
+      authDb.collection('users').doc(UID).update({ isAdmin: true }),
+    );
+  });
+
+  test('user cannot set isAdmin: true on someone else’s document', async () => {
+    const authDb = testEnv.authenticatedContext('uid-attacker').firestore();
+    await assertFails(
+      authDb.collection('users').doc(UID).update({ isAdmin: true }),
+    );
+  });
+
+  test('newly-created user document with isAdmin: true is denied', async () => {
+    const NEW_UID = 'uid-fresh-account';
+    const authDb = testEnv.authenticatedContext(NEW_UID).firestore();
+    await assertFails(
+      authDb.collection('users').doc(NEW_UID).set({
+        email: 'attacker@mail.kmutt.ac.th',
+        firstName: 'Bad',
+        lastName: 'Actor',
+        studentId: '99999999',
+        telephone: '0800000000',
+        emailVerified: false,
+        createdAt: new Date(),
+        isAdmin: true,
+      }),
+    );
+  });
+
+  test('user CAN update unrelated profile fields without touching isAdmin', async () => {
+    const authDb = testEnv.authenticatedContext(UID).firestore();
+    await assertSucceeds(
+      authDb.collection('users').doc(UID).update({
+        firstName: 'Updated',
+        telephone: '0812345679',
+      }),
+    );
+  });
+});

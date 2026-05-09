@@ -8,6 +8,7 @@ class User {
   final String? avatarUrl;
   final bool emailVerified;
   final DateTime? createdAt;
+  final bool isAdmin;
 
   const User({
     required this.uid,
@@ -19,5 +20,6 @@ class User {
     this.avatarUrl,
     required this.emailVerified,
     this.createdAt,
+    this.isAdmin = false,
   });
 }

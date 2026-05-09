@@ -6,7 +6,7 @@ part of 'feature_flag_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$featureFlagsHash() => r'85897832e75e67e34d5785f1fabe94920e683526';
+String _$featureFlagsHash() => r'ec3a51eb2b37f14b1269a9a6a3356933fa100df2';
 
 /// See also [featureFlags].
 @ProviderFor(featureFlags)

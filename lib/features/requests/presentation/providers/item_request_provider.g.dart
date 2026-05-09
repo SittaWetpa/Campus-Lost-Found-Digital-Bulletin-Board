@@ -196,7 +196,7 @@ class _WatchRequestsForItemProviderElement
 }
 
 String _$watchMyRequestForItemHash() =>
-    r'5fba40befc164db700f3155c20f48854b2b580b8';
+    r'2f7af3c3b7d0b5a0114bccec9b5c53f64eff087e';
 
 /// See also [watchMyRequestForItem].
 @ProviderFor(watchMyRequestForItem)

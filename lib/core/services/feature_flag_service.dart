@@ -51,6 +51,9 @@ class FeatureFlagService implements FeatureFlagRepository {
   bool get sensitiveItemEnabled => currentFlags.sensitiveItemEnabled;
   String get securityOfficeContact => currentFlags.securityOfficeContact;
 
+  @override
+  DateTime get lastFetchTime => _remoteConfig.lastFetchTime;
+
   List<String> _parseSensitiveCategories(String raw) {
     try {
       final list = jsonDecode(raw) as List<dynamic>;
