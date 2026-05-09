@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 
 abstract interface class ItemRequestRepository {
   /// Real-time stream of all requests on a given item — Poster's inbox (WBS 2.4).
@@ -44,4 +45,17 @@ abstract interface class ItemRequestRepository {
 
   /// Uploads a photo for a Found Report. Returns the download URL (WBS 2.4).
   Future<String> uploadRequestPhoto(File imageFile);
+
+  /// Evaluates the resubmit policy for [requesterId] on item [itemId] (WBS 2.4.1).
+  ///
+  /// - Founder Post with non-null `secretQuestion`: ≥3 prior rejections by
+  ///   [requesterId] → permanent block.
+  /// - All other posts: most recent rejection newer than (now - 6h) → cooldown.
+  /// - Existing pending/approved request → [ResubmitReason.alreadyActive].
+  ///
+  /// Read-only — never mutates Firestore.
+  Future<ResubmitDecision> canResubmit({
+    required String itemId,
+    required String requesterId,
+  });
 }

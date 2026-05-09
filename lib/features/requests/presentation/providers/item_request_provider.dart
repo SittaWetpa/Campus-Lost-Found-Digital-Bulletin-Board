@@ -8,9 +8,11 @@ import 'package:campus_lost_found/features/post/presentation/providers/post_prov
 import 'package:campus_lost_found/features/requests/data/datasources/item_request_remote_datasource.dart';
 import 'package:campus_lost_found/features/requests/data/repositories/item_request_repository_impl.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 import 'package:campus_lost_found/features/requests/domain/repositories/item_request_repository.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/approve_request_use_case.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/cancel_request_use_case.dart';
+import 'package:campus_lost_found/features/requests/domain/usecases/check_resubmit_policy_use_case.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/reject_request_use_case.dart';
 
 part 'item_request_provider.g.dart';
@@ -64,6 +66,30 @@ Stream<ItemRequest?> watchSingleRequest(
   return ref
       .watch(itemRequestRepositoryProvider)
       .watchSingleRequest(itemId, requestId);
+}
+
+@riverpod
+Future<ResubmitDecision> resubmitDecision(
+  ResubmitDecisionRef ref,
+  String itemId,
+  String requesterId,
+) {
+  return CheckResubmitPolicyUseCase(ref.watch(itemRequestRepositoryProvider))
+      .call(itemId: itemId, requesterId: requesterId);
+}
+
+@riverpod
+Stream<Duration> cooldownRemaining(
+  CooldownRemainingRef ref,
+  DateTime retryAfter,
+) async* {
+  yield retryAfter.difference(DateTime.now());
+  while (true) {
+    await Future<void>.delayed(const Duration(seconds: 30));
+    final remaining = retryAfter.difference(DateTime.now());
+    yield remaining;
+    if (remaining.isNegative || remaining == Duration.zero) break;
+  }
 }
 
 @riverpod

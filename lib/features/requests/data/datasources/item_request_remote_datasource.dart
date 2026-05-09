@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:campus_lost_found/features/requests/data/models/item_request_model.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 
 abstract interface class ItemRequestRemoteDatasource {
   Stream<List<ItemRequestModel>> watchRequestsForItem(String itemId);
@@ -35,6 +36,12 @@ abstract interface class ItemRequestRemoteDatasource {
 
   /// Uploads a photo for a Found Report and returns the download URL (WBS 2.4).
   Future<String> uploadRequestPhoto(File imageFile);
+
+  /// Evaluates the resubmit policy (WBS 2.4.1).
+  Future<ResubmitDecision> canResubmit({
+    required String itemId,
+    required String requesterId,
+  });
 }
 
 class FirestoreItemRequestDatasource implements ItemRequestRemoteDatasource {
@@ -137,5 +144,53 @@ class FirestoreItemRequestDatasource implements ItemRequestRemoteDatasource {
         .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
     await ref.putFile(imageFile);
     return ref.getDownloadURL();
+  }
+
+  @override
+  Future<ResubmitDecision> canResubmit({
+    required String itemId,
+    required String requesterId,
+  }) async {
+    final itemDoc = await _item(itemId).get();
+    final itemData = itemDoc.data() as Map<String, dynamic>?;
+    final secretQuestion = itemData?['secretQuestion'] as String?;
+    final hasSecretQuestion =
+        secretQuestion != null && secretQuestion.isNotEmpty;
+
+    final history = await _requests(itemId)
+        .where('requesterId', isEqualTo: requesterId)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    final rejected = <QueryDocumentSnapshot>[];
+    for (final doc in history.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final status = data['status'] as String?;
+      if (status == 'pending' || status == 'approved') {
+        return const ResubmitDecision.alreadyActive();
+      }
+      if (status == 'rejected') {
+        rejected.add(doc);
+      }
+    }
+
+    if (hasSecretQuestion && rejected.length >= 3) {
+      return const ResubmitDecision.permanentBlock();
+    }
+
+    if (rejected.isNotEmpty) {
+      final mostRecent = rejected.first.data() as Map<String, dynamic>;
+      final createdAt = (mostRecent['createdAt'] as Timestamp?)?.toDate();
+      if (createdAt != null) {
+        final retryAfter = createdAt.add(const Duration(hours: 6));
+        if (retryAfter.isAfter(DateTime.now())) {
+          return ResubmitDecision.cooldown(retryAfter);
+        }
+      }
+    }
+
+    return ResubmitDecision.allowed(
+      attemptsRemaining: hasSecretQuestion ? 3 - rejected.length : null,
+    );
   }
 }

@@ -147,6 +147,12 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 1.3 / 2.4 | RejectRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/reject_request_use_case_test.dart` | Unit | ✅ 3 tests |
 | 1.3 / 2.4 | CancelRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/cancel_request_use_case_test.dart` | Unit | ✅ 3 tests |
 | 1.3 / 2.4 | ItemRequestRepositoryImpl (batch approve, reject, cancel, hasPendingRequests, watchMyRequestForItem, watchSingleRequest) | `test/unit/requests/item_request_repository_impl_test.dart` | Unit | ✅ 8 tests |
+| 2.4.1 | canResubmit policy logic (no history, attempts-remaining on SQ post, permanent block, cooldown active, cooldown expired, alreadyActive, per-requester scoping) | `test/unit/requests/can_resubmit_logic_test.dart` | Unit | ✅ 7 tests |
+| 2.4.1 | CheckResubmitPolicyUseCase (delegation to repository) | `test/unit/requests/check_resubmit_policy_use_case_test.dart` | Unit | ✅ 1 test |
+| 2.4.1 | submitRequest throws ResubmitNotAllowedFailure when policy denies; proceeds when allowed | `test/unit/requests/submit_request_resubmit_guard_test.dart` | Unit | ✅ 2 tests |
+| 2.4.1 | ResubmitBanner widget — attempts-remaining, permanent-block, cooldown, hidden when allowed | `test/widget/feed/item_detail_resubmit_banner_test.dart` | Widget | ✅ 4 tests |
+| 2.4.1 | End-to-end policy enforcement (Cloud Function trigger + UI) — manual emulator run | `test/integration/wbs_2_4_1_resubmit_test.dart` | Integration | ⬜ manual placeholder |
+| 2.4.1 | Firestore rules contract — basic create still allowed, policy_audit denied | `test/firestore_rules/rules.test.js` | Rules | ✅ 4 tests (in-file) |
 | 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
 | 2.6 | Post edit (UpdateItemUseCase + form edit-mode flow) | `test/unit/post/update_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |

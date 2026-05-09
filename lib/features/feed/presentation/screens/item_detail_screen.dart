@@ -11,7 +11,9 @@ import 'package:campus_lost_found/features/feed/presentation/widgets/photo_galle
 import 'package:campus_lost_found/features/feed/presentation/widgets/request_card.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/sensitive_banner.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
+import 'package:campus_lost_found/features/requests/presentation/widgets/resubmit_banner.dart';
 import 'package:campus_lost_found/shared/widgets/walk_in_badge.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
@@ -187,6 +189,7 @@ class _ItemDetailView extends ConsumerWidget {
                           myRequest: myRequest,
                           isCheckingRequest: requestsAsync.isLoading,
                           securityPhone: securityPhone,
+                          requesterId: authUser?.uid,
                           onCancelRequest:
                               myRequest?.status == RequestStatus.pending
                                   ? () => _confirmCancelRequest(
@@ -661,7 +664,7 @@ class _SecretQuestionNotice extends StatelessWidget {
   }
 }
 
-class _VisitorActions extends StatelessWidget {
+class _VisitorActions extends ConsumerWidget {
   const _VisitorActions({
     required this.item,
     required this.isSensitive,
@@ -669,6 +672,7 @@ class _VisitorActions extends StatelessWidget {
     required this.myRequest,
     required this.isCheckingRequest,
     required this.securityPhone,
+    required this.requesterId,
     this.onCancelRequest,
   });
 
@@ -678,10 +682,11 @@ class _VisitorActions extends StatelessWidget {
   final ItemRequest? myRequest;
   final bool isCheckingRequest;
   final String securityPhone;
+  final String? requesterId;
   final VoidCallback? onCancelRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (isSensitive || isWalkIn) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
@@ -761,39 +766,62 @@ class _VisitorActions extends StatelessWidget {
       );
     }
 
+    final decisionAsync = requesterId == null || requesterId!.isEmpty
+        ? const AsyncValue<ResubmitDecision?>.data(null)
+        : ref.watch(resubmitDecisionProvider(item.id, requesterId!))
+            .whenData<ResubmitDecision?>((d) => d);
+    final decision = decisionAsync.valueOrNull;
+    final isPolicyLoading = decisionAsync.isLoading;
+    final canSubmit = !isCheckingRequest &&
+        !isPolicyLoading &&
+        (decision == null || decision.allowed);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFCA8A04),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            shape: const StadiumBorder(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (decision != null && requesterId != null)
+            ResubmitBanner(
+              decision: decision,
+              itemId: item.id,
+              requesterId: requesterId!,
+            ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFCA8A04),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFE5E7EB),
+                disabledForegroundColor: const Color(0xFF9CA3AF),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: const StadiumBorder(),
+              ),
+              onPressed: canSubmit
+                  ? () => context.push(
+                        item.category == ItemCategory.founder
+                            ? '/claim/${item.id}'
+                            : '/found-report/${item.id}',
+                      )
+                  : null,
+              child: isCheckingRequest || isPolicyLoading
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      item.category == ItemCategory.founder
+                          ? 'Submit Claim Request'
+                          : 'Submit Found Report',
+                    ),
+            ),
           ),
-          onPressed: isCheckingRequest
-              ? null
-              : () => context.push(
-                    item.category == ItemCategory.founder
-                        ? '/claim/${item.id}'
-                        : '/found-report/${item.id}',
-                  ),
-          child: isCheckingRequest
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text(
-                  item.category == ItemCategory.founder
-                      ? 'Submit Claim Request'
-                      : 'Submit Found Report',
-                ),
-        ),
+        ],
       ),
     );
   }
