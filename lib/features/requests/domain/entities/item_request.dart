@@ -44,6 +44,9 @@ class ItemRequest {
   // Photo attached by FoundReportScreen to help verify the item
   final String? photoUrl;
 
+  // WBS 2.4 / 2.17 — null on new requests; set when requester edits a pending request
+  final DateTime? editedAt;
+
   const ItemRequest({
     required this.id,
     required this.itemId,
@@ -57,6 +60,7 @@ class ItemRequest {
     this.message,
     this.visitorAnswer,
     this.photoUrl,
+    this.editedAt,
   });
 
   ItemRequest copyWith({
@@ -72,6 +76,7 @@ class ItemRequest {
     String? message,
     String? visitorAnswer,
     String? photoUrl,
+    DateTime? editedAt,
   }) =>
       ItemRequest(
         id: id ?? this.id,
@@ -86,5 +91,6 @@ class ItemRequest {
         message: message ?? this.message,
         visitorAnswer: visitorAnswer ?? this.visitorAnswer,
         photoUrl: photoUrl ?? this.photoUrl,
+        editedAt: editedAt ?? this.editedAt,
       );
 }

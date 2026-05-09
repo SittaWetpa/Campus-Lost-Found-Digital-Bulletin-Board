@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/submit_claim_request_use_case.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/submit_found_report_use_case.dart';
 import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
@@ -18,8 +19,10 @@ class SubmitClaimRequestNotifier
   Future<void> submit(SubmitClaimRequestParams params) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => SubmitClaimRequestUseCase(ref.read(itemRequestRepositoryProvider))
-          .call(params),
+      () => SubmitClaimRequestUseCase(
+            ref.read(itemRequestRepositoryProvider),
+            ref.read(itemRepositoryProvider),
+          ).call(params),
     );
     if (!state.hasError) {
       // Force a fresh subscription so the just-written doc surfaces immediately.
