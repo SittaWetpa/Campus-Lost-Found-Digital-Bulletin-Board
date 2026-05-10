@@ -272,6 +272,43 @@ void main() {
       });
     });
 
+    group('editedAt (WBS 2.10 / 2.17)', () {
+      test('editedAt defaults to null on a new request', () {
+        final request = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.claim, status: RequestStatus.pending,
+          createdAt: baseCreatedAt,
+        );
+        expect(request.editedAt, isNull);
+      });
+
+      test('editedAt is stored when provided', () {
+        final edited = DateTime(2026, 1, 15, 10, 30);
+        final request = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.claim, status: RequestStatus.pending,
+          createdAt: baseCreatedAt,
+          editedAt: edited,
+        );
+        expect(request.editedAt, edited);
+      });
+
+      test('copyWith(editedAt: ...) returns updated value without mutating original', () {
+        final base = ItemRequest(
+          id: 'r', itemId: 'i', requesterId: 'u', requesterName: 'N',
+          requesterContact: '0800000000', studentId: '00000000',
+          type: RequestType.claim, status: RequestStatus.pending,
+          createdAt: baseCreatedAt,
+        );
+        final edited = DateTime(2026, 3, 1, 12, 0);
+        final copy = base.copyWith(editedAt: edited);
+        expect(copy.editedAt, edited);
+        expect(base.editedAt, isNull);
+      });
+    });
+
     group('copyWith()', () {
       late ItemRequest base;
 
@@ -303,6 +340,7 @@ void main() {
         expect(copy.message, base.message);
         expect(copy.visitorAnswer, base.visitorAnswer);
         expect(copy.photoUrl, base.photoUrl);
+        expect(copy.editedAt, base.editedAt);
       });
 
       test('overrides status only', () {

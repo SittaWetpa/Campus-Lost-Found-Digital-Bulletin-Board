@@ -12,7 +12,10 @@
 //   ✓ visitorAnswer (secret question answer) is saved to the request document
 //   ✓ visitorAnswer is null when no secret question exists on the post
 
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
+import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 import 'package:campus_lost_found/features/requests/domain/repositories/item_request_repository.dart';
 import 'package:campus_lost_found/features/requests/domain/usecases/submit_claim_request_use_case.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +23,8 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockItemRequestRepository extends Mock
     implements ItemRequestRepository {}
+
+class _MockItemRepository extends Mock implements ItemRepository {}
 
 // Minimal valid ItemRequest for mocktail fallback registration.
 final _fallbackRequest = ItemRequest(
@@ -34,8 +39,24 @@ final _fallbackRequest = ItemRequest(
   createdAt: DateTime(2024),
 );
 
+// A minimal Item with no secretQuestion — used as the happy-path stub return.
+Item _itemWithNoSecret(String itemId) => Item(
+      id: itemId,
+      title: 'Test Item',
+      description: 'desc',
+      category: ItemCategory.founder,
+      status: ItemStatus.active,
+      location: 'Building A',
+      contact: '0800000000',
+      imageUrls: const [],
+      userId: 'poster-uid',
+      createdAt: DateTime(2026),
+      occurredAt: DateTime(2026),
+    );
+
 void main() {
   late _MockItemRequestRepository repository;
+  late _MockItemRepository itemRepository;
   late SubmitClaimRequestUseCase useCase;
 
   // Params for a standard claim on a Founder Post that has a secret question.
@@ -62,7 +83,20 @@ void main() {
 
   setUp(() {
     repository = _MockItemRequestRepository();
-    useCase = SubmitClaimRequestUseCase(repository);
+    itemRepository = _MockItemRepository();
+    useCase = SubmitClaimRequestUseCase(repository, itemRepository);
+
+    // Happy-path stubs: policy allows + no secret question on either item.
+    when(() => repository.canResubmit(
+          itemId: any(named: 'itemId'),
+          requesterId: any(named: 'requesterId'),
+        )).thenAnswer((_) async => const ResubmitDecision.allowed());
+
+    when(() => itemRepository.watchItem('item-founder-001'))
+        .thenAnswer((_) => Stream.value(_itemWithNoSecret('item-founder-001')));
+    when(() => itemRepository.watchItem('item-founder-002'))
+        .thenAnswer((_) => Stream.value(_itemWithNoSecret('item-founder-002')));
+
     when(() => repository.submitRequest(any())).thenAnswer((inv) async {
       final req = inv.positionalArguments[0] as ItemRequest;
       return ItemRequest(

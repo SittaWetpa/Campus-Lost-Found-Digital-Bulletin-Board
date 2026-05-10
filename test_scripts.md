@@ -50,7 +50,10 @@ test/
 ├── widget/                       # Widget tests — use ProviderScope overrides
 │   ├── auth/router_redirect_test.dart           ← WBS 0.4 / 4.3
 │   ├── feed/feed_screen_test.dart               ← WBS 1.2
-│   └── post/post_form_screen_test.dart          ← WBS 1.4 / 2.10
+│   ├── post/post_form_screen_test.dart          ← WBS 1.4 / 2.10
+│   └── requests/                               ← WBS 2.10
+│       ├── claim_request_screen_test.dart
+│       └── found_report_screen_test.dart
 ├── features/                     # Per-feature widget tests
 │   ├── auth/presentation/screens/
 │   │   ├── login_screen_test.dart               ← WBS 0.3
@@ -118,7 +121,7 @@ Run: `flutter test test/features/`
 | 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
 | 1.3 / 2.4 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label, delete guard with pending requests) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 9 tests |
 | 1.3 | Request detail screen (verification card, action buttons by role/status) | `test/widget/feed/request_detail_screen_test.dart` | Widget | ✅ 5 tests |
-| 1.4 / 2.14 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2, Sensitive selector hides description/contact/SQ) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 13 tests (+ 1 skipped — see note) |
+| 1.4 / 2.10 / 2.14 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2 including Seeker/Sensitive/edit-mode edge cases, SQ field hidden on Seeker, Sensitive selector hides description/contact/SQ) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 19 tests (+ 1 skipped — see note) |
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
 | 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
@@ -159,7 +162,11 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.8 | Similar posts recommendation (debounced 500 ms title-prefix search) | `test/unit/post/get_similar_founder_posts_use_case_test.dart` | Unit | ✅ 7 tests |
 | 1.4 / 2.6 | CreateItemUseCase (post creation, sensitive-item null-handling) | `test/unit/post/create_item_use_case_test.dart` | Unit | ✅ 8 tests |
 | 2.9 | REST API | — | Manual | ⬜ not yet written |
-| 2.10 | Secret question (Photo Safety Case 2 in post form widget tests) | _see WBS 1.4 row above_ | Widget | ✅ covered |
+| 2.10 | Secret question (Photo Safety Cases 1+2 incl. Seeker/Sensitive/edit-mode edge cases, SQ hidden on Seeker) | _see WBS 1.4/2.10/2.14 row above_ | Widget | ✅ covered |
+| 2.10 | SecretAnswerRequiredFailure thrown when secretQuestion set + no answer; succeeds when no question; ResubmitNotAllowedFailure thrown before secret check | `test/unit/requests/submit_claim_request_wbs_2_10_test.dart` | Unit | ✅ 4 tests |
+| 2.10 | ItemRequest.editedAt field + copyWith (WBS 2.4 schema gap) | `test/unit/requests/item_request_entity_test.dart` (added 3 tests) | Unit | ✅ 3 tests |
+| 2.10 | ClaimRequestScreen — SQ block shown/hidden, empty-answer error, poster's answer not displayed, AlreadySubmitted screen | `test/widget/requests/claim_request_screen_test.dart` | Widget | ✅ 5 tests |
+| 2.10 | FoundReportScreen — no Secret Question block or answer field | `test/widget/requests/found_report_screen_test.dart` | Widget | ✅ 1 test |
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
 | 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
 | 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
@@ -221,15 +228,15 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
-| 1.0 Flutter UI | 78 | 78 |
-| 2.0 Data Layer | 238 + 9 (npm) | 247 |
+| 1.0 Flutter UI | 82 | 82 |
+| 2.0 Data Layer | 244 + 9 (npm) | 253 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **402 Dart + 9 npm** | **418 passing + 9 npm** |
+| **Total** | **419 Dart + 9 npm** | **435 passing + 9 npm** |
 
-> Phase totals add to 401; `flutter test` reports 417 passing + 4 skipped (manual integration placeholder + WBS 1.4-04 photo-cap). The ~16-test discrepancy is accounting drift — some files cover multiple WBS rows. **`flutter test` is the source of truth.**
+> Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-08 (WBS 2.18 — Admin Role & Admin Screens. New: `user_model_is_admin_test.dart`, `settings_screen_admin_test.dart`, `remote_config_viewer_screen_test.dart`, `rollback_plan_screen_test.dart`, `admin_route_guard_test.dart`, plus 4 new rules tests in `rules.test.js` and one new row in `user_remote_datasource_test.dart`. All 14 new admin tests pass. 11 pre-existing failures remain on develop — see PR description.)*
+*Last updated: 2026-05-09 (WBS 2.10 — Full test coverage pass. Domain: `submit_claim_request_wbs_2_10_test.dart` (4 tests), `item_request_entity_test.dart` +3 editedAt tests. Widget: `claim_request_screen_test.dart` (5 tests — SQ block shown, empty-answer error, answer not pre-filled, no SQ block, AlreadySubmitted screen), `found_report_screen_test.dart` (1 test), `post_form_screen_test.dart` +4 tests (SQ hidden on Seeker, Photo Safety Case 1 Seeker/Sensitive no-dialog, Case 1 edit-mode with existing SQ). All new tests pass.)*
