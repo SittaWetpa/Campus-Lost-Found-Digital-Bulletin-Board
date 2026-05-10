@@ -20,6 +20,8 @@ import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
+import 'package:campus_lost_found/core/domain/entities/feature_flags.dart';
+import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 
 // Stub that prevents OtpVerifyScreen's auto-send from hitting Cloud Functions.
 class _FakeOtpNotifier extends OtpNotifier {
@@ -50,6 +52,25 @@ class _FakeItemRepository implements ItemRepository {
   Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
   @override
   Future<String?> getItemSecretAnswer(String itemId) async => null;
+}
+
+// No-op FeatureFlagService so PostFormScreen and ItemDetailScreen don't
+// attempt to call FirebaseRemoteConfig.instance in widget tests.
+class _FakeFeatureFlags implements FeatureFlagService {
+  const _FakeFeatureFlags();
+
+  @override
+  bool get secretQuestionEnabled => true;
+  @override
+  bool get sensitiveItemEnabled => true;
+  @override
+  String get securityOfficeContact => '02-470-9999';
+  @override
+  Future<void> fetchAndActivate() async {}
+  @override
+  DateTime get lastFetchTime => DateTime.fromMillisecondsSinceEpoch(0);
+  @override
+  FeatureFlags get currentFlags => FeatureFlags.defaults;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +231,7 @@ void main() {
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
           itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
+          featureFlagsProvider.overrideWith((_) => const _FakeFeatureFlags()),
         ],
       );
     });
@@ -282,6 +304,7 @@ void main() {
           currentUserProvider
               .overrideWith((ref) => Stream.value(_verifiedUser)),
           itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
+          featureFlagsProvider.overrideWith((_) => const _FakeFeatureFlags()),
         ],
       );
     });

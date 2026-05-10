@@ -5,6 +5,7 @@
 
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
+import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
@@ -61,8 +62,9 @@ Widget _buildForm(FeatureFlagService flagService) {
   return ProviderScope(
     overrides: [
       featureFlagsProvider.overrideWithValue(flagService),
-      // Prevent Firebase Auth stream from being accessed.
+      // Prevent Firebase Auth / Firestore from being accessed.
       authStateProvider.overrideWith((_) => Stream.value(null)),
+      currentUserProvider.overrideWith((_) => Stream.value(null)),
       // Notifiers whose build() returns a constant — no Firebase touch.
       postRepositoryProvider.overrideWith((_) => _MockPostRepository()),
       itemRepositoryProvider.overrideWith((_) => _FakeItemRepository()),
