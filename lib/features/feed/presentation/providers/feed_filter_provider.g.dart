@@ -23,9 +23,8 @@ final feedFilterNotifierProvider =
 );
 
 typedef _$FeedFilterNotifier = AutoDisposeNotifier<FeedFilter>;
-
 String _$searchQueryNotifierHash() =>
-    r'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
+    r'f8d0fbf423afa8846f0efc14b3b5204dbe820b23';
 
 /// See also [SearchQueryNotifier].
 @ProviderFor(SearchQueryNotifier)
