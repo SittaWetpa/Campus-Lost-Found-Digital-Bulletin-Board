@@ -156,7 +156,9 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.4.1 | ResubmitBanner widget — attempts-remaining, permanent-block, cooldown, hidden when allowed | `test/widget/feed/item_detail_resubmit_banner_test.dart` | Widget | ✅ 4 tests |
 | 2.4.1 | End-to-end policy enforcement (Cloud Function trigger + UI) — manual emulator run | `test/integration/wbs_2_4_1_resubmit_test.dart` | Integration | ⬜ manual placeholder |
 | 2.4.1 | Firestore rules contract — basic create still allowed, policy_audit denied | `test/firestore_rules/rules.test.js` | Rules | ✅ 4 tests (in-file) |
-| 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
+| 2.5 | Datasource raw-string ops (setThemeMode/getThemeMode round-trip, fresh-install null, setLastViewedCategory null removes key, round-trip) | `test/features/profile/data/datasources/preference_local_datasource_test.dart` | Unit | ✅ 4 tests |
+| 2.5 | Repository enum conversion (stored 'dark' → AppThemeMode.dark; no stored value → AppThemeMode.system) | `test/features/profile/data/repositories/preference_repository_impl_test.dart` | Unit | ✅ 2 tests |
+| 2.5 | PreferenceService startup loader (stored value returned; missing key → 'system' default) | `test/core/services/preference_service_test.dart` | Unit | ✅ 2 tests |
 | 2.6 | Post edit (UpdateItemUseCase + form edit-mode flow) | `test/unit/post/update_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.8 | Similar posts recommendation (debounced 500 ms title-prefix search) | `test/unit/post/get_similar_founder_posts_use_case_test.dart` | Unit | ✅ 7 tests |
@@ -232,14 +234,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
-| 2.0 Data Layer | 270 + 19 (npm) | 289 |
+| 2.0 Data Layer | 278 + 19 (npm) | 297 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **445 Dart + 19 npm** | **461 passing + 19 npm** |
+| **Total** | **453 Dart + 19 npm** | **469 passing + 19 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-10 (WBS 2.9 — REST API data layer tests added. Three new Dart unit test files (26 tests total): `api_item_listing_model_test.dart` (11 — JSON parsing, sensitive masking, occurredAt fallback, nullable itemCategory), `fetch_item_listings_use_case_test.dart` (6 — delegation, all query params), `external_api_repository_impl_test.dart` (9 — entity mapping, ServerFailure wrapping for 401/400/unexpected). Updated `items_api_test.js` from 5 → 10 tests: fixed sensitive-item assertions (empty string, not undefined) to match updated Cloud Function; added occurredAt/itemCategory field assertions and category/keyword filter tests. All Dart tests pass.)*
+*Last updated: 2026-05-10 (WBS 2.5 — Local Storage / Preferences. 8 new Dart unit tests across 3 files: `preference_local_datasource_test.dart` (4 — raw-string round-trips, null-removes-key), `preference_repository_impl_test.dart` (2 — enum conversion dark/system), `preference_service_test.dart` (2 — startup loader stored value and default). Extended `UserPreferences` with `AppThemeMode` enum and `lastViewedCategory`; added `setThemeMode`/`setLastViewedCategory` to repository, datasource, usecases, and notifier; created `PreferenceService` in `core/services/`. All Dart tests pass.)*

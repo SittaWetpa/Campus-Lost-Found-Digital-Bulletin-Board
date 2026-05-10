@@ -13,6 +13,7 @@ import 'core/observability/app_logger.dart';
 import 'core/observability/console_logger_impl.dart';
 import 'core/observability/crashlytics_logger_impl.dart';
 import 'core/services/feature_flag_service.dart';
+import 'core/services/preference_service.dart';
 import 'app.dart';
 
 Future<void> main() async {
@@ -48,6 +49,9 @@ Future<void> main() async {
           .setCrashlyticsCollectionEnabled(kReleaseMode);
     }
 
+    // Preferences (WBS 2.5) — load before first frame so theme is ready
+    final prefService = await PreferenceService.load();
+
     // Feature flags (WBS 2.13) — fetch before first frame; failure is silent
     final flagService = FeatureFlagService(FirebaseRemoteConfig.instance);
     await flagService.fetchAndActivate();
@@ -67,6 +71,7 @@ Future<void> main() async {
     runApp(ProviderScope(
       overrides: [
         featureFlagsProvider.overrideWithValue(flagService),
+        preferenceServiceProvider.overrideWithValue(prefService),
       ],
       child: const CampusLostFoundApp(),
     ));
