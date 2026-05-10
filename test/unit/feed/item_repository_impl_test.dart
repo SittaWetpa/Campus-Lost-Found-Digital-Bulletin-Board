@@ -3,12 +3,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
+import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
+import 'package:campus_lost_found/features/feed/data/datasources/item_local_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/models/item_model.dart';
 import 'package:campus_lost_found/features/feed/data/repositories/item_repository_impl.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 
 class _MockDatasource extends Mock implements ItemRemoteDatasource {}
+
+class _MockLocalDatasource extends Mock implements ItemLocalDatasource {}
+
+class _MockSyncMetadata extends Mock implements SyncMetadataDatasource {}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -37,12 +43,30 @@ ItemModel _makeModel({
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_makeModel());
+    registerFallbackValue(<ItemModel>[]);
+    registerFallbackValue(DateTime(2026));
+  });
+
   late _MockDatasource mockDatasource;
+  late _MockLocalDatasource mockLocal;
+  late _MockSyncMetadata mockSync;
   late ItemRepositoryImpl repo;
 
   setUp(() {
     mockDatasource = _MockDatasource();
-    repo = ItemRepositoryImpl(mockDatasource);
+    mockLocal = _MockLocalDatasource();
+    mockSync = _MockSyncMetadata();
+
+    when(() => mockLocal.getCachedFeed()).thenReturn([]);
+    when(() => mockLocal.getCachedItem(any())).thenReturn(null);
+    when(() => mockLocal.cacheFeed(any())).thenAnswer((_) async {});
+    when(() => mockLocal.cacheItem(any())).thenAnswer((_) async {});
+    when(() => mockSync.setLastSyncedAt(any(), any()))
+        .thenAnswer((_) async {});
+
+    repo = ItemRepositoryImpl(mockDatasource, mockLocal, mockSync);
   });
 
   // ── watchFeed() ────────────────────────────────────────────────────────────

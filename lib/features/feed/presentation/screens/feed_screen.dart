@@ -7,6 +7,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_filter_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
+import 'package:campus_lost_found/shared/widgets/offline_banner.dart';
 
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
@@ -27,6 +28,7 @@ class FeedScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const OfflineBanner(),
             _Header(firstName: firstName, itemCount: itemCount),
             _SearchBar(),
             _FilterTabs(current: filter),
