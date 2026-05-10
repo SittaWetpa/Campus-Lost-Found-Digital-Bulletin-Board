@@ -22,6 +22,8 @@ class ItemModel {
   final String? secretAnswer;
   final String? posterName;
   final String? posterAvatarUrl;
+  // WBS 2.8 — taxonomy bucket stored as the enum's id string
+  final String? itemCategory;
 
   const ItemModel({
     required this.id,
@@ -44,6 +46,7 @@ class ItemModel {
     this.secretAnswer,
     this.posterName,
     this.posterAvatarUrl,
+    this.itemCategory,
   });
 
   factory ItemModel.fromMap(String id, Map<String, dynamic> data) => ItemModel(
@@ -74,6 +77,7 @@ class ItemModel {
         secretAnswer: data['secretAnswer'] as String?,
         posterName: data['posterName'] as String?,
         posterAvatarUrl: data['posterAvatarUrl'] as String?,
+        itemCategory: data['itemCategory'] as String?,
       );
 
   factory ItemModel.fromFirestore(DocumentSnapshot doc) =>
@@ -100,6 +104,7 @@ class ItemModel {
         secretAnswer: item.secretAnswer,
         posterName: item.posterName,
         posterAvatarUrl: item.posterAvatarUrl,
+        itemCategory: item.itemTaxonomy?.id,
       );
 
   /// Returns the mutable fields to write to Firestore.
@@ -117,6 +122,8 @@ class ItemModel {
         'source': source,
         'isSensitive': isSensitive,
         'occurredAt': Timestamp.fromDate(occurredAt),
+        // WBS 2.8 — always write itemCategory; fall back to 'other' for legacy
+        'itemCategory': itemCategory ?? 'other',
         if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
@@ -148,6 +155,9 @@ class ItemModel {
         secretAnswer: secretAnswer,
         posterName: posterName,
         posterAvatarUrl: posterAvatarUrl,
+        // Lazy backfill: items written before WBS 2.8 have no itemCategory.
+        // Default to 'other' so the entity is always non-null after a read.
+        itemTaxonomy: ItemTaxonomy.fromId(itemCategory ?? 'other'),
       );
 
   Map<String, dynamic> toHiveMap() => {

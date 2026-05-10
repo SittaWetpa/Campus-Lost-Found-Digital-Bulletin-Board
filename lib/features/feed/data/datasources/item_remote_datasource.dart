@@ -7,7 +7,15 @@ abstract interface class ItemRemoteDatasource {
   Stream<List<ItemModel>> watchMyItems(String userId);
   Future<ItemModel?> getItemById(String itemId);
   Future<List<ItemModel>> searchByTitle(String keyword);
-  Future<List<ItemModel>> findSimilarFounderPosts(String keyword);
+  /// Returns up to [limit] active, non-sensitive Founder posts in [categoryId],
+  /// ordered by createdAt descending. Used by the Similar Posts panel (WBS 2.8).
+  Future<List<ItemModel>> getRecentInCategory({
+    required String categoryId,
+    int limit = 5,
+  });
+
+  /// Fire-and-forget: writes itemCategory='other' on legacy docs that lack it.
+  void backfillItemCategory(String itemId);
   Future<String> addItem(Map<String, dynamic> data);
   Future<void> updateItem(String itemId, Map<String, dynamic> data);
   Future<void> deleteItem(String itemId);
@@ -75,16 +83,25 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
   }
 
   @override
-  Future<List<ItemModel>> findSimilarFounderPosts(String keyword) async {
-    final end = keyword + String.fromCharCode(0xF8FF);
+  Future<List<ItemModel>> getRecentInCategory({
+    required String categoryId,
+    int limit = 5,
+  }) async {
     final snapshot = await _items
-        .where('status', isEqualTo: 'active')
         .where('category', isEqualTo: 'founder')
-        .where('title', isGreaterThanOrEqualTo: keyword)
-        .where('title', isLessThan: end)
-        .limit(3)
+        .where('itemCategory', isEqualTo: categoryId)
+        .where('isSensitive', isEqualTo: false)
+        .where('status', isEqualTo: 'active')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .get();
     return snapshot.docs.map(ItemModel.fromFirestore).toList();
+  }
+
+  @override
+  void backfillItemCategory(String itemId) {
+    // Fire-and-forget: silently patch legacy docs missing itemCategory.
+    _items.doc(itemId).update({'itemCategory': 'other'}).ignore();
   }
 
   @override

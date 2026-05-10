@@ -41,6 +41,17 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "expiresAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category",     "order": "ASCENDING" },
+        { "fieldPath": "itemCategory", "order": "ASCENDING" },
+        { "fieldPath": "isSensitive",  "order": "ASCENDING" },
+        { "fieldPath": "status",       "order": "ASCENDING" },
+        { "fieldPath": "createdAt",    "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

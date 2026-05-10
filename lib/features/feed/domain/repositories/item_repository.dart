@@ -13,8 +13,12 @@ abstract interface class ItemRepository {
   /// Prefix-range keyword search on title, Active items only (WBS 2.3).
   Future<List<Item>> searchItems(String keyword);
 
-  /// Active Founder Posts matching keyword — Similar Posts panel, max 3 (WBS 2.8).
-  Future<List<Item>> getSimilarFounderPosts(String keyword);
+  /// Active, non-sensitive Founder Posts in [categoryId] — Similar Posts panel,
+  /// max [limit] results ordered by createdAt desc (WBS 2.8).
+  Future<List<Item>> getRecentInCategory({
+    required String categoryId,
+    int limit = 5,
+  });
 
   /// Stream of all items owned by userId — My Posts Screen (WBS 1.7).
   Stream<List<Item>> watchMyItems(String userId);
