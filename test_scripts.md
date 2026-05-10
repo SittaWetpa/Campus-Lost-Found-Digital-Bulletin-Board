@@ -161,7 +161,12 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.5 | PreferenceService startup loader (stored value returned; missing key → 'system' default) | `test/core/services/preference_service_test.dart` | Unit | ✅ 2 tests |
 | 2.6 | Post edit (UpdateItemUseCase + form edit-mode flow) | `test/unit/post/update_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |
-| 2.8 | Similar posts recommendation (debounced 500 ms title-prefix search) | `test/unit/post/get_similar_founder_posts_use_case_test.dart` | Unit | ✅ 7 tests |
+| 2.8 | `getRecentInCategory` Firestore query (correct filters, empty result, sensitive excluded) | `test/features/feed/data/repositories/item_repository_impl_test.dart` (3 added) | Unit | ✅ 3 tests |
+| 2.8 | `ItemModel.fromMap` / `toFirestore` — `itemCategory` round-trip + legacy backfill default | `test/features/feed/data/models/item_model_test.dart` (4 added) | Unit | ✅ 4 tests |
+| 2.8 | `CategoryPicker` widget — validation error, onChanged fires, all 8 tiles rendered | `test/features/post/presentation/widgets/category_picker_test.dart` | Widget | ✅ 5 tests |
+| 2.8 | `SimilarPostsPanel` widget — empty/loading/error hidden, items rendered, header count | `test/features/post/presentation/widgets/similar_posts_panel_test.dart` | Widget | ✅ 5 tests |
+| 2.8 | `SimilarItemsNotifier` — initial state, load calls repo with correct id, clear resets, returns items | `test/features/post/presentation/providers/similar_items_provider_test.dart` | Unit | ✅ 4 tests |
+| 2.8 | Firestore rules — `itemCategory` required on create; invalid value denied; valid values allowed | `test/firestore_rules/item_category.test.js` | Node.js | ✅ 5 tests (requires emulator) |
 | 1.4 / 2.6 | CreateItemUseCase (post creation, sensitive-item null-handling) | `test/unit/post/create_item_use_case_test.dart` | Unit | ✅ 8 tests |
 | 2.9 | REST API — `ApiItemListingModel` JSON parsing (full fields, sensitive masking, occurredAt fallback, nullable itemCategory) | `test/features/feed/data/models/api_item_listing_model_test.dart` | Unit | ✅ 11 tests |
 | 2.9 | REST API — `FetchItemListingsUseCase` delegation (category, keyword, limit, empty list, exception propagation) | `test/features/feed/domain/usecases/fetch_item_listings_use_case_test.dart` | Unit | ✅ 6 tests |
@@ -234,14 +239,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
-| 2.0 Data Layer | 278 + 19 (npm) | 297 |
+| 2.0 Data Layer | 292 + 24 (npm) | 316 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **453 Dart + 19 npm** | **469 passing + 19 npm** |
+| **Total** | **466 Dart + 24 npm** | **490 passing + 24 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-10 (WBS 2.5 — Local Storage / Preferences. 8 new Dart unit tests across 3 files: `preference_local_datasource_test.dart` (4 — raw-string round-trips, null-removes-key), `preference_repository_impl_test.dart` (2 — enum conversion dark/system), `preference_service_test.dart` (2 — startup loader stored value and default). Extended `UserPreferences` with `AppThemeMode` enum and `lastViewedCategory`; added `setThemeMode`/`setLastViewedCategory` to repository, datasource, usecases, and notifier; created `PreferenceService` in `core/services/`. All Dart tests pass.)*
+*Last updated: 2026-05-10 (WBS 2.8 — Similar Posts Recommendation (category-based). Replaced old title-prefix query with `getRecentInCategory`. New files: `ItemTaxonomy` enum (8 values + metadata), `CategoryPicker` widget (4×2 icon grid), `SimilarPostsPanel` widget (category-based), `SimilarItemsNotifier` provider, `similar_items_provider.dart`. Updated: `Item` entity, `ItemModel`, `ItemRemoteDatasource`, `ItemRepository`, `ItemRepositoryImpl`, `PostFormScreen` (full UX overhaul — quick-pick chips, adaptive placeholders, photo row redesign, sensitive explanation box, photo safety hint), `firestore.indexes.json`, `firestore.rules`. Deleted: `GetSimilarFounderPostsUseCase`, `SimilarPostsNotifier`, old test file. Added 21 new Dart tests + 5 npm rules tests across 5 new/updated test files. Old WBS 2.8 test deleted (use case removed). All Dart tests pass.)*

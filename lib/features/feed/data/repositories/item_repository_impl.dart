@@ -31,7 +31,12 @@ class ItemRepositoryImpl implements ItemRepository {
   Future<Item?> getItemById(String itemId) async {
     try {
       final model = await _datasource.getItemById(itemId);
-      return model?.toEntity();
+      if (model == null) return null;
+      // Lazy backfill: patch legacy docs missing itemCategory (fire-and-forget).
+      if (model.itemCategory == null) {
+        _datasource.backfillItemCategory(itemId);
+      }
+      return model.toEntity();
     } on FirebaseException catch (e) {
       throw ItemFailure(e.message ?? 'Failed to fetch item.');
     } catch (_) {
@@ -53,9 +58,15 @@ class ItemRepositoryImpl implements ItemRepository {
   }
 
   @override
-  Future<List<Item>> getSimilarFounderPosts(String keyword) async {
+  Future<List<Item>> getRecentInCategory({
+    required String categoryId,
+    int limit = 5,
+  }) async {
     try {
-      final models = await _datasource.findSimilarFounderPosts(keyword);
+      final models = await _datasource.getRecentInCategory(
+        categoryId: categoryId,
+        limit: limit,
+      );
       return models.map((m) => m.toEntity()).toList();
     } on FirebaseException catch (e) {
       throw ItemFailure(e.message ?? 'Failed to load similar posts.');

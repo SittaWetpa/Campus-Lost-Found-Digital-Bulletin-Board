@@ -159,27 +159,32 @@ void main() {
     });
   });
 
-  // ── getSimilarFounderPosts() ───────────────────────────────────────────────
+  // ── getRecentInCategory() — WBS 2.8 ──────────────────────────────────────
 
-  group('getSimilarFounderPosts() — WBS 1.2', () {
+  group('getRecentInCategory() — WBS 2.8', () {
     test('returns mapped entities on success', () async {
-      final model = _makeModel(id: 'sim-001', category: 'founder');
-      when(() => mockDatasource.findSimilarFounderPosts('wallet'))
-          .thenAnswer((_) async => [model]);
+      final model = _makeModel(id: 'cat-001', category: 'founder');
+      when(() => mockDatasource.getRecentInCategory(
+            categoryId: 'electronics',
+            limit: any(named: 'limit'),
+          )).thenAnswer((_) async => [model]);
 
-      final items = await repo.getSimilarFounderPosts('wallet');
+      final items = await repo.getRecentInCategory(categoryId: 'electronics');
 
       expect(items, hasLength(1));
       expect(items.first.category, ItemCategory.founder);
     });
 
     test('wraps FirebaseException in ItemFailure', () async {
-      when(() => mockDatasource.findSimilarFounderPosts(any())).thenThrow(
+      when(() => mockDatasource.getRecentInCategory(
+            categoryId: any(named: 'categoryId'),
+            limit: any(named: 'limit'),
+          )).thenThrow(
         FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
       );
 
       expect(
-        () => repo.getSimilarFounderPosts('keyword'),
+        () => repo.getRecentInCategory(categoryId: 'electronics'),
         throwsA(isA<ItemFailure>()),
       );
     });

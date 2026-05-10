@@ -49,7 +49,7 @@ class _FakeItemRepository implements ItemRepository {
   @override
   Future<List<Item>> searchItems(String keyword) async => const [];
   @override
-  Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
+  Future<List<Item>> getRecentInCategory({required String categoryId, int limit = 5}) async => [];
   @override
   Future<String?> getItemSecretAnswer(String itemId) async => null;
 }

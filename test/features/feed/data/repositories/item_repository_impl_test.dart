@@ -3,6 +3,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/repositories/item_repository_impl.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
@@ -96,6 +97,93 @@ void main() {
           reason: 'Item "${item.title}" has status "${item.status.name}" — only active expected',
         );
       }
+    });
+  });
+
+  group('ItemRepositoryImpl.getRecentInCategory() — WBS 2.8', () {
+    setUp(() async {
+      // Seed category-tagged items for WBS 2.8 tests.
+      await fakeFirestore.collection('items').add({
+        'title': 'Found iPhone 14',
+        'description': 'Black iPhone found near cafeteria',
+        'category': 'founder',
+        'itemCategory': 'electronics',
+        'status': 'active',
+        'isSensitive': false,
+        'location': 'Cafeteria',
+        'contact': '081-200-0001',
+        'imageUrls': <String>[],
+        'occurredAt': Timestamp.fromDate(DateTime(2026, 5, 1, 10, 0)),
+        'userId': 'user-e',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1, 10, 0)),
+      });
+      await fakeFirestore.collection('items').add({
+        'title': 'Found AirPods case',
+        'description': 'White AirPods near LIB-1',
+        'category': 'founder',
+        'itemCategory': 'electronics',
+        'status': 'active',
+        'isSensitive': false,
+        'location': 'Library',
+        'contact': '081-200-0002',
+        'imageUrls': <String>[],
+        'occurredAt': Timestamp.fromDate(DateTime(2026, 5, 2, 9, 0)),
+        'userId': 'user-f',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 5, 2, 9, 0)),
+      });
+      // Sensitive electronics post — must be excluded.
+      await fakeFirestore.collection('items').add({
+        'title': 'Found sensitive laptop',
+        'description': 'Sensitive',
+        'category': 'founder',
+        'itemCategory': 'electronics',
+        'status': 'active',
+        'isSensitive': true,
+        'location': 'Gate',
+        'contact': '',
+        'imageUrls': <String>[],
+        'occurredAt': Timestamp.fromDate(DateTime(2026, 5, 3, 8, 0)),
+        'userId': 'user-g',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 5, 3, 8, 0)),
+        'expiresAt': Timestamp.fromDate(DateTime(2026, 5, 17, 8, 0)),
+      });
+    });
+
+    test('04 getRecentInCategory returns active non-sensitive Founder posts in category',
+        () async {
+      final results = await repository.getRecentInCategory(
+        categoryId: 'electronics',
+      );
+
+      expect(results, isNotEmpty);
+      for (final item in results) {
+        expect(item.category, equals(ItemCategory.founder));
+        expect(item.isSensitive, isFalse);
+        expect(item.status.name, equals('active'));
+        expect(item.itemTaxonomy?.id, equals('electronics'));
+      }
+    });
+
+    test('05 getRecentInCategory excludes sensitive items even when category matches',
+        () async {
+      final results = await repository.getRecentInCategory(
+        categoryId: 'electronics',
+      );
+
+      expect(
+        results.any((i) => i.isSensitive),
+        isFalse,
+        reason: 'Sensitive items must never appear in similar posts panel',
+      );
+    });
+
+    test('06 getRecentInCategory with no matching docs returns empty list',
+        () async {
+      final results = await repository.getRecentInCategory(
+        categoryId: 'clothing',
+      );
+
+      expect(results, isEmpty);
     });
   });
 }

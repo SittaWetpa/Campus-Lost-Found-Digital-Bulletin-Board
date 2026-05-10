@@ -168,6 +168,7 @@ describe('WBS 2.1 Test case 3 — Authenticated reads on items are allowed', () 
         title: 'Lost keys',
         description: 'Car keys with blue keychain',
         category: 'seeker',
+        itemCategory: 'keys', // WBS 2.8: required field
         status: 'active',
         location: 'Parking B',
         contact: '0823456789',

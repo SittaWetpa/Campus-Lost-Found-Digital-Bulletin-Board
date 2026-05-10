@@ -1,26 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'edit_post_notifier.dart';
+part of 'similar_items_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$editPostNotifierHash() => r'dc494df997a25de8a4f05be3c8ae0a6fd0cecd7e';
+String _$similarItemsNotifierHash() =>
+    r'b0da2b938206fee3f61d224ab5d1d45c01c44243';
 
-/// See also [EditPostNotifier].
-@ProviderFor(EditPostNotifier)
-final editPostNotifierProvider =
-    AutoDisposeNotifierProvider<EditPostNotifier, AsyncValue<void>>.internal(
-  EditPostNotifier.new,
-  name: r'editPostNotifierProvider',
+/// See also [SimilarItemsNotifier].
+@ProviderFor(SimilarItemsNotifier)
+final similarItemsNotifierProvider = AutoDisposeNotifierProvider<
+    SimilarItemsNotifier, AsyncValue<List<Item>>>.internal(
+  SimilarItemsNotifier.new,
+  name: r'similarItemsNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$editPostNotifierHash,
+      : _$similarItemsNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$EditPostNotifier = AutoDisposeNotifier<AsyncValue<void>>;
+typedef _$SimilarItemsNotifier = AutoDisposeNotifier<AsyncValue<List<Item>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
