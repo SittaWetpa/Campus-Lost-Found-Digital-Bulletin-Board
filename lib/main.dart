@@ -34,8 +34,12 @@ Future<void> main() async {
 
     // Hive (WBS 2.11)
     await Hive.initFlutter();
-    // Register @HiveType adapters here once they're generated:
-    // Hive.registerAdapter(ItemAdapter());
+    await Future.wait([
+      Hive.openBox<Map>('items_box'),
+      Hive.openBox<Map>('user_profile_box'),
+      Hive.openBox<dynamic>('sync_metadata_box'),
+    ]);
+    // No adapter registration needed — map-based storage
 
     // Crashlytics (WBS 2.12) – mobile only
     if (!kIsWeb) {

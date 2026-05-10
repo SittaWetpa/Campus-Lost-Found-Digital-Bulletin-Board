@@ -22,7 +22,24 @@ final userDatasourceProvider =
 );
 
 typedef UserDatasourceRef = AutoDisposeProviderRef<UserRemoteDatasource>;
-String _$userRepositoryHash() => r'59b1c71fca47ffec56376199eb28a4ed84a09f7c';
+String _$userLocalDatasourceHash() =>
+    r'4979508096bb9f3ef48cf8909f89ef0b7b25ebeb';
+
+/// See also [userLocalDatasource].
+@ProviderFor(userLocalDatasource)
+final userLocalDatasourceProvider =
+    AutoDisposeProvider<UserLocalDatasource>.internal(
+  userLocalDatasource,
+  name: r'userLocalDatasourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$userLocalDatasourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef UserLocalDatasourceRef = AutoDisposeProviderRef<UserLocalDatasource>;
+String _$userRepositoryHash() => r'c2ffcc70c6d0c0cb48e8a6290bcbc45ccee7ba74';
 
 /// See also [userRepository].
 @ProviderFor(userRepository)

@@ -9,12 +9,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:campus_lost_found/core/errors/failures.dart';
+import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
+import 'package:campus_lost_found/features/auth/data/datasources/user_local_datasource.dart';
 import 'package:campus_lost_found/features/auth/data/datasources/user_remote_datasource.dart';
 import 'package:campus_lost_found/features/auth/data/models/user_model.dart';
 import 'package:campus_lost_found/features/auth/data/repositories/user_repository_impl.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 
 class _MockUserDatasource extends Mock implements UserRemoteDatasource {}
+
+class _MockUserLocalDatasource extends Mock implements UserLocalDatasource {}
+
+class _MockSyncMetadata extends Mock implements SyncMetadataDatasource {}
 
 class _FakeUserModel extends Fake implements UserModel {}
 
@@ -34,11 +40,21 @@ void main() {
   });
 
   late _MockUserDatasource datasource;
+  late _MockUserLocalDatasource localDatasource;
+  late _MockSyncMetadata syncMetadata;
   late UserRepositoryImpl sut;
 
   setUp(() {
     datasource = _MockUserDatasource();
-    sut = UserRepositoryImpl(datasource);
+    localDatasource = _MockUserLocalDatasource();
+    syncMetadata = _MockSyncMetadata();
+
+    when(() => localDatasource.getCachedUser(any())).thenReturn(null);
+    when(() => localDatasource.cacheUser(any())).thenAnswer((_) async {});
+    when(() => syncMetadata.setLastSyncedAt(any(), any()))
+        .thenAnswer((_) async {});
+
+    sut = UserRepositoryImpl(datasource, localDatasource, syncMetadata);
   });
 
   group('UserRepositoryImpl — WBS 0.2', () {

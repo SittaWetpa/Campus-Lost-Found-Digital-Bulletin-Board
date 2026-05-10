@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive/hive.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
+import 'package:campus_lost_found/features/auth/data/datasources/user_local_datasource.dart';
 import 'package:campus_lost_found/features/auth/data/datasources/user_remote_datasource.dart';
 import 'package:campus_lost_found/features/auth/data/repositories/user_repository_impl.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
@@ -14,8 +17,17 @@ UserRemoteDatasource userDatasource(UserDatasourceRef ref) {
 }
 
 @riverpod
+UserLocalDatasource userLocalDatasource(UserLocalDatasourceRef ref) {
+  return HiveUserLocalDatasource(Hive.box<Map>('user_profile_box'));
+}
+
+@riverpod
 UserRepository userRepository(UserRepositoryRef ref) {
-  return UserRepositoryImpl(ref.watch(userDatasourceProvider));
+  return UserRepositoryImpl(
+    ref.watch(userDatasourceProvider),
+    ref.watch(userLocalDatasourceProvider),
+    ref.watch(syncMetadataProvider),
+  );
 }
 
 @riverpod
