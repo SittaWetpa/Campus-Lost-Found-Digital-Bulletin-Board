@@ -3,14 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // True iff the caller's user document has isAdmin == true.
-    // Granted manually via Firebase Console — see ADMIN_ROLE.md (WBS 2.18).
-    function isAdmin() {
-      return request.auth != null
-             && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
     // Users: any authenticated user may read (needed to display poster names);
     // writes are still restricted to the owner only.
     match /users/{userId} {
