@@ -125,7 +125,7 @@ Run: `flutter test test/features/`
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
 | 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
-| 1.7 | My posts screen | — | Widget | ⬜ not yet written |
+| 1.7 | My posts screen | `test/features/feed/presentation/screens/my_posts_screen_test.dart` | Widget | ✅ 3 tests |
 | 1.8 | Edit profile & avatar screen | `test/features/profile/presentation/screens/edit_profile_screen_test.dart` | Widget | ✅ 4 tests |
 
 ---
