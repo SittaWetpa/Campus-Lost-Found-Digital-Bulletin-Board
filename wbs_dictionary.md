@@ -1169,7 +1169,7 @@ Both cases use the same `PhotoSafetyWarningDialog` widget. The guard applies on 
 - Widget test: no photos on form → fill Secret Question → verify no dialog triggered
 ---
 
-### 2.11 Hive Offline-First Cache
+###  2.11Hive Offline-First Cache
 
 | Field | Detail |
 |---|---|

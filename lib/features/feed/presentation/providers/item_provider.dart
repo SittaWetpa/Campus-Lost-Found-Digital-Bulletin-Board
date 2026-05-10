@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive/hive.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
+import 'package:campus_lost_found/features/feed/data/datasources/item_local_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/repositories/item_repository_impl.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
@@ -13,8 +16,17 @@ ItemRemoteDatasource itemDatasource(ItemDatasourceRef ref) {
 }
 
 @riverpod
+ItemLocalDatasource itemLocalDatasource(ItemLocalDatasourceRef ref) {
+  return HiveItemLocalDatasource(Hive.box<Map>('items_box'));
+}
+
+@riverpod
 ItemRepository itemRepository(ItemRepositoryRef ref) {
-  return ItemRepositoryImpl(ref.watch(itemDatasourceProvider));
+  return ItemRepositoryImpl(
+    ref.watch(itemDatasourceProvider),
+    ref.watch(itemLocalDatasourceProvider),
+    ref.watch(syncMetadataProvider),
+  );
 }
 
 @riverpod

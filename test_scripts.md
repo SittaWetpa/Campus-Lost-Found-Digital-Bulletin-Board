@@ -172,7 +172,12 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.10 | ItemRequest.editedAt field + copyWith (WBS 2.4 schema gap) | `test/unit/requests/item_request_entity_test.dart` (added 3 tests) | Unit | ✅ 3 tests |
 | 2.10 | ClaimRequestScreen — SQ block shown/hidden, empty-answer error, poster's answer not displayed, AlreadySubmitted screen | `test/widget/requests/claim_request_screen_test.dart` | Widget | ✅ 5 tests |
 | 2.10 | FoundReportScreen — no Secret Question block or answer field | `test/widget/requests/found_report_screen_test.dart` | Widget | ✅ 1 test |
-| 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
+| 2.11 | Hive item local datasource (cold start, cacheFeed order, replace, cacheItem upsert, remove, full round-trip, nullable fields) | `test/features/feed/data/datasources/item_local_datasource_test.dart` | Unit | ✅ 7 tests |
+| 2.11 | Hive sync metadata datasource (cold start, round-trip, independent keys, overwrite) | `test/core/services/sync_metadata_datasource_test.dart` | Unit | ✅ 4 tests |
+| 2.11 | Hive user local datasource (cold start, cache+retrieve, upsert, round-trip all fields, nullable fields) | `test/features/auth/data/datasources/user_local_datasource_test.dart` | Unit | ✅ 5 tests |
+| 2.11 | ItemRepositoryImpl offline — watchFeed fallback + write-through + error propagation; getItemById cache fallback; watchItem fallback + write-through + error propagation; watchMyItems fallback + write-through + error propagation | `test/features/feed/data/repositories/item_repository_impl_offline_test.dart` | Unit | ✅ 11 tests |
+| 2.11 | UserRepositoryImpl offline — watchUser cache seed + write-through + error propagation; getUserById cache fallback + empty miss | `test/features/auth/data/repositories/user_repository_impl_offline_test.dart` | Unit | ✅ 5 tests |
+| 2.11 | Offline banner widget — hidden when online, visible when offline, "No cached data" label, relative time display | `test/shared/widgets/offline_banner_test.dart` | Widget | ✅ 4 tests |
 | 2.12 | Crashlytics & logging — AppLogger.error() routes to log with level=error; AppLogger.info() routes to log with level=info | `test/unit/observability/app_logger_test.dart` | Unit | ✅ 2 tests |
 | 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
 | 2.13 | PostFormScreen — secretQuestionEnabled flag hides/shows SECRET QUESTION section | `test/features/post/presentation/screens/post_form_screen_test.dart` | Widget | ✅ 2 tests |
@@ -234,14 +239,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
-| 2.0 Data Layer | 278 + 19 (npm) | 297 |
+| 2.0 Data Layer | 314 + 19 (npm) | 333 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **453 Dart + 19 npm** | **469 passing + 19 npm** |
+| **Total** | **489 Dart + 19 npm** | **505 passing + 19 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-10 (WBS 2.5 — Local Storage / Preferences. 8 new Dart unit tests across 3 files: `preference_local_datasource_test.dart` (4 — raw-string round-trips, null-removes-key), `preference_repository_impl_test.dart` (2 — enum conversion dark/system), `preference_service_test.dart` (2 — startup loader stored value and default). Extended `UserPreferences` with `AppThemeMode` enum and `lastViewedCategory`; added `setThemeMode`/`setLastViewedCategory` to repository, datasource, usecases, and notifier; created `PreferenceService` in `core/services/`. All Dart tests pass.)*
+*Last updated: 2026-05-10 (WBS 2.11 — Hive Offline-First Cache. 36 new Dart unit/widget tests across 6 files: `item_local_datasource_test.dart` (7 — cold start, cacheFeed order, replace, upsert, remove, full round-trip, nullable fields), `sync_metadata_datasource_test.dart` (4 — cold start, round-trip, independent keys, overwrite), `user_local_datasource_test.dart` (5 — cold start, cache+retrieve, upsert, round-trip, nullable), `item_repository_impl_offline_test.dart` expanded to 11 — added watchItem and watchMyItems groups, `user_repository_impl_offline_test.dart` (5 — watchUser cache seed/write-through/error propagation, getUserById cache fallback/empty miss), `offline_banner_test.dart` (4 — hidden online, visible offline, no cached data, relative time). All Dart tests pass.)*

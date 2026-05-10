@@ -149,4 +149,54 @@ class ItemModel {
         posterName: posterName,
         posterAvatarUrl: posterAvatarUrl,
       );
+
+  Map<String, dynamic> toHiveMap() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'category': category,
+        'status': status,
+        'location': location,
+        'contact': contact,
+        'imageUrls': imageUrls,
+        'userId': userId,
+        'source': source,
+        'isSensitive': isSensitive,
+        'createdAt': createdAt.toIso8601String(),
+        'occurredAt': occurredAt.toIso8601String(),
+        'editedAt': editedAt?.toIso8601String(),
+        'expiresAt': expiresAt?.toIso8601String(),
+        'claimedBy': claimedBy,
+        'secretQuestion': secretQuestion,
+        'secretAnswer': secretAnswer,
+        'posterName': posterName,
+        'posterAvatarUrl': posterAvatarUrl,
+      };
+
+  factory ItemModel.fromHiveMap(Map map) => ItemModel(
+        id: map['id'] as String,
+        title: map['title'] as String,
+        description: map['description'] as String? ?? '',
+        category: map['category'] as String,
+        status: map['status'] as String,
+        location: map['location'] as String? ?? '',
+        contact: map['contact'] as String? ?? '',
+        imageUrls: List<String>.from(map['imageUrls'] as List? ?? []),
+        userId: map['userId'] as String,
+        source: map['source'] as String? ?? 'web',
+        isSensitive: map['isSensitive'] as bool? ?? false,
+        createdAt: DateTime.parse(map['createdAt'] as String),
+        occurredAt: DateTime.parse(map['occurredAt'] as String),
+        editedAt: map['editedAt'] == null
+            ? null
+            : DateTime.parse(map['editedAt'] as String),
+        expiresAt: map['expiresAt'] == null
+            ? null
+            : DateTime.parse(map['expiresAt'] as String),
+        claimedBy: map['claimedBy'] as String?,
+        secretQuestion: map['secretQuestion'] as String?,
+        secretAnswer: map['secretAnswer'] as String?,
+        posterName: map['posterName'] as String?,
+        posterAvatarUrl: map['posterAvatarUrl'] as String?,
+      );
 }
