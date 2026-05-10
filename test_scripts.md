@@ -161,7 +161,10 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.8 | Similar posts recommendation (debounced 500 ms title-prefix search) | `test/unit/post/get_similar_founder_posts_use_case_test.dart` | Unit | ✅ 7 tests |
 | 1.4 / 2.6 | CreateItemUseCase (post creation, sensitive-item null-handling) | `test/unit/post/create_item_use_case_test.dart` | Unit | ✅ 8 tests |
-| 2.9 | REST API | — | Manual | ⬜ not yet written |
+| 2.9 | REST API — `ApiItemListingModel` JSON parsing (full fields, sensitive masking, occurredAt fallback, nullable itemCategory) | `test/features/feed/data/models/api_item_listing_model_test.dart` | Unit | ✅ 11 tests |
+| 2.9 | REST API — `FetchItemListingsUseCase` delegation (category, keyword, limit, empty list, exception propagation) | `test/features/feed/domain/usecases/fetch_item_listings_use_case_test.dart` | Unit | ✅ 6 tests |
+| 2.9 | REST API — `ExternalApiRepositoryImpl` entity mapping + error translation (401→ServerFailure, 400→ServerFailure, unexpected→ServerFailure) | `test/features/feed/data/repositories/external_api_repository_impl_test.dart` | Unit | ✅ 9 tests |
+| 2.9 / 2.14 | Cloud Function GET /items — sensitive redaction, auth guards, category filter, keyword filter, occurredAt/itemCategory fields | `test/functions/items_api_test.js` | Node.js | ✅ 10 tests |
 | 2.10 | Secret question (Photo Safety Cases 1+2 incl. Seeker/Sensitive/edit-mode edge cases, SQ hidden on Seeker) | _see WBS 1.4/2.10/2.14 row above_ | Widget | ✅ covered |
 | 2.10 | SecretAnswerRequiredFailure thrown when secretQuestion set + no answer; succeeds when no question; ResubmitNotAllowedFailure thrown before secret check | `test/unit/requests/submit_claim_request_wbs_2_10_test.dart` | Unit | ✅ 4 tests |
 | 2.10 | ItemRequest.editedAt field + copyWith (WBS 2.4 schema gap) | `test/unit/requests/item_request_entity_test.dart` (added 3 tests) | Unit | ✅ 3 tests |
@@ -229,14 +232,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
-| 2.0 Data Layer | 244 + 9 (npm) | 253 |
+| 2.0 Data Layer | 270 + 19 (npm) | 289 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **419 Dart + 9 npm** | **435 passing + 9 npm** |
+| **Total** | **445 Dart + 19 npm** | **461 passing + 19 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-09 (WBS 2.10 — Full test coverage pass. Domain: `submit_claim_request_wbs_2_10_test.dart` (4 tests), `item_request_entity_test.dart` +3 editedAt tests. Widget: `claim_request_screen_test.dart` (5 tests — SQ block shown, empty-answer error, answer not pre-filled, no SQ block, AlreadySubmitted screen), `found_report_screen_test.dart` (1 test), `post_form_screen_test.dart` +4 tests (SQ hidden on Seeker, Photo Safety Case 1 Seeker/Sensitive no-dialog, Case 1 edit-mode with existing SQ). All new tests pass.)*
+*Last updated: 2026-05-10 (WBS 2.9 — REST API data layer tests added. Three new Dart unit test files (26 tests total): `api_item_listing_model_test.dart` (11 — JSON parsing, sensitive masking, occurredAt fallback, nullable itemCategory), `fetch_item_listings_use_case_test.dart` (6 — delegation, all query params), `external_api_repository_impl_test.dart` (9 — entity mapping, ServerFailure wrapping for 401/400/unexpected). Updated `items_api_test.js` from 5 → 10 tests: fixed sensitive-item assertions (empty string, not undefined) to match updated Cloud Function; added occurredAt/itemCategory field assertions and category/keyword filter tests. All Dart tests pass.)*

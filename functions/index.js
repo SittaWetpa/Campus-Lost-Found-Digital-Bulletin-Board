@@ -46,22 +46,22 @@ exports.items = onRequest(
             const snap = await q.get();
             const items = snap.docs.map((doc) => {
                 const data = doc.data();
-                const item = {
+                const sensitive = data.isSensitive ?? false;
+                return {
                     id: doc.id,
                     title: data.title,
                     category: data.category,
                     status: data.status,
                     location: data.location,
-                    imageUrls: data.imageUrls ?? [],
-                    isSensitive: data.isSensitive ?? false,
+                    description: sensitive ? "" : (data.description ?? ""),
+                    contact: sensitive ? "" : (data.contact ?? ""),
+                    imageUrls: sensitive ? [] : (data.imageUrls ?? []),
+                    isSensitive: sensitive,
                     createdAt: data.createdAt?.toDate().toISOString() ?? null,
+                    occurredAt: data.occurredAt?.toDate().toISOString() ?? null,
                     expiresAt: data.expiresAt?.toDate().toISOString() ?? null,
+                    itemCategory: data.itemCategory ?? null,
                 };
-                if (!data.isSensitive) {
-                    item.description = data.description;
-                    item.contact = data.contact;
-                }
-                return item;
             });
 
             return res.status(200).json(items);
