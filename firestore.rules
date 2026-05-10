@@ -3,17 +3,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: own profile only; emailVerified and createdAt are server-managed
+    // True iff the caller's user document has isAdmin == true.
+    // Granted manually via Firebase Console — see ADMIN_ROLE.md (WBS 2.18).
+    function isAdmin() {
+      return request.auth != null
+             && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Users: any authenticated user may read (needed to display poster names);
+    // writes are still restricted to the owner only.
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
       allow create: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.emailVerified == false
-                    && request.resource.data.createdAt == request.time;
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.isAdmin == false;
       allow update: if request.auth != null
                     && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data)
-                        .affectedKeys().hasAny(['emailVerified', 'createdAt']);
+                        .affectedKeys().hasAny(['emailVerified', 'createdAt', 'isAdmin']);
     }
 
     // OTP verifications: Admin SDK only — no client access
@@ -30,18 +40,51 @@ service cloud.firestore {
     match /items/{itemId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
-                    && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-                            && resource.data.userId == request.auth.uid;
+                    && request.resource.data.userId == request.auth.uid
+                    && (
+                      !request.resource.data.isSensitive
+                      || (
+                        request.resource.data.category == 'founder'
+                        && request.resource.data.expiresAt is timestamp
+                      )
+                    );
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && !request.resource.data.diff(resource.data)
+                        .affectedKeys().hasAny(['isSensitive', 'expiresAt']);
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+
+      // Private sub-collection: secret answer — poster only
+      match /private/{doc} {
+        allow read, write: if request.auth != null
+                           && get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid;
+      }
 
       // Requests sub-collection
+      // WBS 2.4.1 note: the resubmit policy (3-attempt cap on Secret Question
+      // posts, 6-hour cooldown elsewhere) is NOT enforced in these rules —
+      // Firestore rules cannot count documents in a sub-collection. The
+      // `onRequestCreatePolicyCheck` Cloud Function trigger enforces the
+      // policy by deleting invalid requests after creation and writing an
+      // audit entry to `policy_audit/`. The client-side `canResubmit` check
+      // in the data layer is the user-facing guard.
       match /requests/{requestId} {
         allow create: if request.auth != null
                       && request.resource.data.requesterId == request.auth.uid;
-        allow read, update: if request.auth != null
-                            && (resource.data.requesterId == request.auth.uid
-                                || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+        allow read: if request.auth != null
+                    && (resource.data.requesterId == request.auth.uid
+                        || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+        allow update: if request.auth != null
+                      && (resource.data.requesterId == request.auth.uid
+                          || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid)
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       }
+    }
+
+    // WBS 2.4.1 — Cloud Function audit log; Admin SDK only, no client access.
+    match /policy_audit/{docId} {
+      allow read, write: if false;
     }
   }
 }

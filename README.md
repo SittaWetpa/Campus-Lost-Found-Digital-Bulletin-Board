@@ -45,6 +45,9 @@ A Flutter mobile application for reporting and finding lost items on campus. Stu
 - **Claim Request / Found Report** — request and approval system with Cancel (undo) support
 - **Similar Posts Recommendation** — suggests matching Founder Posts before a user creates a new Seeker Post
 - **Secret Question Verification** — Poster sets a secret question on a Founder Post; Visitor must answer correctly before sending a Claim Request to prevent false ownership claims
+- **Sensitive Item Handling** — financial cards, ID cards, passports, and similar items trigger a notification-only flow directing Seekers to the campus security office; sensitive Founder Posts auto-expire after 14 days
+- **QR Walk-in Web Form** — QR codes at campus drop-off points let non-app users (e.g. security staff, dropping-off visitors) submit Founder Posts via a public web form
+- **Push Notifications** — real-time push alerts for new Claim Requests / Found Reports, request status changes, and other key events
 - **REST API** — read-only endpoint for external tools to access Active items via API Key
 - **Offline Cache** — browse recent posts even without an internet connection
 
@@ -331,6 +334,8 @@ The PR you opened earlier will update automatically — no need to open a new on
 | `film/feat/crashlytics` | Film | 2.12 |
 | `film/feat/android` | Film | 3.1 |
 | `film/feat/push` | Film | 2.16 |
+| `film/feat/resubmit` | Film | 2.4.1 |
+| `film/feat/admin` | Film | 2.17 |
 | `posh/feat/auth` | Posh | 0.3 |
 | `posh/feat/router` | Posh | 4.3 |
 | `posh/feat/requests` | Posh | 2.4, 2.5 |
@@ -422,9 +427,9 @@ See **[ORCHESTRATION.md](./ORCHESTRATION.md)** for the full step-by-step prompt 
 
 | Name | Role | Tasks |
 |------|------|-------|
-| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.9, 2.12, 2.16, 3.1, 4.2, 6.1 |
+| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.4.1, 2.9, 2.12, 2.16, 2.17, 3.1, 4.2, 6.1 |
 | Van | Frontend Lead | 1.2, 1.3, 1.4, 1.5, 2.10, 2.13, 3.2 |
-| Posh | Auth · Backend | 0.3, 0.4, 2.4, 2.5, 2.11, 2.14, 4.3 |
+| Posh | Auth · Backend | 0.3, 2.4, 2.5, 2.11, 2.14, 4.3 |
 | Jed | Backend · Frontend | 2.2, 2.3, 2.6, 2.7, 2.8, 5.2 |
 | Shogun | Frontend · Design | 1.1, 1.6, 1.7, 1.8, 2.15, 4.1, 5.1 |
 

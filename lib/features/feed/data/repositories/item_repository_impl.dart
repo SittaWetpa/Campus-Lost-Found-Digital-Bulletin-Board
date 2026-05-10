@@ -63,4 +63,15 @@ class ItemRepositoryImpl implements ItemRepository {
       throw const ItemFailure('An unexpected error occurred.');
     }
   }
+
+  @override
+  Future<String?> getItemSecretAnswer(String itemId) async {
+    try {
+      return await _datasource.readSecretAnswer(itemId);
+    } on FirebaseException catch (e) {
+      throw ItemFailure(e.message ?? 'Failed to fetch secret answer.');
+    } catch (_) {
+      throw const ItemFailure('An unexpected error occurred.');
+    }
+  }
 }

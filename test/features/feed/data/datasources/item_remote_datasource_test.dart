@@ -22,6 +22,7 @@ void main() {
           'location': 'Library',
           'contact': '081-000-0001',
           'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
           'userId': 'user-abc',
         };
 
@@ -31,6 +32,28 @@ void main() {
         expect(doc.exists, isTrue);
         expect(doc.data()!['userId'], equals('user-abc'));
         expect(doc.data()!['status'], equals('active'));
+      });
+
+      test('persists occurredAt as a Timestamp on the new document (WBS 2.2)',
+          () async {
+        final occurredAt = DateTime(2026, 4, 27, 14, 30);
+        final data = {
+          'title': 'Lost laptop',
+          'description': 'MacBook Pro 14 inch',
+          'category': 'seeker',
+          'location': 'Library',
+          'contact': '081-000-0001',
+          'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(occurredAt),
+          'userId': 'user-abc',
+        };
+
+        final id = await datasource.addItem(data);
+
+        final doc = await fakeFirestore.collection('items').doc(id).get();
+        final stored = doc.data()!['occurredAt'];
+        expect(stored, isA<Timestamp>());
+        expect((stored as Timestamp).toDate(), equals(occurredAt));
       });
     });
 
@@ -44,6 +67,7 @@ void main() {
           'location': 'Canteen',
           'contact': '081-000-0002',
           'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
           'userId': 'user-xyz',
           'createdAt': Timestamp.now(),
         });
@@ -55,6 +79,7 @@ void main() {
           'location': 'Gate B',
           'contact': '081-000-0003',
           'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
           'userId': 'user-xyz',
           'createdAt': Timestamp.now(),
         });
@@ -77,6 +102,7 @@ void main() {
           'location': 'Parking lot',
           'contact': '081-000-0004',
           'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
           'userId': 'user-def',
           'createdAt': Timestamp.now(),
         });
@@ -99,6 +125,7 @@ void main() {
           'location': 'Gym',
           'contact': '081-000-0005',
           'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 27, 14, 30)),
           'userId': 'user-ghi',
           'createdAt': Timestamp.now(),
         });

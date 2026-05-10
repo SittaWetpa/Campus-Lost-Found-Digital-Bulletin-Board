@@ -24,3 +24,14 @@ Stream<User?> currentUser(CurrentUserRef ref) {
   if (authUser == null) return Stream.value(null);
   return ref.watch(userRepositoryProvider).watchUser(authUser.uid);
 }
+
+@riverpod
+Future<User?> getUserById(GetUserByIdRef ref, String uid) async {
+  // Wait for Firebase Auth to emit before making the Firestore call.
+  // On web, auth initializes asynchronously; firing the query before auth
+  // resolves causes a permission-denied error (rules require request.auth != null)
+  // which Riverpod caches as a permanent null via valueOrNull.
+  final authUser = await ref.watch(authStateProvider.future);
+  if (authUser == null) return null;
+  return ref.watch(userRepositoryProvider).getUserById(uid);
+}

@@ -1,4 +1,6 @@
 const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {initializeApp} = require("firebase-admin/app");
 const {getFirestore} = require("firebase-admin/firestore");
 const {getAuth} = require("firebase-admin/auth");
@@ -36,23 +38,136 @@ exports.items = onRequest(
             }
             if (keyword) {
                 q = q.where("title", ">=", keyword)
-                    .where("title", "<=", keyword + "");
+                    .where("title", "<=", keyword + "");
             }
 
             q = q.limit(max);
 
             const snap = await q.get();
-            const items = snap.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate().toISOString() ?? null,
-            }));
+            const items = snap.docs.map((doc) => {
+                const data = doc.data();
+                const sensitive = data.isSensitive ?? false;
+                return {
+                    id: doc.id,
+                    title: data.title,
+                    category: data.category,
+                    status: data.status,
+                    location: data.location,
+                    description: sensitive ? "" : (data.description ?? ""),
+                    contact: sensitive ? "" : (data.contact ?? ""),
+                    imageUrls: sensitive ? [] : (data.imageUrls ?? []),
+                    isSensitive: sensitive,
+                    createdAt: data.createdAt?.toDate().toISOString() ?? null,
+                    occurredAt: data.occurredAt?.toDate().toISOString() ?? null,
+                    expiresAt: data.expiresAt?.toDate().toISOString() ?? null,
+                    itemCategory: data.itemCategory ?? null,
+                };
+            });
 
             return res.status(200).json(items);
         } catch (err) {
             console.error(err);
             return res.status(500).json({error: "Internal server error"});
         }
+    },
+);
+
+// WBS 2.14 — daily Cloud Function that expires sensitive posts after 14 days.
+// Requires composite index: isSensitive ASC, status ASC, expiresAt ASC.
+exports.autoExpireSensitivePosts = onSchedule(
+    {schedule: "every 24 hours", region: "asia-southeast1"},
+    async () => {
+        const db = getFirestore();
+        const now = new Date();
+        const snap = await db.collection("items")
+            .where("isSensitive", "==", true)
+            .where("status", "==", "active")
+            .where("expiresAt", "<=", now)
+            .get();
+
+        if (snap.empty) return;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.update(doc.ref, {status: "expired"}));
+        await batch.commit();
+        console.log(`Expired ${snap.size} sensitive posts.`);
+    },
+);
+
+// WBS 2.4.1 — Request Resubmit Policy enforcement.
+// Firestore rules cannot count or aggregate documents, so this post-create
+// trigger validates the policy and deletes invalid requests. The same logic
+// runs client-side in canResubmit; this trigger is the defense-in-depth layer.
+exports.onRequestCreatePolicyCheck = onDocumentCreated(
+    {
+        document: "items/{itemId}/requests/{requestId}",
+        region: "asia-southeast1",
+    },
+    async (event) => {
+        const snap = event.data;
+        if (!snap) return;
+        const data = snap.data();
+        const requesterId = data.requesterId;
+        if (!requesterId) return;
+
+        const {itemId, requestId} = event.params;
+        const db = getFirestore();
+
+        const itemSnap = await db.doc(`items/${itemId}`).get();
+        const itemData = itemSnap.exists ? itemSnap.data() : {};
+        const sq = itemData.secretQuestion;
+        const hasSecretQuestion = typeof sq === "string" && sq.length > 0;
+
+        const historySnap = await db
+            .collection(`items/${itemId}/requests`)
+            .where("requesterId", "==", requesterId)
+            .orderBy("createdAt", "desc")
+            .get();
+
+        let pendingOrApproved = false;
+        const rejected = [];
+        for (const doc of historySnap.docs) {
+            if (doc.id === requestId) continue;
+            const status = doc.data().status;
+            if (status === "pending" || status === "approved") {
+                pendingOrApproved = true;
+            } else if (status === "rejected") {
+                rejected.push(doc);
+            }
+        }
+
+        let violation = null;
+        if (pendingOrApproved) {
+            violation = "already_active";
+        } else if (hasSecretQuestion && rejected.length >= 3) {
+            violation = "permanent_block";
+        } else if (rejected.length > 0) {
+            const recent = rejected[0].data();
+            const createdAt = recent.createdAt &&
+                typeof recent.createdAt.toDate === "function" ?
+                recent.createdAt.toDate() : null;
+            if (createdAt) {
+                const retryMs = createdAt.getTime() + 6 * 60 * 60 * 1000;
+                if (retryMs > Date.now()) violation = "cooldown";
+            }
+        }
+
+        if (!violation) return;
+
+        await snap.ref.delete();
+        await db.collection("policy_audit").add({
+            wbs: "2.4.1",
+            itemId,
+            requestId,
+            requesterId,
+            reason: violation,
+            hasSecretQuestion,
+            rejectedCount: rejected.length,
+            timestamp: new Date(),
+        });
+        console.log(
+            `WBS 2.4.1 - deleted invalid request ${requestId} ` +
+            `on item ${itemId} (reason: ${violation})`,
+        );
     },
 );
 

@@ -31,3 +31,7 @@ final class ItemFailure extends Failure {
 final class ProfileFailure extends Failure {
   const ProfileFailure(super.message);
 }
+
+base class RequestFailure extends Failure {
+  const RequestFailure(super.message);
+}

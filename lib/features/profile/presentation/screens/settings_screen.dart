@@ -195,6 +195,47 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
 
+              // ── Developer section (admin only — WBS 2.18) ────────────────
+              if (user.isAdmin) ...[
+                const SizedBox(height: 20),
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                  child: Text(
+                    'DEVELOPER',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: _kInk500,
+                    ),
+                  ),
+                ),
+                _Card(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _DeveloperRow(
+                        label: 'Remote Config',
+                        sub: 'Feature flags · WBS 2.13',
+                        onTap: () => context.push(AppRoutes.adminRemoteConfig),
+                      ),
+                      const Divider(height: 1, color: _kBorder),
+                      _DeveloperRow(
+                        label: 'Rollback Plan',
+                        sub: 'secret_question_enabled · WBS 2.13',
+                        onTap: () => context.push(AppRoutes.adminRollbackPlan),
+                      ),
+                      const Divider(height: 1, color: _kBorder),
+                      _DeveloperRow(
+                        label: 'Debug Menu',
+                        sub: 'Crashlytics test crashes · WBS 2.12',
+                        onTap: () => context.push(AppRoutes.adminDebugMenu),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 20),
 
               // ── Sign out button ───────────────────────────────────────────
@@ -250,6 +291,47 @@ class _Card extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _DeveloperRow extends StatelessWidget {
+  final String label;
+  final String sub;
+  final VoidCallback onTap;
+  const _DeveloperRow({required this.label, required this.sub, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: _kInk900,
+                    ),
+                  ),
+                  Text(
+                    sub,
+                    style: const TextStyle(fontSize: 12, color: _kInk500),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: _kInk500),
+          ],
+        ),
+      ),
     );
   }
 }
