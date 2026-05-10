@@ -66,6 +66,12 @@ class _FakePreferenceRepository implements PreferenceRepository {
 
   @override
   Future<void> setNotificationsEnabled({required bool value}) async {}
+
+  @override
+  Future<void> setThemeMode(AppThemeMode mode) async {}
+
+  @override
+  Future<void> setLastViewedCategory(String? category) async {}
 }
 
 Widget _buildScreen(User user) {

@@ -9,7 +9,9 @@ import 'package:campus_lost_found/features/profile/domain/entities/user_preferen
 import 'package:campus_lost_found/features/profile/domain/repositories/preference_repository.dart';
 import 'package:campus_lost_found/features/profile/domain/repositories/profile_repository.dart';
 import 'package:campus_lost_found/features/profile/domain/usecases/get_user_preferences.dart';
+import 'package:campus_lost_found/features/profile/domain/usecases/set_last_viewed_category.dart';
 import 'package:campus_lost_found/features/profile/domain/usecases/set_notifications_enabled.dart';
+import 'package:campus_lost_found/features/profile/domain/usecases/set_theme_mode.dart';
 import 'package:campus_lost_found/features/profile/domain/usecases/update_profile.dart';
 import 'package:campus_lost_found/features/profile/domain/usecases/upload_avatar.dart';
 
@@ -111,7 +113,24 @@ class PreferencesNotifier extends _$PreferencesNotifier {
     state = await AsyncValue.guard(() async {
       await SetNotificationsEnabled(ref.read(preferenceRepositoryProvider))
           .call(value: value);
-      ref.invalidate(userPreferencesProvider); // re-fetch after write
+      ref.invalidate(userPreferencesProvider);
+    });
+  }
+
+  Future<void> setThemeMode(AppThemeMode mode) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await SetThemeMode(ref.read(preferenceRepositoryProvider)).call(mode);
+      ref.invalidate(userPreferencesProvider);
+    });
+  }
+
+  Future<void> setLastViewedCategory(String? category) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await SetLastViewedCategory(ref.read(preferenceRepositoryProvider))
+          .call(category);
+      ref.invalidate(userPreferencesProvider);
     });
   }
 }

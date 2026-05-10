@@ -126,7 +126,7 @@ final uploadAvatarNotifierProvider = AutoDisposeNotifierProvider<
 
 typedef _$UploadAvatarNotifier = AutoDisposeNotifier<AsyncValue<void>>;
 String _$preferencesNotifierHash() =>
-    r'f410de4b46575deb69013d5481f26d25817e807a';
+    r'dfef6a05f7396aa2bf865028870e1e2a7b097b53';
 
 /// See also [PreferencesNotifier].
 @ProviderFor(PreferencesNotifier)
