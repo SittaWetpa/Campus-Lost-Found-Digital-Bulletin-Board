@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:campus_lost_found/core/domain/entities/feature_flags.dart';
+import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
@@ -11,6 +13,25 @@ import 'package:campus_lost_found/features/feed/presentation/screens/item_detail
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
 import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
+
+// ─── fake feature flags ───────────────────────────────────────────────────────
+
+class _FakeFeatureFlags implements FeatureFlagService {
+  const _FakeFeatureFlags();
+
+  @override
+  bool get secretQuestionEnabled => true;
+  @override
+  bool get sensitiveItemEnabled => true;
+  @override
+  String get securityOfficeContact => '02-470-9999';
+  @override
+  Future<void> fetchAndActivate() async {}
+  @override
+  DateTime get lastFetchTime => DateTime.fromMillisecondsSinceEpoch(0);
+  @override
+  FeatureFlags get currentFlags => FeatureFlags.defaults;
+}
 
 // ─── fixtures ────────────────────────────────────────────────────────────────
 
@@ -56,6 +77,7 @@ Widget _buildScreen({required List<ItemRequest> requests}) {
           .overrideWith((ref) => Stream.value(_authUser)),
       watchRequestsForItemProvider(_itemId)
           .overrideWith((ref) => Stream.value(requests)),
+      featureFlagsProvider.overrideWith((_) => const _FakeFeatureFlags()),
       // Poster display — null is acceptable; _PosterRow handles it gracefully.
       getUserByIdProvider(_ownerId)
           .overrideWith((ref) async => null),

@@ -31,6 +31,8 @@
 //        Marked `skip:` here with a reason so it activates as soon as
 //        the picker UI is wired to the use case.
 
+import 'package:campus_lost_found/core/domain/entities/feature_flags.dart';
+import 'package:campus_lost_found/core/services/feature_flag_service.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/user.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
@@ -52,6 +54,30 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 // ── fakes / mocks ─────────────────────────────────────────────────────────
 
 class _MockPostRepository extends Mock implements PostRepository {}
+
+class _FakeFeatureFlags implements FeatureFlagService {
+  const _FakeFeatureFlags({this.secretQuestionEnabled = true});
+
+  @override
+  final bool secretQuestionEnabled;
+  @override
+  bool get sensitiveItemEnabled => true;
+  @override
+  String get securityOfficeContact => '02-470-9999';
+  @override
+  Future<void> fetchAndActivate() async {}
+  @override
+  DateTime get lastFetchTime => DateTime.fromMillisecondsSinceEpoch(0);
+  @override
+  FeatureFlags get currentFlags => FeatureFlags(
+        secretQuestionEnabled: secretQuestionEnabled,
+        sensitiveItemEnabled: true,
+        securityOfficeContact: '02-470-9999',
+        sensitiveCategories: const [
+          'credit_card', 'id_card', 'passport', 'key', 'document'
+        ],
+      );
+}
 
 /// Test double for `image_picker`'s platform interface. Lets us count
 /// how many times the picker would have been opened, without going to a
@@ -173,6 +199,7 @@ Widget _app({
         (_) => _FakeItemRepository(seededItem: editingItem),
       ),
       postRepositoryProvider.overrideWith((_) => postRepository),
+      featureFlagsProvider.overrideWith((_) => const _FakeFeatureFlags()),
     ],
     child: MaterialApp.router(routerConfig: _router(home)),
   );
@@ -816,6 +843,147 @@ void main() {
       expect(find.text('Sensitive Item'), findsNothing,
           reason: 'Sensitive selector must not appear on Seeker posts');
       expect(find.text('General Item'), findsNothing);
+    },
+  );
+
+  // WBS 2.10 — Secret Question field visibility by category ─────────────────
+
+  testWidgets(
+    'WBS 2.10 — Seeker Post hides the Secret Question field',
+    (tester) async {
+      await _navigateToForm(tester);
+
+      // Default is Founder Post — SECRET QUESTION field is shown.
+      expect(find.text('SECRET QUESTION (optional)'), findsOneWidget);
+
+      // Switch to Seeker category.
+      await tester.ensureVisible(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      // Secret Question must not appear on Seeker Posts.
+      expect(find.text('SECRET QUESTION (optional)'), findsNothing,
+          reason: 'Secret Question section is only for Founder Posts');
+    },
+  );
+
+  // WBS 2.10 — Photo Safety Guard, Case 1 additional no-fire paths ──────────
+
+  testWidgets(
+    'Photo Safety Case 1 — Seeker Post: no dialog on Add Photo; '
+    'picker opens directly',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Switch to Seeker (no SQ field rendered).
+      await tester.ensureVisible(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      // Tap Add Photo — no SQ value can exist, so no safety dialog fires.
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing,
+          reason: 'No SQ field on Seeker Post → Case 1 dialog must not appear');
+      expect(mockPicker.callCount, 1,
+          reason: 'Picker should open immediately on Seeker Post');
+    },
+  );
+
+  testWidgets(
+    'Photo Safety Case 1 — Sensitive Item: no dialog on Add Photo; '
+    'picker opens directly',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Switch to Sensitive Item (SQ field is hidden).
+      await tester.ensureVisible(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sensitive Item'));
+      await tester.pumpAndSettle();
+
+      // Tap Add Photo — SQ is not accessible, so no safety dialog fires.
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Photo Safety'), findsNothing,
+          reason: 'SQ field hidden on Sensitive Item → Case 1 dialog must not appear');
+      expect(mockPicker.callCount, 1,
+          reason: 'Picker should open immediately on Sensitive Item');
+    },
+  );
+
+  testWidgets(
+    'Photo Safety Case 1 — edit mode with existing secretQuestion: '
+    'dialog appears when tapping Add Photo',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      // Existing item with secretQuestion already set and no photos yet.
+      final existing = Item(
+        id: 'edit-sq-case1',
+        title: 'Item with secret question',
+        description: 'desc',
+        category: ItemCategory.founder,
+        status: ItemStatus.active,
+        location: 'CB2',
+        contact: '0812345678',
+        imageUrls: const [],
+        userId: _testUid,
+        createdAt: DateTime(2024),
+        occurredAt: DateTime(2024),
+        secretQuestion: 'What brand is it?',
+      );
+
+      final mockRepo = _MockPostRepository();
+      await tester.pumpWidget(_app(
+        postRepository: mockRepo,
+        profile: _testUser,
+        editingItem: existing,
+      ));
+      await tester.pumpAndSettle();
+
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .context
+          .go('/post/${existing.id}/edit');
+      await tester.pumpAndSettle();
+
+      // The SQ field is pre-filled from the existing item.
+      // Tapping Add Photo with a pre-filled SQ should trigger Case 1 dialog.
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Photo Safety'),
+        findsOneWidget,
+        reason:
+            'Safety dialog must appear when SQ is pre-filled from edit mode',
+      );
+      expect(mockPicker.callCount, 0,
+          reason: 'Picker must not open until the user confirms');
     },
   );
 }

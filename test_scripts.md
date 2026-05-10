@@ -50,7 +50,10 @@ test/
 ├── widget/                       # Widget tests — use ProviderScope overrides
 │   ├── auth/router_redirect_test.dart           ← WBS 0.4 / 4.3
 │   ├── feed/feed_screen_test.dart               ← WBS 1.2
-│   └── post/post_form_screen_test.dart          ← WBS 1.4 / 2.10
+│   ├── post/post_form_screen_test.dart          ← WBS 1.4 / 2.10
+│   └── requests/                               ← WBS 2.10
+│       ├── claim_request_screen_test.dart
+│       └── found_report_screen_test.dart
 ├── features/                     # Per-feature widget tests
 │   ├── auth/presentation/screens/
 │   │   ├── login_screen_test.dart               ← WBS 0.3
@@ -118,7 +121,7 @@ Run: `flutter test test/features/`
 | 1.2 | Feed providers (filter + filtered watchFeed view-model) | `test/unit/feed/feed_providers_test.dart` | Unit | ✅ 10 tests |
 | 1.3 / 2.4 | Item detail screen (role views, sensitive item, existing request, Seeker Post, editedAt label, delete guard with pending requests) | `test/widget/feed/item_detail_screen_test.dart` | Widget | ✅ 9 tests |
 | 1.3 | Request detail screen (verification card, action buttons by role/status) | `test/widget/feed/request_detail_screen_test.dart` | Widget | ✅ 5 tests |
-| 1.4 / 2.14 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2, Sensitive selector hides description/contact/SQ) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 13 tests (+ 1 skipped — see note) |
+| 1.4 / 2.10 / 2.14 | Post form screen (validation, submission, "Use my number" toggle, Photo Safety Case 1 + 2 including Seeker/Sensitive/edit-mode edge cases, SQ field hidden on Seeker, Sensitive selector hides description/contact/SQ) | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 19 tests (+ 1 skipped — see note) |
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
 | 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
@@ -147,16 +150,32 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 1.3 / 2.4 | RejectRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/reject_request_use_case_test.dart` | Unit | ✅ 3 tests |
 | 1.3 / 2.4 | CancelRequestUseCase (delegation, success, exception propagation) | `test/unit/requests/cancel_request_use_case_test.dart` | Unit | ✅ 3 tests |
 | 1.3 / 2.4 | ItemRequestRepositoryImpl (batch approve, reject, cancel, hasPendingRequests, watchMyRequestForItem, watchSingleRequest) | `test/unit/requests/item_request_repository_impl_test.dart` | Unit | ✅ 8 tests |
-| 2.5 | Local storage (preferences) | — | Unit | ⬜ not yet written |
+| 2.4.1 | canResubmit policy logic (no history, attempts-remaining on SQ post, permanent block, cooldown active, cooldown expired, alreadyActive, per-requester scoping) | `test/unit/requests/can_resubmit_logic_test.dart` | Unit | ✅ 7 tests |
+| 2.4.1 | CheckResubmitPolicyUseCase (delegation to repository) | `test/unit/requests/check_resubmit_policy_use_case_test.dart` | Unit | ✅ 1 test |
+| 2.4.1 | submitRequest throws ResubmitNotAllowedFailure when policy denies; proceeds when allowed | `test/unit/requests/submit_request_resubmit_guard_test.dart` | Unit | ✅ 2 tests |
+| 2.4.1 | ResubmitBanner widget — attempts-remaining, permanent-block, cooldown, hidden when allowed | `test/widget/feed/item_detail_resubmit_banner_test.dart` | Widget | ✅ 4 tests |
+| 2.4.1 | End-to-end policy enforcement (Cloud Function trigger + UI) — manual emulator run | `test/integration/wbs_2_4_1_resubmit_test.dart` | Integration | ⬜ manual placeholder |
+| 2.4.1 | Firestore rules contract — basic create still allowed, policy_audit denied | `test/firestore_rules/rules.test.js` | Rules | ✅ 4 tests (in-file) |
+| 2.5 | Datasource raw-string ops (setThemeMode/getThemeMode round-trip, fresh-install null, setLastViewedCategory null removes key, round-trip) | `test/features/profile/data/datasources/preference_local_datasource_test.dart` | Unit | ✅ 4 tests |
+| 2.5 | Repository enum conversion (stored 'dark' → AppThemeMode.dark; no stored value → AppThemeMode.system) | `test/features/profile/data/repositories/preference_repository_impl_test.dart` | Unit | ✅ 2 tests |
+| 2.5 | PreferenceService startup loader (stored value returned; missing key → 'system' default) | `test/core/services/preference_service_test.dart` | Unit | ✅ 2 tests |
 | 2.6 | Post edit (UpdateItemUseCase + form edit-mode flow) | `test/unit/post/update_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.7 | Post delete (DeleteItemUseCase) | `test/unit/post/delete_item_use_case_test.dart` | Unit | ✅ 1 test |
 | 2.8 | Similar posts recommendation (debounced 500 ms title-prefix search) | `test/unit/post/get_similar_founder_posts_use_case_test.dart` | Unit | ✅ 7 tests |
 | 1.4 / 2.6 | CreateItemUseCase (post creation, sensitive-item null-handling) | `test/unit/post/create_item_use_case_test.dart` | Unit | ✅ 8 tests |
-| 2.9 | REST API | — | Manual | ⬜ not yet written |
-| 2.10 | Secret question (Photo Safety Case 2 in post form widget tests) | _see WBS 1.4 row above_ | Widget | ✅ covered |
+| 2.9 | REST API — `ApiItemListingModel` JSON parsing (full fields, sensitive masking, occurredAt fallback, nullable itemCategory) | `test/features/feed/data/models/api_item_listing_model_test.dart` | Unit | ✅ 11 tests |
+| 2.9 | REST API — `FetchItemListingsUseCase` delegation (category, keyword, limit, empty list, exception propagation) | `test/features/feed/domain/usecases/fetch_item_listings_use_case_test.dart` | Unit | ✅ 6 tests |
+| 2.9 | REST API — `ExternalApiRepositoryImpl` entity mapping + error translation (401→ServerFailure, 400→ServerFailure, unexpected→ServerFailure) | `test/features/feed/data/repositories/external_api_repository_impl_test.dart` | Unit | ✅ 9 tests |
+| 2.9 / 2.14 | Cloud Function GET /items — sensitive redaction, auth guards, category filter, keyword filter, occurredAt/itemCategory fields | `test/functions/items_api_test.js` | Node.js | ✅ 10 tests |
+| 2.10 | Secret question (Photo Safety Cases 1+2 incl. Seeker/Sensitive/edit-mode edge cases, SQ hidden on Seeker) | _see WBS 1.4/2.10/2.14 row above_ | Widget | ✅ covered |
+| 2.10 | SecretAnswerRequiredFailure thrown when secretQuestion set + no answer; succeeds when no question; ResubmitNotAllowedFailure thrown before secret check | `test/unit/requests/submit_claim_request_wbs_2_10_test.dart` | Unit | ✅ 4 tests |
+| 2.10 | ItemRequest.editedAt field + copyWith (WBS 2.4 schema gap) | `test/unit/requests/item_request_entity_test.dart` (added 3 tests) | Unit | ✅ 3 tests |
+| 2.10 | ClaimRequestScreen — SQ block shown/hidden, empty-answer error, poster's answer not displayed, AlreadySubmitted screen | `test/widget/requests/claim_request_screen_test.dart` | Widget | ✅ 5 tests |
+| 2.10 | FoundReportScreen — no Secret Question block or answer field | `test/widget/requests/found_report_screen_test.dart` | Widget | ✅ 1 test |
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
-| 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
-| 2.13 | FeatureFlagService (Remote Config wrapper, hardcoded defaults) | `test/unit/post/post_draft_test.dart` (covered indirectly via secretQuestionEnabled gating) | Unit | ⏭️ direct test pending |
+| 2.12 | Crashlytics & logging — AppLogger.error() routes to log with level=error; AppLogger.info() routes to log with level=info | `test/unit/observability/app_logger_test.dart` | Unit | ✅ 2 tests |
+| 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
+| 2.13 | PostFormScreen — secretQuestionEnabled flag hides/shows SECRET QUESTION section | `test/features/post/presentation/screens/post_form_screen_test.dart` | Widget | ✅ 2 tests |
 | 2.14 | Sensitive Item entity invariants (source / isSensitive / expiresAt) + `ItemStatus.expired` parsing | `test/unit/feed/item_entity_test.dart` | Unit | ✅ 16 tests |
 | 2.14 | `autoExpireSensitivePosts` Cloud Function (expired doc → status:'expired'; non-expired → unchanged; multiple docs) | `test/functions/auto_expire_test.js` | Node.js | ✅ 4 tests |
 | 2.14 | REST API redaction (sensitive → omits contact/description; general → includes; auth + method guards; mixed feed) | `test/functions/items_api_test.js` | Node.js | ✅ 5 tests |
@@ -165,6 +184,13 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.15 | UploadPostPhotosUseCase (3-photo cap, storage upload) | `test/unit/post/upload_post_photos_use_case_test.dart` | Unit | ✅ 5 tests |
 | 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
 | 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
+| 2.18 | UserModel.fromFirestore reads `isAdmin` (true / false / missing-defaults-to-false; toEntity carries it) | `test/unit/auth/user_model_is_admin_test.dart` | Unit | ✅ 4 tests |
+| 2.18 | `FirestoreUserDatasource.createUser` stamps `isAdmin: false` on new accounts | `test/unit/auth/user_remote_datasource_test.dart` (added row to existing file) | Unit | ✅ 1 test |
+| 2.18 | Settings screen — Developer section gated on `currentUser.isAdmin` | `test/features/profile/presentation/screens/settings_screen_admin_test.dart` | Widget | ✅ 2 tests |
+| 2.18 | RemoteConfigViewerScreen renders all four flags + last-fetched banner + "Fetch & activate" trigger | `test/features/admin/presentation/screens/remote_config_viewer_screen_test.dart` | Widget | ✅ 4 tests |
+| 2.18 | RollbackPlanScreen banner reflects `secret_question_enabled`; checklist toggles on tap | `test/features/admin/presentation/screens/rollback_plan_screen_test.dart` | Widget | ✅ 3 tests |
+| 2.18 | Admin route guard: non-admin → /feed + snackbar; admin → viewer screen | `test/widget/admin/admin_route_guard_test.dart` | Widget | ✅ 2 tests |
+| 2.18 | Firestore rules: client cannot self-elevate `isAdmin` (own doc, others' doc, on create) | `test/firestore_rules/rules.test.js` | Node.js | ✅ 4 tests (requires emulator) |
 
 ---
 
@@ -207,15 +233,15 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | Phase | Tests written | Tests passing |
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
-| 1.0 Flutter UI | 78 | 78 |
-| 2.0 Data Layer | 232 + 9 (npm) | 241 |
+| 1.0 Flutter UI | 82 | 82 |
+| 2.0 Data Layer | 278 + 19 (npm) | 297 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
-| **Total** | **402 Dart + 9 npm** | **418 passing + 9 npm** |
+| **Total** | **453 Dart + 19 npm** | **469 passing + 19 npm** |
 
-> Phase totals add to 401; `flutter test` reports 417 passing + 4 skipped (manual integration placeholder + WBS 1.4-04 photo-cap). The ~16-test discrepancy is accounting drift — some files cover multiple WBS rows. **`flutter test` is the source of truth.**
+> Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-04 (WBS 2.4 delete-guard test added — test 09 in item_detail_screen_test.dart covers "Poster taps delete with pending requests → Resolve requests first dialog, Delete button absent". flutter test: 418 passing + 4 skipped.)*
+*Last updated: 2026-05-10 (WBS 2.5 — Local Storage / Preferences. 8 new Dart unit tests across 3 files: `preference_local_datasource_test.dart` (4 — raw-string round-trips, null-removes-key), `preference_repository_impl_test.dart` (2 — enum conversion dark/system), `preference_service_test.dart` (2 — startup loader stored value and default). Extended `UserPreferences` with `AppThemeMode` enum and `lastViewedCategory`; added `setThemeMode`/`setLastViewedCategory` to repository, datasource, usecases, and notifier; created `PreferenceService` in `core/services/`. All Dart tests pass.)*

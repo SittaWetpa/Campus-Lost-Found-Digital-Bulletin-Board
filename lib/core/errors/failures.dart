@@ -32,6 +32,6 @@ final class ProfileFailure extends Failure {
   const ProfileFailure(super.message);
 }
 
-final class RequestFailure extends Failure {
+base class RequestFailure extends Failure {
   const RequestFailure(super.message);
 }

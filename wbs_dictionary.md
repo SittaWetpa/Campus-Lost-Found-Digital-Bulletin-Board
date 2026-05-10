@@ -421,6 +421,7 @@ Build the Settings and Profile screen where users can view their profile info (f
 - "Edit profile" button navigating to Edit Profile & Avatar Screen
 - Preferences persist across app restarts via `shared_preferences`
 - Sign-out button
+- **Developer section** — rendered only when `currentUser.isAdmin == true` (see **2.18**); contains links to Remote Config viewer and Rollback Plan screens
 
 **Associated Activities**
 - Build settings screen layout based on wireframe
@@ -526,8 +527,8 @@ Create and configure the Firebase project, connect it to Flutter, and define the
   - `editedAt` — Timestamp, added in **2.6** (Post Edit)
   - `claimedBy` — String (requesterId), added in **2.4** (Request & Approval)
   - `secretQuestion`, `secretAnswer` — String?, added in **2.10** (Secret Question), only on Founder Posts
-- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`
-- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**)
+- Firestore `users` schema: `uid`, `email`, `studentId`, `firstName`, `lastName`, `telephone`, `avatarUrl`, `createdAt`, `isAdmin: bool` (default `false`, granted manually via Firebase Console — see **2.18**)
+- Firestore `requests` sub-collection schema (under each item) — full detail in **2.4**: `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message`, `status`, `createdAt`, plus `visitorAnswer` (added in **2.10**) and `editedAt` (Timestamp?, added in **2.17** — Request Edit)
 - Firestore security rules: read/write for authenticated users only (field-level rules for `secretAnswer` and `visitorAnswer` are defined in **2.10**)
 
 **Associated Activities**
@@ -623,7 +624,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 
 **Deliverables**
 - Firestore `requests` sub-collection under each item document:
-  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**)
+  `requestId`, `requesterId`, `requesterName`, `requesterContact`, `message` (for Seeker Posts), `status` (pending / approved / rejected / cancelled), `createdAt`, `visitorAnswer` (for Claim Requests on Founder Posts with a secret question — see **2.10**), `editedAt` (Timestamp?, set when the requester edits a pending request — see **2.17**; approve/reject/cancel flows do not modify `editedAt`)
 - Parent `items` document gains a `claimedBy` (requesterId) field when a request is approved (status → "resolved")
 - `RequestService` Dart class: `submitRequest()`, `getRequestsForItem()`, `approveRequest()`, `rejectRequest()`, **`cancelRequest()`**
 - "Claim Request" button on Founder Post Detail Screen (Visitors only)
@@ -635,6 +636,7 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 - Poster's request inbox on Detail Screen: list of pending requests with approve/reject buttons
 - Approving a request sets item `status` to "resolved" and stores `claimedBy` (requesterId)
 - **Visitor can cancel their own pending request**: "Cancel Request" button shown on the request detail view if `status == "pending"` and `requesterId == currentUser.uid`
+- **Visitor can edit their own pending request** — see **2.17** (Request Edit) for full details; the Edit button shares the same visibility guard as Cancel
 
 **Associated Activities**
 - Design `requests` sub-collection schema in Firestore (including `visitorAnswer` for secret-question verification — see **2.10**)
@@ -656,6 +658,91 @@ Implement the request and approval flow for both Seeker Posts and Founder Posts.
 - Widget test: render request detail as the requester with `status == "pending"` — verify "Cancel Request" button is visible
 - Widget test: render request detail as a different user — verify "Cancel Request" button is hidden
 - Widget test: Poster taps delete on a post with pending requests — verify warning dialog appears and deletion is blocked
+
+---
+
+### 2.4.1 Request Resubmit Policy
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.4.1 |
+| **Type** | Sub-Work Package (under 2.4) |
+| **Requirement** | Request Lifecycle / Anti-Abuse |
+
+**Scope / Statement of Work**
+Define and enforce the policy for what happens after a request is rejected by the Poster — specifically whether and how a Visitor can submit a new request on the same post. WBS 2.4 specifies behavior for the `cancel` and `approve` flows but leaves the post-rejection state undefined. This sub-package fills that gap with two distinct policies based on the post's risk profile:
+
+- **Claim Requests on Founder Posts with a Secret Question (high-risk — brute-force vector for `secretAnswer`):** maximum **3 rejected attempts** per Visitor per post (lifetime), then **permanent block** for that Visitor on that post.
+- **All other requests** (Found Reports on Seeker Posts, and Claim Requests on Founder Posts *without* a Secret Question): **6-hour cooldown** between rejection timestamp and the next allowed submission. No permanent block.
+
+The policy is enforced both in the Flutter client (UX feedback) and in Firestore security rules (defense in depth). No schema change is required — attempt counts are derived by querying the existing `requests` sub-collection filtered by `requesterId` and `status == "rejected"`.
+
+**Deliverables**
+- `RequestService.canResubmit(String itemId, String requesterId)` method returning a `ResubmitDecision` object: `{ allowed: bool, reason: String?, attemptsRemaining: int?, retryAfter: Timestamp? }`
+- `RequestService.submitRequest()` updated to call `canResubmit()` before write — throws `ResubmitNotAllowedException` if denied
+- `ResubmitDecision.reason` enum: `"allowed"`, `"permanent_block"`, `"cooldown"`, `"already_active"` (the last delegated to the existing 2.10 rule for active Claim Requests)
+- Detail Screen UI updates (Visitor view):
+  - When 1+ rejected attempts exist on a Secret Question post: button shows `"Incorrect answer. {n} attempt(s) remaining"` (`n` = attempts remaining)
+  - When `permanent_block`: button replaced with disabled state showing `"You can no longer submit a request on this post"`
+  - When `cooldown`: button replaced with countdown `"You can submit a new request in {hours}h {minutes}m"`
+- Firestore security rules update (extends **5.2**) — `requests` create operation denied when:
+  - For posts with `secretQuestion != null`: `requesterId` already has ≥ 3 documents with `status == "rejected"` in the same `requests` sub-collection, OR
+  - For other posts: `requesterId` has a `status == "rejected"` document with `createdAt` newer than `now - 6h`
+- Policy documented in `CONVENTIONS.md` (or team-shared schema doc per **2.1**) with rationale and enforcement layers
+
+**Associated Activities**
+- Implement `canResubmit()` in `request_service.dart` — uses Firestore query `where("requesterId", "==", currentUid).where("status", "==", "rejected")` and counts / sorts by `createdAt`
+- Branch logic in `canResubmit()` based on the parent item's `secretQuestion` field (read once, cached for the call)
+- Update `submitRequest()` to invoke `canResubmit()` first; convert `ResubmitNotAllowedException` to a user-facing error in the Claim Request / Found Report form
+- Refactor Detail Screen Visitor button state to consume `ResubmitDecision` via a Riverpod provider
+- Implement a countdown-timer widget for the cooldown state — refreshes once per minute and on screen-focus regain
+- Add Firestore security-rule clauses for both policies; consult Firebase docs for query-in-rules constraints — may require a Cloud Function `beforeCreate` fallback if rules-side aggregate queries are unsupported
+- Document policy and reasoning in the team conventions doc
+
+**Notes & Out-of-Scope Decisions**
+- **Poster cannot undo a rejection.** A rejected request stays rejected. If the Poster rejects by accident, the Visitor must wait for cooldown or use remaining attempts. Rationale: keep the state machine simple and avoid "undo" race conditions with the notification fired by **2.16 T4**.
+- **Account-switching abuse is out of scope.** A locked Visitor could theoretically register a different `@mail.kmutt.ac.th` account and retry. This is accepted residual risk because (a) KMUTT accounts are non-trivial to provision and (b) cross-account identity correlation is outside the current threat model.
+- **Cooldown duration (6h) and attempt limit (3) are constants** — not Remote Config flags. If tunability is needed later, a separate WP should add them to **2.13**.
+
+**Acceptance Criteria**
+- [ ] AC1: A Visitor with 3 rejected Claim Requests on a Secret Question post cannot submit a 4th — enforced in both the Flutter client and Firestore security rules
+- [ ] AC2: A Visitor with a rejected Found Report (or rejected Claim Request on a non-Secret-Question post) must wait 6 hours from the rejection timestamp before the submit button becomes available again
+- [ ] AC3: The Detail Screen displays the attempts-remaining message (Secret Question case) or the cooldown countdown (other cases) using the exact English copy specified in Deliverables
+- [ ] AC4: Firestore security rules deny the `create` operation on the `requests` sub-collection when policy is violated, verified independently of the client via the Firebase Emulator
+- [ ] AC5: All unit, widget, integration, and security-rules test cases listed in the Testing section pass
+- [ ] AC6: Policy and rationale are documented in `CONVENTIONS.md`
+
+**Dependencies**
+- **Upstream (must be complete before starting):**
+  - **2.4** Request & Approval System — provides `RequestService`, `submitRequest()`, and the `rejected` status flow
+  - **2.10** Secret Question for Claim Request Verification — provides the `secretQuestion` field on items, needed to branch policy
+  - **5.2** Security & Dependency Scans — provides the baseline Firestore security rules that this WP extends
+- **Downstream (will be affected by this WP):**
+  - **2.16** Push Notifications — T4 (Request rejected) notification copy may be updated in a follow-up iteration to mention remaining attempts
+  - **7.1** Test Scripts — new test cases added to the test suite
+
+**Risks & Mitigations**
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Firestore security rules cannot perform aggregate count queries, blocking rule-side enforcement | Medium | High | Fallback to a Cloud Function `beforeCreate` trigger that performs the count and rejects the write; client-side check remains the first line of defense |
+| Legitimate item owner mistypes `secretAnswer` 3 times and is permanently locked out of a post | Low | High | Poster can be contacted manually via the item's `contact` field; a future WP may introduce a "Poster manual unlock" action — out of scope here |
+| Cross-account abuse: a locked Visitor registers a second `@mail.kmutt.ac.th` account to retry | Low | Medium | Accepted residual risk; KMUTT accounts are non-trivial to provision and cross-account correlation is out of scope for this WP |
+| Race condition: two near-simultaneous submits both pass `canResubmit()` on the client | Low | Low | Firestore security rules act as the final gatekeeper — at most one write succeeds; the second receives a permission-denied error |
+| Cooldown countdown drifts during long-lived Detail Screen sessions | Low | Low | Refresh `ResubmitDecision` from `RequestService` whenever the screen regains focus, in addition to the 1-minute timer |
+
+**Testing**
+- Unit test: `canResubmit()` on Secret Question post with 0 rejected — verify returns `{ allowed: true, attemptsRemaining: 3 }`
+- Unit test: `canResubmit()` on Secret Question post with 2 rejected — verify returns `{ allowed: true, attemptsRemaining: 1 }`
+- Unit test: `canResubmit()` on Secret Question post with 3 rejected — verify returns `{ allowed: false, reason: "permanent_block" }`
+- Unit test: `canResubmit()` on non-Secret-Question post with most-recent rejection 4 h ago — verify returns `{ allowed: false, reason: "cooldown" }` and `retryAfter` is approximately 2 h from now
+- Unit test: `canResubmit()` on non-Secret-Question post with most-recent rejection 7 h ago — verify returns `{ allowed: true }`
+- Unit test: `submitRequest()` when `canResubmit()` returns `{ allowed: false }` — verify `ResubmitNotAllowedException` is thrown and no document is written
+- Widget test: render Detail Screen as Visitor on a Secret Question post with 2 rejected — verify button label contains `"1 attempt remaining"`
+- Widget test: render Detail Screen as Visitor on a Secret Question post with 3 rejected — verify button is disabled and shows the permanent-block message
+- Widget test: render Detail Screen as Visitor on a Seeker Post with rejection 4 h ago — verify countdown widget renders and shows approximately `"2h"`
+- Integration test: with 3 rejected requests in Firestore, attempt to submit a 4th — verify both the client throws `ResubmitNotAllowedException` AND the Firestore security rule denies the write
+- Security-rules test (Firebase Emulator): simulate authenticated user with 3+ rejected requests in the sub-collection — verify rule denies `create` on a new request document
+- Security-rules test (Firebase Emulator): simulate authenticated user with most-recent rejection 4 h ago on a non-Secret-Question post — verify rule denies `create`
 
 ---
 
@@ -1004,6 +1091,7 @@ Both cases use the same `PhotoSafetyWarningDialog` widget. The guard applies on 
 - `secretQuestion` is displayed on the Claim Request form when the target Founder Post has one set, requiring the Visitor to fill in their own answer before submitting — no hints or expected answer shown
 - **One active Claim Request per Visitor per post enforced** — if a Visitor already has a pending or approved request on a post, the Claim Request button is replaced with a "Cancel Request" option. A new request can only be submitted after cancellation
 - Visitor's submitted answer stored as `visitorAnswer` in the requests sub-collection document
+- `visitorAnswer` is editable by the requester while `status == "pending"` (see **2.17** — Request Edit). The Verification section the Poster sees re-renders with the latest answer, and the request's `editedAt` timestamp signals that the answer changed since the Poster last looked. Editing reuses the same request document, so the "one active Claim Request per Visitor per post" rule is preserved
 - Request Detail screen (Poster view only) displays a "Verification" section: the question, the Poster's expected answer, and the Visitor's submitted answer side by side for manual comparison. A note in the UI reminds the Poster that comparison is manual
 - `secretQuestion` and `secretAnswer` are hidden from all Visitor-facing views (Feed, Detail Screen, Claim Request form result)
 - Found Report form on Seeker Posts has no answer field — Secret Question does not apply
@@ -1182,6 +1270,7 @@ Gate at least one major feature behind a Firebase Remote Config boolean flag so 
   - Expected propagation time (depends on min-fetch-interval)
   - Post-rollback verification checklist
   - On-call contact list
+- **In-app surfaces** — the `RemoteConfigViewerScreen` (read-only viewer) and `RollbackPlanScreen` (interactive runbook mirroring `ROLLBACK_PLAN.md`) are scoped under **2.18** and gated by the admin role. The Firebase Console remains the only place Remote Config values can be **edited**; the in-app screen exists for visibility, not for writing.
 
 **Associated Activities**
 - Enable Remote Config in Firebase Console; create `secret_question_enabled` parameter
@@ -1376,6 +1465,81 @@ Notification text is in English only, matching the app language. For sensitive p
 - Widget test: Settings Screen — toggle "Receive notifications" off → verify `UserService.updateUserProfile()` called with `notificationsEnabled: false`
 - Integration test: submit a Claim Request → verify the Poster's device receives a push notification with correct title and body
 - Integration test: tap incoming notification → verify app navigates to the correct Detail Screen (`/items/{itemId}`)
+
+---
+
+### 2.17 Admin Role & In-App Admin Screens
+
+| Field | Detail |
+|---|---|
+| **WBS Code** | 2.17 |
+| **Type** | Work Package |
+| **Requirement** | Data Storage · Pages & Navigation · Reliability |
+
+**Scope / Statement of Work**
+
+Introduce an admin role so the Remote Config viewer and Rollback Plan screens designed in the prototype (under Settings → Developer) can ship to the Flutter app behind proper access control. Admin status is a single boolean on the user document — granted **manually** by an existing admin editing `users/{uid}.isAdmin = true` in the Firebase Console. There is no in-app flow to grant or revoke admin; this matches the small-team admin pool and keeps the auth surface area minimal.
+
+The in-app Remote Config screen is **read-only**. It surfaces the currently-fetched values of `secret_question_enabled`, `sensitive_categories`, and `security_office_contact`, plus the last-fetched timestamp, so on-call admins can confirm what the app is actually using without opening the Firebase Console. To **change** a value, the screen links out to the Firebase Console — the source of truth for Remote Config remains the console, and there is no app-to-Remote-Config write path. This avoids needing a Cloud Function with Remote Config admin credentials and removes the risk of a stolen admin device flipping flags.
+
+The in-app Rollback Plan screen is the interactive equivalent of `ROLLBACK_PLAN.md` (WBS 2.13): it shows the current flag state, when to invoke the plan, the 5-step procedure, propagation timing, an interactive post-rollback verification checklist (local UI state only), and on-call contacts.
+
+**Deliverables**
+- `isAdmin: bool` field added to `users/{uid}` (default `false`); admin granted manually by editing the user document in Firebase Console
+- `currentUserProvider` (in `features/auth/presentation/providers/`) exposes `isAdmin` so UI and route guards can read it
+- GoRouter routes:
+  - `/admin/remote-config`
+  - `/admin/rollback-plan`
+- Route guard: any `/admin/*` route redirects non-admin users to `/feed` with a snackbar "Admin access required"
+- Settings & Profile screen (1.6): a **Developer** section is rendered only when `currentUser.isAdmin == true`; rows link to the two admin screens
+- `RemoteConfigViewerScreen` (read-only):
+  - Header card: last fetched timestamp, min-fetch-interval reminder
+  - Feature flags section: `secret_question_enabled` with current value badge (no toggle)
+  - Configuration values section: `security_office_contact`, `sensitive_categories` (chips)
+  - "Edit in Firebase Console" button — opens `console.firebase.google.com/.../config` in an external browser
+  - "Fetch & activate now" button — calls `FeatureFlagService.fetchAndActivate()` and refreshes displayed values
+- `RollbackPlanScreen`:
+  - Current flag status banner (ENABLED / DISABLED) — derived from live `FeatureFlagService` state
+  - "When to invoke" criteria list
+  - Numbered rollback procedure (mirrors `ROLLBACK_PLAN.md`)
+  - Propagation time table (Production / Debug / Force-fetch)
+  - Post-rollback verification checklist with local checked state (state is screen-local; no persistence)
+  - On-call contacts (Tech Lead handle, Firebase Console URL, Crashlytics URL)
+- Firestore security rules:
+  - `users/{uid}.isAdmin` is writable **only** by another admin or via Firebase Console (i.e. not by the user themselves) — clients cannot self-elevate
+  - Rule helper `function isAdmin() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; }` available for any future admin-gated writes
+- A short `ADMIN_ROLE.md` runbook in the repo root documenting how to grant `isAdmin` via Firebase Console (click-path) and how to revoke it
+
+**Associated Activities**
+- Add `isAdmin: bool` (default `false`) to the user model (`UserModel.fromJson`/`toJson`) and `User` entity
+- Update `UserService.createUserProfile()` to set `isAdmin: false` on new accounts
+- Update `currentUserProvider` to expose `isAdmin` from the user document
+- Add the two routes to `lib/config/router/app_router.dart` with the admin guard
+- Build `RemoteConfigViewerScreen` reusing tokens and components from the Figma prototype (`screens-admin.jsx`); replace the prototype's toggle with a value badge + "Edit in Firebase Console" deep link
+- Build `RollbackPlanScreen` mirroring the prototype design (`screens-admin.jsx` `RollbackPlanScreen`); rollback step content sourced from `ROLLBACK_PLAN.md` (single source of truth — keep the markdown and the screen text in sync)
+- Add the Developer section to Settings (1.6) gated on `currentUser.isAdmin`
+- Update Firestore security rules: `isAdmin` cannot be written by the user themselves; add `isAdmin()` helper for future use
+- Write `ADMIN_ROLE.md` with the manual-grant procedure
+- Update `ROLLBACK_PLAN.md` (WBS 2.13) to cross-reference the in-app Rollback Plan screen
+
+**Testing**
+- Unit test: `currentUserProvider` returns `isAdmin: true` when the user doc has `isAdmin: true` — verify
+- Unit test: `currentUserProvider` returns `isAdmin: false` when the field is missing (default behaviour)
+- Widget test: render Settings screen with `currentUser.isAdmin == false` — verify Developer section is **not** rendered
+- Widget test: render Settings screen with `currentUser.isAdmin == true` — verify Developer section is rendered with two rows linking to `/admin/remote-config` and `/admin/rollback-plan`
+- Widget test: navigate to `/admin/remote-config` as a non-admin user — verify redirect to `/feed` and "Admin access required" snackbar
+- Widget test: render `RemoteConfigViewerScreen` with mocked `FeatureFlagService` — verify all three keys render with current values and last-fetched relative time
+- Widget test: tap "Fetch & activate now" — verify `FeatureFlagService.fetchAndActivate()` is called
+- Widget test: render `RollbackPlanScreen` with `secret_question_enabled == true` — verify status banner shows ENABLED; with `false` — verify DISABLED banner
+- Widget test: tap a checklist item — verify the row toggles to the checked state
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on their own document — verify denied
+- Firestore rules test: a non-admin user tries to set `isAdmin: true` on another user's document — verify denied
+
+**Cross-references to update**
+- **2.1 (Firestore Schema)** — add `isAdmin: bool` (default `false`) to the `users/{uid}` schema
+- **2.13 (Feature Flag & Rollback Plan)** — note that the in-app `RemoteConfigViewerScreen` and `RollbackPlanScreen` are implemented in **2.17** behind the admin role; `ROLLBACK_PLAN.md` remains the source of truth for rollback step content
+- **1.6 (Settings & Profile Screen)** — note that an admin-gated Developer section appears in Settings when `currentUser.isAdmin == true`
+- **CLAUDE.md** — add `isAdmin?: bool (default false)` to the `users/{uid}` row in the Firestore Collections table; mention `ADMIN_ROLE.md` in Key Files
 
 ---
 

@@ -1,23 +1,69 @@
-// WBS 2.13 — Remote Config integration is a separate work package.
-// Until then this service returns hardcoded in-app defaults so all
-// feature-flagged code paths compile and run correctly.
+import 'dart:convert';
 
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../domain/entities/feature_flags.dart';
+import '../domain/repositories/feature_flag_repository.dart';
 
 part 'feature_flag_service.g.dart';
 
-class FeatureFlagService {
-  const FeatureFlagService();
+class FeatureFlagService implements FeatureFlagRepository {
+  FeatureFlagService(this._remoteConfig);
 
-  // WBS 2.10 / 2.13 — gates the Secret Question feature on Founder Posts
-  bool get secretQuestionEnabled => true;
+  final FirebaseRemoteConfig _remoteConfig;
 
-  // WBS 2.14 — gates the Sensitive Item selector on the Post Form
-  bool get sensitiveItemEnabled => true;
+  @override
+  Future<void> fetchAndActivate() async {
+    await _remoteConfig.setDefaults({
+      'secret_question_enabled': true,
+      'sensitive_item_enabled': true,
+      'security_office_contact': '02-470-9999',
+      'sensitive_categories':
+          '["credit_card","id_card","passport","key","document"]',
+    });
+    await _remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval:
+          kReleaseMode ? const Duration(hours: 1) : Duration.zero,
+    ));
+    // Failure is intentionally swallowed; in-app defaults remain active.
+    try {
+      await _remoteConfig.fetchAndActivate();
+    } catch (_) {}
+  }
 
-  // WBS 1.3 / 2.14 — security office phone number for sensitive items
-  String get securityOfficeContact => '02-470-9999';
+  @override
+  FeatureFlags get currentFlags => FeatureFlags(
+        secretQuestionEnabled:
+            _remoteConfig.getBool('secret_question_enabled'),
+        sensitiveItemEnabled: _remoteConfig.getBool('sensitive_item_enabled'),
+        securityOfficeContact:
+            _remoteConfig.getString('security_office_contact'),
+        sensitiveCategories: _parseSensitiveCategories(
+          _remoteConfig.getString('sensitive_categories'),
+        ),
+      );
+
+  // Convenience getters keep all existing call sites unchanged.
+  bool get secretQuestionEnabled => currentFlags.secretQuestionEnabled;
+  bool get sensitiveItemEnabled => currentFlags.sensitiveItemEnabled;
+  String get securityOfficeContact => currentFlags.securityOfficeContact;
+
+  @override
+  DateTime get lastFetchTime => _remoteConfig.lastFetchTime;
+
+  List<String> _parseSensitiveCategories(String raw) {
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list.cast<String>();
+    } catch (_) {
+      return FeatureFlags.defaults.sensitiveCategories;
+    }
+  }
 }
 
 @riverpod
-FeatureFlagService featureFlags(_) => const FeatureFlagService();
+FeatureFlagService featureFlags(FeatureFlagsRef ref) =>
+    FeatureFlagService(FirebaseRemoteConfig.instance);

@@ -11,6 +11,7 @@ class UserModel {
   final String? avatarUrl;
   final bool emailVerified;
   final DateTime? createdAt;
+  final bool isAdmin;
 
   const UserModel({
     required this.uid,
@@ -22,6 +23,7 @@ class UserModel {
     this.avatarUrl,
     required this.emailVerified,
     this.createdAt,
+    this.isAdmin = false,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -36,6 +38,7 @@ class UserModel {
       avatarUrl: data['avatarUrl'] as String?,
       emailVerified: data['emailVerified'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      isAdmin: data['isAdmin'] as bool? ?? false,
     );
   }
 
@@ -49,6 +52,7 @@ class UserModel {
         avatarUrl: user.avatarUrl,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
+        isAdmin: user.isAdmin,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -70,5 +74,6 @@ class UserModel {
         avatarUrl: avatarUrl,
         emailVerified: emailVerified,
         createdAt: createdAt,
+        isAdmin: isAdmin,
       );
 }

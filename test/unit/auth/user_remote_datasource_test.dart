@@ -110,6 +110,16 @@ void main() {
           reason: 'createdAt must be written via FieldValue.serverTimestamp()',
         );
       });
+
+      test(
+        'WBS 2.18 — stamps isAdmin: false so new accounts default to non-admin',
+        () async {
+          await sut.createUser(_buildModel());
+
+          final doc = await firestore.collection('users').doc('uid-1').get();
+          expect(doc.data()!['isAdmin'], isFalse);
+        },
+      );
     });
 
     group('02 getUserById()', () {

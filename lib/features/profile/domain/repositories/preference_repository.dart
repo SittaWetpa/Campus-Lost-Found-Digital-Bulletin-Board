@@ -5,4 +5,6 @@ abstract interface class PreferenceRepository {
   Future<UserPreferences> getUserPreferences();
 
   Future<void> setNotificationsEnabled({required bool value});
+  Future<void> setThemeMode(AppThemeMode mode);
+  Future<void> setLastViewedCategory(String? category);
 }

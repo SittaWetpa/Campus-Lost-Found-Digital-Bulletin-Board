@@ -67,6 +67,12 @@ class _FakePreferenceRepository implements PreferenceRepository {
     lastSetValue = value;
     _prefs = _prefs.copyWith(notificationsEnabled: value);
   }
+
+  @override
+  Future<void> setThemeMode(AppThemeMode mode) async {}
+
+  @override
+  Future<void> setLastViewedCategory(String? category) async {}
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

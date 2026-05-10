@@ -495,6 +495,282 @@ class _WatchSingleRequestProviderElement
   String get requestId => (origin as WatchSingleRequestProvider).requestId;
 }
 
+String _$resubmitDecisionHash() => r'dcaa850d0817a1e8a0deac488600f27ad9dbd102';
+
+/// See also [resubmitDecision].
+@ProviderFor(resubmitDecision)
+const resubmitDecisionProvider = ResubmitDecisionFamily();
+
+/// See also [resubmitDecision].
+class ResubmitDecisionFamily extends Family<AsyncValue<ResubmitDecision>> {
+  /// See also [resubmitDecision].
+  const ResubmitDecisionFamily();
+
+  /// See also [resubmitDecision].
+  ResubmitDecisionProvider call(
+    String itemId,
+    String requesterId,
+  ) {
+    return ResubmitDecisionProvider(
+      itemId,
+      requesterId,
+    );
+  }
+
+  @override
+  ResubmitDecisionProvider getProviderOverride(
+    covariant ResubmitDecisionProvider provider,
+  ) {
+    return call(
+      provider.itemId,
+      provider.requesterId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'resubmitDecisionProvider';
+}
+
+/// See also [resubmitDecision].
+class ResubmitDecisionProvider
+    extends AutoDisposeFutureProvider<ResubmitDecision> {
+  /// See also [resubmitDecision].
+  ResubmitDecisionProvider(
+    String itemId,
+    String requesterId,
+  ) : this._internal(
+          (ref) => resubmitDecision(
+            ref as ResubmitDecisionRef,
+            itemId,
+            requesterId,
+          ),
+          from: resubmitDecisionProvider,
+          name: r'resubmitDecisionProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$resubmitDecisionHash,
+          dependencies: ResubmitDecisionFamily._dependencies,
+          allTransitiveDependencies:
+              ResubmitDecisionFamily._allTransitiveDependencies,
+          itemId: itemId,
+          requesterId: requesterId,
+        );
+
+  ResubmitDecisionProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.itemId,
+    required this.requesterId,
+  }) : super.internal();
+
+  final String itemId;
+  final String requesterId;
+
+  @override
+  Override overrideWith(
+    FutureOr<ResubmitDecision> Function(ResubmitDecisionRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ResubmitDecisionProvider._internal(
+        (ref) => create(ref as ResubmitDecisionRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        itemId: itemId,
+        requesterId: requesterId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<ResubmitDecision> createElement() {
+    return _ResubmitDecisionProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ResubmitDecisionProvider &&
+        other.itemId == itemId &&
+        other.requesterId == requesterId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, itemId.hashCode);
+    hash = _SystemHash.combine(hash, requesterId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ResubmitDecisionRef on AutoDisposeFutureProviderRef<ResubmitDecision> {
+  /// The parameter `itemId` of this provider.
+  String get itemId;
+
+  /// The parameter `requesterId` of this provider.
+  String get requesterId;
+}
+
+class _ResubmitDecisionProviderElement
+    extends AutoDisposeFutureProviderElement<ResubmitDecision>
+    with ResubmitDecisionRef {
+  _ResubmitDecisionProviderElement(super.provider);
+
+  @override
+  String get itemId => (origin as ResubmitDecisionProvider).itemId;
+  @override
+  String get requesterId => (origin as ResubmitDecisionProvider).requesterId;
+}
+
+String _$cooldownRemainingHash() => r'3db4841f7836efc49bace7fb327345896a567347';
+
+/// See also [cooldownRemaining].
+@ProviderFor(cooldownRemaining)
+const cooldownRemainingProvider = CooldownRemainingFamily();
+
+/// See also [cooldownRemaining].
+class CooldownRemainingFamily extends Family<AsyncValue<Duration>> {
+  /// See also [cooldownRemaining].
+  const CooldownRemainingFamily();
+
+  /// See also [cooldownRemaining].
+  CooldownRemainingProvider call(
+    DateTime retryAfter,
+  ) {
+    return CooldownRemainingProvider(
+      retryAfter,
+    );
+  }
+
+  @override
+  CooldownRemainingProvider getProviderOverride(
+    covariant CooldownRemainingProvider provider,
+  ) {
+    return call(
+      provider.retryAfter,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'cooldownRemainingProvider';
+}
+
+/// See also [cooldownRemaining].
+class CooldownRemainingProvider extends AutoDisposeStreamProvider<Duration> {
+  /// See also [cooldownRemaining].
+  CooldownRemainingProvider(
+    DateTime retryAfter,
+  ) : this._internal(
+          (ref) => cooldownRemaining(
+            ref as CooldownRemainingRef,
+            retryAfter,
+          ),
+          from: cooldownRemainingProvider,
+          name: r'cooldownRemainingProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$cooldownRemainingHash,
+          dependencies: CooldownRemainingFamily._dependencies,
+          allTransitiveDependencies:
+              CooldownRemainingFamily._allTransitiveDependencies,
+          retryAfter: retryAfter,
+        );
+
+  CooldownRemainingProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.retryAfter,
+  }) : super.internal();
+
+  final DateTime retryAfter;
+
+  @override
+  Override overrideWith(
+    Stream<Duration> Function(CooldownRemainingRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CooldownRemainingProvider._internal(
+        (ref) => create(ref as CooldownRemainingRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        retryAfter: retryAfter,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Duration> createElement() {
+    return _CooldownRemainingProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CooldownRemainingProvider && other.retryAfter == retryAfter;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, retryAfter.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin CooldownRemainingRef on AutoDisposeStreamProviderRef<Duration> {
+  /// The parameter `retryAfter` of this provider.
+  DateTime get retryAfter;
+}
+
+class _CooldownRemainingProviderElement
+    extends AutoDisposeStreamProviderElement<Duration>
+    with CooldownRemainingRef {
+  _CooldownRemainingProviderElement(super.provider);
+
+  @override
+  DateTime get retryAfter => (origin as CooldownRemainingProvider).retryAfter;
+}
+
 String _$itemDetailActionNotifierHash() =>
     r'5f2d860ad3837c91e8eef3d088bf3fb14b674e1a';
 
