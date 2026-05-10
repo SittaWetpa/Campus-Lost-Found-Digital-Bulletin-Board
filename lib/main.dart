@@ -9,6 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'config/firebase_options.dart';
+import 'core/observability/app_logger.dart';
+import 'core/observability/console_logger_impl.dart';
+import 'core/observability/crashlytics_logger_impl.dart';
 import 'core/services/feature_flag_service.dart';
 import 'app.dart';
 
@@ -49,6 +52,18 @@ Future<void> main() async {
     final flagService = FeatureFlagService(FirebaseRemoteConfig.instance);
     await flagService.fetchAndActivate();
 
+    // AppLogger (WBS 2.12) — init before first frame
+    AppLogger.init(
+      (!kIsWeb && kReleaseMode)
+          ? CrashlyticsLoggerImpl(FirebaseCrashlytics.instance)
+          : const ConsoleLoggerImpl(),
+    );
+    await AppLogger.setUserContext(
+      userId: 'anonymous',
+      appVersion: '1.0.0',
+      platform: kIsWeb ? 'web' : 'android',
+    );
+
     runApp(ProviderScope(
       overrides: [
         featureFlagsProvider.overrideWithValue(flagService),
@@ -59,6 +74,12 @@ Future<void> main() async {
     if (!kIsWeb) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     } else {
+      AppLogger.error(
+        'Uncaught zone error',
+        tag: 'ZoneGuard',
+        error: error,
+        stackTrace: stack,
+      );
       if (kDebugMode) debugPrint('Uncaught zone error: $error\n$stack');
     }
   });

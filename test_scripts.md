@@ -168,7 +168,7 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.10 | ClaimRequestScreen — SQ block shown/hidden, empty-answer error, poster's answer not displayed, AlreadySubmitted screen | `test/widget/requests/claim_request_screen_test.dart` | Widget | ✅ 5 tests |
 | 2.10 | FoundReportScreen — no Secret Question block or answer field | `test/widget/requests/found_report_screen_test.dart` | Widget | ✅ 1 test |
 | 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
-| 2.12 | Crashlytics & logging | — | Unit | ⬜ not yet written |
+| 2.12 | Crashlytics & logging — AppLogger.error() routes to log with level=error; AppLogger.info() routes to log with level=info | `test/unit/observability/app_logger_test.dart` | Unit | ✅ 2 tests |
 | 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
 | 2.13 | PostFormScreen — secretQuestionEnabled flag hides/shows SECRET QUESTION section | `test/features/post/presentation/screens/post_form_screen_test.dart` | Widget | ✅ 2 tests |
 | 2.14 | Sensitive Item entity invariants (source / isSensitive / expiresAt) + `ItemStatus.expired` parsing | `test/unit/feed/item_entity_test.dart` | Unit | ✅ 16 tests |

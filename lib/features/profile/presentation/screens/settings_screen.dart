@@ -225,6 +225,12 @@ class SettingsScreen extends ConsumerWidget {
                         sub: 'secret_question_enabled · WBS 2.13',
                         onTap: () => context.push(AppRoutes.adminRollbackPlan),
                       ),
+                      const Divider(height: 1, color: _kBorder),
+                      _DeveloperRow(
+                        label: 'Debug Menu',
+                        sub: 'Crashlytics test crashes · WBS 2.12',
+                        onTap: () => context.push(AppRoutes.adminDebugMenu),
+                      ),
                     ],
                   ),
                 ),

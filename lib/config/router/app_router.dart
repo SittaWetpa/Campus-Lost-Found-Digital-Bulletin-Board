@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
+import 'package:campus_lost_found/core/observability/app_logger_route_observer.dart';
+import 'package:campus_lost_found/features/admin/presentation/screens/debug_menu_screen.dart';
 import 'package:campus_lost_found/features/admin/presentation/screens/remote_config_viewer_screen.dart';
 import 'package:campus_lost_found/features/admin/presentation/screens/rollback_plan_screen.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
@@ -43,6 +45,7 @@ abstract final class AppRoutes {
   // Admin (WBS 2.18) — gated by isAdmin
   static const adminRemoteConfig = '/admin/remote-config';
   static const adminRollbackPlan = '/admin/rollback-plan';
+  static const adminDebugMenu    = '/admin/debug-menu';
   static bool isAdminRoute(String location) =>
       location.startsWith('/admin/');
 
@@ -83,6 +86,7 @@ GoRouter appRouter(AppRouterRef ref) {
 
   return GoRouter(
     initialLocation: AppRoutes.login,
+    observers: [AppLoggerRouteObserver()],
     refreshListenable: Listenable.merge([authListenable, userListenable]),
     redirect: (context, state) {
       final authValue = authListenable.value;
@@ -195,6 +199,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: AppRoutes.adminRollbackPlan,
         builder: (context, state) => const RollbackPlanScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminDebugMenu,
+        builder: (context, state) => const DebugMenuScreen(),
       ),
     ],
   );
