@@ -12,6 +12,7 @@ import 'package:campus_lost_found/features/post/presentation/providers/post_prov
 import 'package:campus_lost_found/features/post/presentation/providers/similar_items_provider.dart';
 import 'package:campus_lost_found/features/post/presentation/widgets/category_picker.dart';
 import 'package:campus_lost_found/features/post/presentation/widgets/similar_posts_panel.dart';
+import 'package:campus_lost_found/shared/widgets/confirm_dialog.dart';
 
 const _kAmber = Color(0xFFCA8A04);
 const _kGreen = Color(0xFF16A34A);
@@ -160,31 +161,19 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     });
   }
 
-  Future<bool?> _showPhotoSafetyDialog({required bool isReview}) {
-    return showDialog<bool>(
+  Future<bool> _showPhotoSafetyDialog({required bool isReview}) {
+    return showConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Photo Safety'),
-        content: Text(
-          isReview
-              ? 'You attached photos before setting the Secret Question. Make '
-                  'sure the photos do NOT reveal the answer — anyone with a '
-                  'photo could bypass verification. Confirm or remove the '
-                  'photos before proceeding.'
-              : 'Make sure your photos do NOT show the answer to your Secret '
-                  'Question. Anyone with a photo could bypass verification.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('I understand'),
-          ),
-        ],
-      ),
+      title: 'Photo Safety',
+      body: isReview
+          ? 'You attached photos before setting the Secret Question. Make '
+              'sure the photos do NOT reveal the answer — anyone with a '
+              'photo could bypass verification. Confirm or remove the '
+              'photos before proceeding.'
+          : 'Make sure your photos do NOT show the answer to your Secret '
+              'Question. Anyone with a photo could bypass verification.',
+      confirmLabel: 'I understand',
+      cancelLabel: 'Cancel',
     );
   }
 

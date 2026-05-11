@@ -6,10 +6,11 @@ part of 'feed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$feedItemsHash() => r'8f0a9fd5119a2084de86041f238ec0bc36126911';
+String _$feedItemsHash() => r'6d94acaf001ce473b962de453246030a46c7e164';
 
-/// Filtered view of the feed stream — applies [FeedFilter] on top of the
-/// shared [itemRepositoryProvider] / `watchFeed()` chain defined in
+/// Filtered view of the feed stream — applies [FeedFilter], the taxonomy
+/// filter, and the search query on top of the shared
+/// [itemRepositoryProvider] / `watchFeed()` chain defined in
 /// `item_provider.dart`. The data layer (datasource, repository) lives there;
 /// this provider is a thin presentation-layer view-model.
 ///
