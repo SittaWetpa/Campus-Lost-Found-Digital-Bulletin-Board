@@ -17,6 +17,7 @@ import 'package:campus_lost_found/features/feed/domain/repositories/item_reposit
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/my_posts_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
@@ -49,7 +50,7 @@ class _FakeItemRepository implements ItemRepository {
   @override
   Future<List<Item>> searchItems(String keyword) async => const [];
   @override
-  Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
+  Future<List<Item>> getRecentInCategory({required String categoryId, int limit = 5}) async => [];
   @override
   Future<String?> getItemSecretAnswer(String itemId) async => null;
 }
@@ -328,7 +329,7 @@ void main() {
       container.read(appRouterProvider).go(AppRoutes.myPosts);
       await tester.pumpAndSettle();
 
-      expect(find.text('My Posts — WBS 1.7'), findsOneWidget);
+      expect(find.byType(MyPostsScreen), findsOneWidget);
     });
 
     testWidgets('navigate to /settings renders Settings placeholder',

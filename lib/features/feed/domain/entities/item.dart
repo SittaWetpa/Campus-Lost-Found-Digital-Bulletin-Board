@@ -1,3 +1,8 @@
+import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
+
+export 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart'
+    show ItemTaxonomy, TaxonomyMeta;
+
 enum ItemCategory {
   seeker,
   founder;
@@ -80,6 +85,10 @@ class Item {
   final String? posterName;
   final String? posterAvatarUrl;
 
+  // WBS 2.8 — taxonomy bucket (electronics, bag_wallet, etc.); null for legacy
+  // items written before this field was introduced. Lazy-backfilled to 'other'.
+  final ItemTaxonomy? itemTaxonomy;
+
   const Item({
     required this.id,
     required this.title,
@@ -101,6 +110,7 @@ class Item {
     this.secretAnswer,
     this.posterName,
     this.posterAvatarUrl,
+    this.itemTaxonomy,
   });
 
   Item copyWith({
@@ -124,6 +134,7 @@ class Item {
     String? secretAnswer,
     String? posterName,
     String? posterAvatarUrl,
+    ItemTaxonomy? itemTaxonomy,
   }) =>
       Item(
         id: id ?? this.id,
@@ -146,5 +157,6 @@ class Item {
         secretAnswer: secretAnswer ?? this.secretAnswer,
         posterName: posterName ?? this.posterName,
         posterAvatarUrl: posterAvatarUrl ?? this.posterAvatarUrl,
+        itemTaxonomy: itemTaxonomy ?? this.itemTaxonomy,
       );
 }

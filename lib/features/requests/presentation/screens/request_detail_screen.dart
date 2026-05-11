@@ -6,6 +6,7 @@ import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
 import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
+import 'package:campus_lost_found/shared/widgets/confirm_dialog.dart';
 
 // KMUTT design tokens — kept local to this screen until the rest of the app
 // migrates off the cool grey palette.
@@ -218,30 +219,19 @@ class _RequestDetailView extends ConsumerWidget {
       BuildContext context, WidgetRef ref, int otherPendingCount) async {
     final typeLabel =
         req.type == RequestType.found ? 'found report' : 'claim';
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: _Tokens.surface,
-        title: Text("Approve ${req.requesterName}'s $typeLabel?"),
-        content: _ApproveDialogBody(
-          itemTitle: item.title,
-          requesterName: req.requesterName,
-          otherPendingCount: otherPendingCount,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: _Tokens.success),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, approve'),
-          ),
-        ],
+      title: "Approve ${req.requesterName}'s $typeLabel?",
+      bodyWidget: _ApproveDialogBody(
+        itemTitle: item.title,
+        requesterName: req.requesterName,
+        otherPendingCount: otherPendingCount,
       ),
+      confirmLabel: 'Yes, approve',
+      cancelLabel: 'Cancel',
+      tone: ConfirmTone.success,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).approve(
           itemId: item.id,
           requestId: req.id,
@@ -258,26 +248,15 @@ class _RequestDetailView extends ConsumerWidget {
   Future<void> _reject(BuildContext context, WidgetRef ref) async {
     final typeLabel =
         req.type == RequestType.found ? 'found report' : 'claim';
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: _Tokens.surface,
-        title: Text("Reject ${req.requesterName}'s $typeLabel?"),
-        content: _RejectDialogBody(requesterName: req.requesterName),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: _Tokens.danger),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, reject'),
-          ),
-        ],
-      ),
+      title: "Reject ${req.requesterName}'s $typeLabel?",
+      bodyWidget: _RejectDialogBody(requesterName: req.requesterName),
+      confirmLabel: 'Yes, reject',
+      cancelLabel: 'Cancel',
+      tone: ConfirmTone.danger,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).reject(
           itemId: item.id,
           requestId: req.id,
@@ -291,30 +270,16 @@ class _RequestDetailView extends ConsumerWidget {
   }
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: _Tokens.surface,
-        title: const Text('Cancel your request?'),
-        content: const Text(
-          "The poster will see this request as cancelled and won't be able to approve it. "
-          'You can submit a new request later if needed.',
-          style: TextStyle(color: _Tokens.ink700, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: _Tokens.danger),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, cancel it'),
-          ),
-        ],
-      ),
+      title: 'Cancel your request?',
+      body: "The poster will see this request as cancelled and won't be able "
+          'to approve it. You can submit a new request later if needed.',
+      confirmLabel: 'Yes, cancel it',
+      cancelLabel: 'Keep',
+      tone: ConfirmTone.danger,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     await ref.read(itemDetailActionNotifierProvider.notifier).cancel(
           itemId: item.id,
           requestId: req.id,

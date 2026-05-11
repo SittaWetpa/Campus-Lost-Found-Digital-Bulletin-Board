@@ -105,6 +105,92 @@ void main() {
     });
   });
 
+  group('ItemModel itemCategory — WBS 2.8', () {
+    test('fromMap with itemCategory parses to correct ItemTaxonomy', () {
+      final data = {
+        'title': 'Found iPhone',
+        'description': 'Black iPhone',
+        'category': 'founder',
+        'status': 'active',
+        'location': 'Library',
+        'contact': '0812345678',
+        'imageUrls': <String>[],
+        'userId': 'uid-001',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1)),
+        'occurredAt': Timestamp.fromDate(DateTime(2026, 5, 1)),
+        'itemCategory': 'electronics',
+      };
+
+      final entity = ItemModel.fromMap('id-1', data).toEntity();
+
+      expect(entity.itemTaxonomy, equals(ItemTaxonomy.electronics));
+    });
+
+    test('fromMap with missing itemCategory defaults to ItemTaxonomy.other (lazy backfill)',
+        () {
+      final data = {
+        'title': 'Old item no category',
+        'description': 'Legacy',
+        'category': 'seeker',
+        'status': 'active',
+        'location': 'Gate',
+        'contact': '0812345678',
+        'imageUrls': <String>[],
+        'userId': 'uid-002',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 4, 1)),
+        'occurredAt': Timestamp.fromDate(DateTime(2026, 4, 1)),
+        // no itemCategory field
+      };
+
+      final entity = ItemModel.fromMap('id-2', data).toEntity();
+
+      expect(entity.itemTaxonomy, equals(ItemTaxonomy.other));
+    });
+
+    test('toFirestore includes itemCategory key', () {
+      final model = ItemModel(
+        id: 'item-001',
+        title: 'Found watch',
+        description: 'Silver watch',
+        category: 'founder',
+        status: 'active',
+        location: 'Gym',
+        contact: '0812345678',
+        imageUrls: const [],
+        userId: 'uid-001',
+        createdAt: DateTime(2026, 5, 1),
+        occurredAt: DateTime(2026, 5, 1),
+        itemCategory: 'accessory',
+      );
+
+      final payload = model.toFirestore();
+
+      expect(payload.containsKey('itemCategory'), isTrue);
+      expect(payload['itemCategory'], equals('accessory'));
+    });
+
+    test('toFirestore falls back to "other" when itemCategory is null', () {
+      final model = ItemModel(
+        id: 'item-002',
+        title: 'Old item',
+        description: '',
+        category: 'seeker',
+        status: 'active',
+        location: 'Gate',
+        contact: '0812345678',
+        imageUrls: const [],
+        userId: 'uid-002',
+        createdAt: DateTime(2026, 4, 1),
+        occurredAt: DateTime(2026, 4, 1),
+        // itemCategory not set
+      );
+
+      final payload = model.toFirestore();
+
+      expect(payload['itemCategory'], equals('other'));
+    });
+  });
+
   group('ItemModel round-trip — WBS 2.1 / 2.2', () {
     test('entity → toFirestore → fromFirestore → entity preserves occurredAt',
         () async {

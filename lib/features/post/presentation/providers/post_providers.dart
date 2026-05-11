@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -6,9 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:campus_lost_found/core/services/storage_repository.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
-import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/create_item_use_case.dart';
-import 'package:campus_lost_found/features/post/domain/usecases/get_similar_founder_posts_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/update_item_use_case.dart';
 import 'package:campus_lost_found/features/post/domain/usecases/upload_post_photos_use_case.dart';
 import 'package:campus_lost_found/features/post/presentation/providers/post_provider.dart';
@@ -63,37 +60,5 @@ class PostFormNotifier extends _$PostFormNotifier {
     state = await AsyncValue.guard(() async {
       await UpdateItemUseCase(ref.read(postRepositoryProvider)).call(item);
     });
-  }
-}
-
-@riverpod
-class SimilarPostsNotifier extends _$SimilarPostsNotifier {
-  Timer? _debounce;
-
-  @override
-  AsyncValue<List<Item>> build() {
-    ref.onDispose(() => _debounce?.cancel());
-    return const AsyncData([]);
-  }
-
-  void search(String title) {
-    _debounce?.cancel();
-    final trimmed = title.trim();
-    if (trimmed.length < 3) {
-      state = const AsyncData([]);
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      state = const AsyncLoading();
-      state = await AsyncValue.guard(
-        () => GetSimilarFounderPostsUseCase(ref.read(itemRepositoryProvider))
-            .call(trimmed),
-      );
-    });
-  }
-
-  void clear() {
-    _debounce?.cancel();
-    state = const AsyncData([]);
   }
 }

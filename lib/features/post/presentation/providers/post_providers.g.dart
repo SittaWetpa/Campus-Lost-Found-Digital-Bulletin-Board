@@ -56,22 +56,5 @@ final postFormNotifierProvider =
 );
 
 typedef _$PostFormNotifier = AutoDisposeNotifier<AsyncValue<void>>;
-String _$similarPostsNotifierHash() =>
-    r'd3dc6d03fed896d916e80973837cf6abe9d82c5b';
-
-/// See also [SimilarPostsNotifier].
-@ProviderFor(SimilarPostsNotifier)
-final similarPostsNotifierProvider = AutoDisposeNotifierProvider<
-    SimilarPostsNotifier, AsyncValue<List<Item>>>.internal(
-  SimilarPostsNotifier.new,
-  name: r'similarPostsNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$similarPostsNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SimilarPostsNotifier = AutoDisposeNotifier<AsyncValue<List<Item>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

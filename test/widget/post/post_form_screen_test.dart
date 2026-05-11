@@ -116,7 +116,10 @@ class _FakeItemRepository implements ItemRepository {
   @override
   Future<List<Item>> searchItems(String keyword) async => const [];
   @override
-  Future<List<Item>> getSimilarFounderPosts(String keyword) async => const [];
+  Future<List<Item>> getRecentInCategory({
+    required String categoryId,
+    int limit = 5,
+  }) async => const [];
   @override
   Stream<List<Item>> watchMyItems(String userId) => const Stream.empty();
   @override
@@ -263,11 +266,12 @@ void main() {
     (tester) async {
       final mockRepo = await _navigateToForm(tester);
 
-      // Switch to Seeker before any title input. This prevents the
-      // SimilarPostsNotifier debounce timer from being scheduled (the
-      // notifier's `search` only runs while category == founder), keeping
-      // the test deterministic.
+      // Switch to Seeker and select a category (WBS 2.8: required field).
       await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      // Select the "Other" category tile so category validation passes.
+      await tester.tap(find.text('Other'));
       await tester.pumpAndSettle();
 
       // For a non-sensitive Seeker Post the form renders exactly four
@@ -350,7 +354,10 @@ void main() {
       var contactCtrl = tester.widget<TextFormField>(fields.at(3)).controller!;
       expect(contactCtrl.text, _testTelephone);
 
-      // Switch to "Use different".
+      // Switch to "Use different" — the contact section is below the fold
+      // on the taller form (category picker + sensitive selector add height).
+      await tester.ensureVisible(find.text('Use different'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Use different'));
       await tester.pumpAndSettle();
 
@@ -361,6 +368,8 @@ void main() {
       expect(contactCtrl.text, isEmpty);
 
       // User can type a new number.
+      await tester.ensureVisible(find.byType(TextFormField).at(3));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).at(3), '0899999999');
       await tester.pumpAndSettle();
       contactCtrl = tester
