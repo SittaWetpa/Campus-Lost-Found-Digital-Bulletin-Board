@@ -46,7 +46,7 @@ class PostDraft {
         title: item.title,
         description: item.description ?? '',
         location: item.location,
-        occurredAt: item.occurredAt,
+        occurredAt: item.occurredAt ?? DateTime.now(),
         contact: item.contact ?? '',
         useMyNumber: item.contact == myTelephone,
         imageUrls: List.of(item.imageUrls),

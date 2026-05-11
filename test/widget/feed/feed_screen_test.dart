@@ -156,8 +156,8 @@ void main() {
             body: ItemCard(item: item, isOwner: false, onTap: () {}),
           ),
         ));
-        expect(find.text('FOUND · FOUNDER'), findsOneWidget);
-        expect(find.text('LOST · SEEKER'),   findsNothing);
+        expect(find.text('Found · Founder'), findsOneWidget);
+        expect(find.text('Lost · Seeker'),   findsNothing);
       },
     );
 
@@ -170,8 +170,8 @@ void main() {
             body: ItemCard(item: item, isOwner: false, onTap: () {}),
           ),
         ));
-        expect(find.text('LOST · SEEKER'),   findsOneWidget);
-        expect(find.text('FOUND · FOUNDER'), findsNothing);
+        expect(find.text('Lost · Seeker'),   findsOneWidget);
+        expect(find.text('Found · Founder'), findsNothing);
       },
     );
 
@@ -212,8 +212,8 @@ void main() {
         ));
         final card = tester.widget<Card>(find.byType(Card));
         final shape = card.shape as RoundedRectangleBorder;
-        expect(shape.side.color, const Color(0xFFF59E0B));
-        expect(shape.side.width, 2.0);
+        expect(shape.side.color, const Color(0xFFE9A534));
+        expect(shape.side.width, 1.5);
       },
     );
 
@@ -228,7 +228,7 @@ void main() {
         ));
         final card = tester.widget<Card>(find.byType(Card));
         final shape = card.shape as RoundedRectangleBorder;
-        expect(shape.side.color, Colors.transparent);
+        expect(shape.side.color, const Color(0xFFE6DDC4));
       },
     );
 
@@ -378,8 +378,8 @@ void main() {
         await tester.pumpWidget(_buildApp(items: items));
         await tester.pumpAndSettle();
 
-        expect(find.text('FOUND · FOUNDER'), findsOneWidget);
-        expect(find.text('LOST · SEEKER'),   findsOneWidget);
+        expect(find.text('Found · Founder'), findsOneWidget);
+        expect(find.text('Lost · Seeker'),   findsOneWidget);
       },
     );
 

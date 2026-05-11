@@ -3,47 +3,115 @@ import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_category_chip.dart';
 
+// Walk-in ribbon — blue stripe shown at the top of QR-submitted cards
+class _WalkInRibbon extends StatelessWidget {
+  const _WalkInRibbon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF3B5BDB),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: const Row(
+        children: [
+          Icon(Icons.qr_code, size: 12, color: Colors.white),
+          SizedBox(width: 6),
+          Text(
+            'QR WALK-IN · HANDED IN AT SECURITY OFFICE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ItemCard extends StatelessWidget {
   const ItemCard({
     super.key,
     required this.item,
     required this.isOwner,
     required this.onTap,
+    this.showStatus = false,
   });
 
   final Item item;
   final bool isOwner;
   final VoidCallback onTap;
 
+  /// When true, shows the item's status (Active/Resolved/Expired) as a chip.
+  /// Used by MyPostsScreen; Feed does not show status.
+  final bool showStatus;
+
   @override
   Widget build(BuildContext context) {
+    final isWalkIn = item.source == ItemSource.qrWalkIn;
+    final isSensitive = item.isSensitive;
+
+    final Color cardColor;
+    final Color borderColor;
+    final double borderWidth;
+
+    if (isOwner) {
+      cardColor = AppTokens.primary100;
+      borderColor = AppTokens.primary400;
+      borderWidth = 1.5;
+    } else if (isSensitive) {
+      cardColor = AppTokens.warnBg;
+      borderColor = AppTokens.warnBorder;
+      borderWidth = 1;
+    } else if (isWalkIn) {
+      cardColor = const Color(0xFFEEF2FF);
+      borderColor = const Color(0xFFC7D2FE);
+      borderWidth = 1;
+    } else {
+      cardColor = AppTokens.surface;
+      borderColor = AppTokens.border;
+      borderWidth = 1;
+    }
+
     return Card(
-      color: AppTokens.surface,
+      color: cardColor,
       elevation: 0,
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTokens.rMd),
-        side: BorderSide(
-          color: isOwner ? AppTokens.primary400 : AppTokens.border,
-          width: isOwner ? 1.5 : 1,
-        ),
+        side: BorderSide(color: borderColor, width: borderWidth),
       ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTokens.rMd),
         child: Stack(
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(isOwner ? 16 : 12, 12, 12, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Thumbnail(item: item),
-                  const SizedBox(width: 12),
-                  Expanded(child: _Content(item: item, isOwner: isOwner)),
-                ],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isWalkIn) const _WalkInRibbon(),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(isOwner ? 16 : 12, 12, 12, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Thumbnail(item: item),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _Content(
+                          item: item,
+                          isOwner: isOwner,
+                          showStatus: showStatus,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             if (isOwner)
               const Positioned(
@@ -82,6 +150,19 @@ class _Thumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (item.isSensitive) {
+      return Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: const Color(0xFFD4C8A8),
+          borderRadius: BorderRadius.circular(AppTokens.rSm),
+        ),
+        alignment: Alignment.center,
+        child: const Text('🔒', style: TextStyle(fontSize: 28)),
+      );
+    }
+
     final base = item.imageUrls.isNotEmpty
         ? ClipRRect(
             borderRadius: BorderRadius.circular(AppTokens.rSm),
@@ -137,10 +218,15 @@ class _Thumbnail extends StatelessWidget {
 }
 
 class _Content extends StatelessWidget {
-  const _Content({required this.item, required this.isOwner});
+  const _Content({
+    required this.item,
+    required this.isOwner,
+    required this.showStatus,
+  });
 
   final Item item;
   final bool isOwner;
+  final bool showStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +241,8 @@ class _Content extends StatelessWidget {
             _CategoryBadge(category: item.category),
             if (item.itemTaxonomy != null)
               ItemCategoryChip(taxonomy: item.itemTaxonomy!),
+            if (item.isSensitive) const _SensitiveChip(),
+            if (showStatus) _StatusChip(status: item.status),
             if (isOwner) const _YouBadge(),
           ],
         ),
@@ -169,8 +257,17 @@ class _Content extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (item.description.isNotEmpty) ...[
-          const SizedBox(height: 2),
+        const SizedBox(height: 2),
+        if (item.isSensitive)
+          const Text(
+            'Contact Security Office to retrieve',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTokens.warn,
+              fontStyle: FontStyle.italic,
+            ),
+          )
+        else if (item.description.isNotEmpty)
           Text(
             item.description,
             style: const TextStyle(
@@ -181,7 +278,6 @@ class _Content extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-        ],
         const SizedBox(height: 6),
         Row(
           children: [
@@ -231,6 +327,62 @@ class _CategoryBadge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.02,
+        ),
+      ),
+    );
+  }
+}
+
+class _SensitiveChip extends StatelessWidget {
+  const _SensitiveChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppTokens.warnBg,
+        borderRadius: BorderRadius.circular(AppTokens.pill),
+      ),
+      child: const Text(
+        'SENSITIVE',
+        style: TextStyle(
+          color: AppTokens.warn,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+
+  final ItemStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, bg, fg) = switch (status) {
+      ItemStatus.active => ('ACTIVE', AppTokens.successBg, AppTokens.success),
+      ItemStatus.resolved => ('RESOLVED', AppTokens.warnBg, AppTokens.warn),
+      ItemStatus.expired =>
+        ('EXPIRED', AppTokens.ink100, const Color(0xFF5C5242)),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppTokens.pill),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );

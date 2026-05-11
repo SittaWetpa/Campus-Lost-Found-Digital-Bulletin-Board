@@ -42,17 +42,17 @@ void main() {
       expect(model.occurredAt, equals(occurredAt));
     });
 
-    test('throws when occurredAt is missing — loud failure on legacy docs',
+    test('returns null occurredAt when field is absent — WBS 2.15 walk-in items',
         () async {
-      // Architect verdict (plan point 3): occurredAt has no defensive fallback.
-      // A doc lacking the field is malformed and must throw, not silently
-      // substitute DateTime.now().
+      // Walk-in posts created by the Admin SDK have no occurredAt field.
+      // The model must tolerate its absence and expose null instead of throwing.
       final ref = await fakeFirestore
           .collection('items')
           .add(validFirestoreDoc()); // omits occurredAt
       final doc = await ref.get();
 
-      expect(() => ItemModel.fromFirestore(doc), throwsA(isA<TypeError>()));
+      final model = ItemModel.fromFirestore(doc);
+      expect(model.occurredAt, isNull);
     });
   });
 

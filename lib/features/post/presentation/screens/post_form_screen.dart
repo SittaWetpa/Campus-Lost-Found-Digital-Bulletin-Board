@@ -142,7 +142,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
       _category = item.category;
       _itemTaxonomy = item.itemTaxonomy;
       _isSensitive = item.isSensitive;
-      _occurredAt = item.occurredAt;
+      _occurredAt = item.occurredAt ?? DateTime.now();
       _imageUrls = List.from(item.imageUrls);
     });
     _titleCtrl.text = item.title;

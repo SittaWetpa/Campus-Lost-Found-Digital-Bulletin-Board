@@ -456,7 +456,8 @@ class _MetaRow extends StatelessWidget {
       runSpacing: 4,
       children: [
         _metaItem(Icons.location_on_outlined, item.location),
-        _metaItem(Icons.access_time, _formatFull(item.occurredAt)),
+        if (item.occurredAt != null)
+          _metaItem(Icons.access_time, _formatFull(item.occurredAt!)),
         if ((isSensitive || isWalkIn) && item.expiresAt != null)
           _metaItem(
             Icons.hourglass_bottom_outlined,

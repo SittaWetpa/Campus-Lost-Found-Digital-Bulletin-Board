@@ -106,21 +106,23 @@ class _ConfirmDialog extends StatelessWidget {
                     child: Text(cancelLabel),
                   ),
                   const SizedBox(width: 8),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _confirmBg,
-                      foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 11),
-                      minimumSize: const Size(0, 40),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                  Flexible(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _confirmBg,
+                        foregroundColor: Colors.white,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 11),
+                        minimumSize: const Size(0, 40),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
                       ),
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: Text(confirmLabel),
                     ),
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(confirmLabel),
                   ),
                 ],
               ),
