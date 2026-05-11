@@ -192,7 +192,9 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.14 | Firestore rules: `isSensitive` and `expiresAt` immutable after creation (poster + visitor denied; allowed-field update succeeds) | `test/firestore_rules/rules.test.js` | Node.js | ✅ 4 tests (requires emulator) |
 | 2.14 | Post Form: Founder → select Sensitive → description/contact/SQ hidden; General → fields restored; Seeker → selector hidden | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 3 tests |
 | 2.15 | UploadPostPhotosUseCase (3-photo cap, storage upload) | `test/unit/post/upload_post_photos_use_case_test.dart` | Unit | ✅ 5 tests |
-| 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
+| 2.15 | QR walk-in: valid submit → 201 + source field; missing fields → 400; rate limit → 429; reCAPTCHA fail → 400; sensitive → isSensitive:true | `functions/test/walkin.test.js` | Node.js | ✅ 7 tests |
+| 2.15 | ItemCard: walk-in ribbon rendered for source==qrWalkIn; absent for web source; ribbon uses blue container | `test/features/feed/presentation/widgets/item_card_test.dart` | Widget | ✅ 3 tests |
+| 2.15 | Firestore rules: client write with source:"qr_walk_in" denied | — | Rules | ⬜ requires Firebase emulator |
 | 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
 | 2.18 | UserModel.fromFirestore reads `isAdmin` (true / false / missing-defaults-to-false; toEntity carries it) | `test/unit/auth/user_model_is_admin_test.dart` | Unit | ✅ 4 tests |
 | 2.18 | `FirestoreUserDatasource.createUser` stamps `isAdmin: false` on new accounts | `test/unit/auth/user_remote_datasource_test.dart` (added row to existing file) | Unit | ✅ 1 test |
