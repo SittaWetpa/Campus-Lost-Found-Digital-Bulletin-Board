@@ -22,7 +22,7 @@ enum ItemStatus {
       };
 }
 
-// WBS 2.15 — walk-in QR registration source
+// WBS 2.15 — walk-in posts written by Admin SDK; client posts default to 'web'
 enum ItemSource {
   web,
   qrWalkIn;
@@ -30,6 +30,11 @@ enum ItemSource {
   static ItemSource fromString(String value) => switch (value) {
         'qr_walk_in' => ItemSource.qrWalkIn,
         _ => ItemSource.web,
+      };
+
+  String get firestoreValue => switch (this) {
+        ItemSource.web => 'web',
+        ItemSource.qrWalkIn => 'qr_walk_in',
       };
 }
 
@@ -53,8 +58,8 @@ class Item {
 
   final DateTime createdAt;
 
-  // WBS 2.2 — when the item was lost (Seeker) or found (Founder), user-provided
-  final DateTime occurredAt;
+  // WBS 2.2 / 2.15 — when the item was lost/found; null for walk-in submissions
+  final DateTime? occurredAt;
 
   // WBS 2.6 — null until post has been edited
   final DateTime? editedAt;
@@ -86,7 +91,7 @@ class Item {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
-    required this.occurredAt,
+    this.occurredAt,
     this.source = ItemSource.web,
     this.isSensitive = false,
     this.editedAt,

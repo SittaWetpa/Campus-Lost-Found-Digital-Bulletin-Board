@@ -213,7 +213,8 @@ void main() {
       expect(entity.isSensitive, true);
 
       final map = ItemModel.fromEntity(entity).toFirestore();
-      expect(map['source'],      'qr_walk_in');
+      // source is intentionally excluded from toFirestore() — Admin SDK is the only writer
+      expect(map.containsKey('source'), isFalse);
       expect(map['isSensitive'], true);
     });
 
@@ -264,7 +265,8 @@ void main() {
       expect(map['contact'], '0845678901');
       expect(map['imageUrls'], ['url1', 'url2']);
       expect(map['userId'], 'uid-003');
-      expect(map['source'], 'qr_walk_in');
+      // source is intentionally excluded from toFirestore() — Admin SDK is the only writer
+      expect(map.containsKey('source'), isFalse);
       expect(map['isSensitive'], true);
       // createdAt and editedAt are intentionally omitted — the datasource
       // sets them via FieldValue.serverTimestamp() to guarantee

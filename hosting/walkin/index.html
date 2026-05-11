@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campus Lost &amp; Found — แจ้งพบสิ่งของ / Report Found Item</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- reCAPTCHA v3 — replace SITE_KEY with your key from console.google.com/recaptcha -->
+<script src="https://www.google.com/recaptcha/api.js?render=6Lc7FuQsAAAAAKd9Ds7zMYB9MZ2uLVwL454xtpFr" async defer></script>
+
+<style>
+  :root {
+    --k-primary:    #d98a0e;
+    --k-primary-l:  #fff8e9;
+    --k-primary-d:  #b76e05;
+    --k-ink:        #1b1610;
+    --k-ink-m:      #5c5242;
+    --k-ink-l:      #9c9179;
+    --k-bg:         #fbf7ec;
+    --k-surface:    #ffffff;
+    --k-border:     #e6ddc4;
+    --k-border-s:   #cbbf9f;
+    --k-warn:       #a96c00;
+    --k-warn-bg:    #fcecc3;
+    --k-success:    #2f7d3e;
+    --k-success-bg: #e4f2dd;
+    --k-danger:     #b23a28;
+    --k-danger-bg:  #fbe3dd;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
+    --sh-1: 0 1px 4px rgba(60,42,10,.07);
+    --sh-2: 0 4px 16px rgba(60,42,10,.10);
+    --f-th: 'Sarabun', sans-serif;
+    --f-en: 'Plus Jakarta Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #ece5d2; min-height: 100vh; }
+  body { font-family: var(--f-th); color: var(--k-ink); -webkit-font-smoothing: antialiased; }
+  body.en { font-family: var(--f-en); }
+
+  .page {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 0 60px;
+  }
+
+  /* Header */
+  .header {
+    width: 100%; background: var(--k-surface);
+    border-bottom: 1px solid var(--k-border);
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: var(--sh-1);
+  }
+  .header-logo {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--k-primary); display: flex; align-items: center; justify-content: center;
+    font: 700 18px var(--f-en); color: #fff; flex-shrink: 0;
+  }
+  .header-title { flex: 1; }
+  .header-title h1 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .header-title p  { margin: 0; font-size: 12px; color: var(--k-ink-m); }
+
+  /* Lang toggle */
+  .lang-toggle {
+    display: flex; border-radius: 999px; overflow: hidden;
+    border: 1.5px solid var(--k-border-s); flex-shrink: 0;
+  }
+  .lang-btn {
+    padding: 6px 14px; border: 0; cursor: pointer;
+    font: 600 12px var(--f-en); transition: background 120ms, color 120ms;
+    background: transparent; color: var(--k-ink-m);
+  }
+  .lang-btn.active { background: var(--k-primary); color: #fff; }
+
+  /* Card */
+  .card {
+    width: 100%; max-width: 560px;
+    background: var(--k-surface); border: 1px solid var(--k-border);
+    border-radius: var(--r-lg); box-shadow: var(--sh-1);
+    padding: 24px; margin: 24px 16px 0;
+  }
+
+  /* Intro banner */
+  .intro-banner {
+    width: 100%; max-width: 560px;
+    margin: 20px 16px 0; padding: 14px 18px;
+    background: var(--k-primary-l); border: 1px solid #f7c264;
+    border-radius: var(--r-md);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .intro-icon { font-size: 24px; flex-shrink: 0; line-height: 1; }
+  .intro-text h2 { margin: 0 0 4px; font-size: 15px; color: #8a5103; }
+  .intro-text p  { margin: 0; font-size: 13px; line-height: 1.55; color: var(--k-ink-m); }
+
+  /* Form elements */
+  label.field-label {
+    display: block; font: 600 12px var(--f-en);
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--k-ink-m); margin-bottom: 6px;
+  }
+  .field { margin-bottom: 18px; }
+  input[type=text], input[type=tel], select, textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--k-border); border-radius: var(--r-sm);
+    font: 14px var(--f-th); color: var(--k-ink);
+    background: var(--k-surface); outline: none;
+    transition: border-color 120ms, box-shadow 120ms;
+    -webkit-appearance: none;
+  }
+  body.en input[type=text], body.en input[type=tel],
+  body.en select, body.en textarea { font-family: var(--f-en); }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--k-primary); box-shadow: 0 0 0 3px #fff8e9;
+  }
+  input.invalid, select.invalid, textarea.invalid { border-color: var(--k-danger); }
+  .err-msg { font-size: 12px; color: var(--k-danger); margin-top: 4px; display: none; }
+  .err-msg.show { display: block; }
+  textarea { resize: vertical; min-height: 90px; font-family: var(--f-th); }
+  body.en textarea { font-family: var(--f-en); }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239c9179' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    padding-right: 36px; cursor: pointer;
+  }
+
+  /* Category grid */
+  .cat-group-label {
+    display: block; font: 600 11px var(--f-en);
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--k-ink-l); margin: 14px 0 8px;
+  }
+  .cat-group-label:first-child { margin-top: 0; }
+  .cat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .cat-grid.sensitive { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cat-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 14px 8px 12px;
+    border: 1.5px solid var(--k-border); border-radius: var(--r-md);
+    background: var(--k-surface); cursor: pointer; text-align: center;
+    transition: border-color 120ms, background 120ms, transform 80ms;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cat-tile:hover { border-color: var(--k-border-s); background: #fdfaf2; }
+  .cat-tile:active { transform: scale(.97); }
+  .cat-tile.selected {
+    border-color: var(--k-primary); background: var(--k-primary-l);
+    box-shadow: 0 0 0 3px #fff8e9;
+  }
+  .cat-tile-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--k-bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--k-ink-m); transition: background 120ms, color 120ms;
+  }
+  .cat-tile.selected .cat-tile-icon { background: var(--k-primary); color: #fff; }
+  .cat-tile-icon svg { width: 22px; height: 22px; display: block; }
+  .cat-tile-label { font: 600 12.5px var(--f-th); color: var(--k-ink); line-height: 1.3; }
+  body.en .cat-tile-label { font-family: var(--f-en); }
+  .cat-tile.sensitive .cat-tile-icon { background: var(--k-warn-bg); color: var(--k-warn); }
+  .cat-tile.sensitive.selected .cat-tile-icon { background: var(--k-warn); color: #fff; }
+  .cat-grid.invalid .cat-tile { border-color: var(--k-danger); }
+
+  .cat-divider {
+    display: flex; align-items: center; gap: 12px; margin: 18px 0 10px;
+  }
+  .cat-divider::before, .cat-divider::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(to right, transparent, var(--k-border-s), transparent);
+  }
+  .cat-divider-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 600 11px var(--f-en); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--k-warn); background: var(--k-warn-bg);
+    border: 1px solid #e0aa4055; padding: 4px 10px; border-radius: 999px; flex-shrink: 0;
+  }
+
+  /* Quick-pick chips */
+  .quickpick {
+    margin-top: 14px; padding: 12px 14px;
+    border-radius: var(--r-sm); background: var(--k-bg); border: 1px solid var(--k-border);
+  }
+  .quickpick-label {
+    display: block; font: 600 11px var(--f-en);
+    letter-spacing: .06em; text-transform: uppercase; color: var(--k-ink-l); margin-bottom: 8px;
+  }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--k-border-s); background: var(--k-surface); color: var(--k-ink-m);
+    font: 600 12px var(--f-th); cursor: pointer; transition: all 120ms;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.en .chip { font-family: var(--f-en); }
+  .chip:hover { background: var(--k-primary-l); border-color: var(--k-primary); color: var(--k-primary-d); }
+  .chip.selected {
+    background: var(--k-primary-l); border-color: var(--k-primary);
+    color: var(--k-primary-d); box-shadow: 0 0 0 2px #fff8e9;
+  }
+
+  /* Locked title (sensitive auto-fill) */
+  .title-locked {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border-radius: var(--r-sm);
+    background: var(--k-bg); border: 1px solid var(--k-border);
+  }
+  .title-locked-text { flex: 1; font: 600 14.5px var(--f-th); color: var(--k-ink); }
+  body.en .title-locked-text { font-family: var(--f-en); }
+  .title-locked-hint {
+    display: block; font: 400 11.5px var(--f-en); color: var(--k-ink-l);
+    margin-top: 2px; letter-spacing: 0; text-transform: none;
+  }
+  .title-locked-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--k-success); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+
+  /* Sensitive warning */
+  .sensitive-warn {
+    display: none; align-items: flex-start; gap: 10px;
+    padding: 12px 14px; border-radius: var(--r-sm);
+    background: var(--k-warn-bg); border: 1px solid #e0aa40;
+    margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--k-ink);
+  }
+  .sensitive-warn.show { display: flex; }
+  .sensitive-warn strong { color: var(--k-warn); }
+
+  /* Photo upload */
+  .photo-drop {
+    border: 1.5px dashed var(--k-border-s); border-radius: var(--r-sm);
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .photo-drop:hover { background: var(--k-primary-l); border-color: var(--k-primary); }
+  .photo-drop input { display: none; }
+  .photo-drop-icon { font-size: 28px; margin-bottom: 6px; }
+  .photo-drop-label { font-size: 13px; color: var(--k-ink-m); }
+  .photo-preview { display: none; margin-top: 10px; position: relative; }
+  .photo-preview img { width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--r-sm); }
+
+  /* reCAPTCHA notice */
+  .recaptcha-notice {
+    font-size: 11.5px; color: var(--k-ink-l); text-align: center;
+    margin-bottom: 14px; line-height: 1.5;
+  }
+  .recaptcha-notice a { color: var(--k-primary-d); }
+
+  /* Buttons */
+  .btn-submit {
+    width: 100%; padding: 14px; border: 0; border-radius: 999px;
+    background: var(--k-primary); color: #fff;
+    font: 700 15px var(--f-en); cursor: pointer; letter-spacing: .01em;
+    transition: background 120ms, transform 100ms;
+  }
+  .btn-submit:hover { background: var(--k-primary-d); }
+  .btn-submit:active { transform: scale(.98); }
+  .btn-submit:disabled { background: #c2b89f; cursor: not-allowed; }
+
+  /* Step dots */
+  .step-indicator { display: flex; gap: 6px; align-items: center; margin-bottom: 20px; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--k-border-s); transition: all 200ms; }
+  .step-dot.active { background: var(--k-primary); width: 24px; border-radius: 4px; }
+
+  /* Success screen */
+  .success-screen { display: none; text-align: center; padding: 40px 20px; }
+  .success-screen.show { display: block; }
+  .success-icon { font-size: 64px; margin-bottom: 16px; }
+  .success-screen h2 { font-size: 22px; margin: 0 0 8px; color: var(--k-success); }
+  .success-screen p  { font-size: 14px; color: var(--k-ink-m); line-height: 1.6; max-width: 360px; margin: 0 auto 20px; }
+  .success-ref { font: 600 13px var(--f-en); color: var(--k-primary-d); margin-top: 6px; }
+
+  /* Error banner */
+  .error-banner {
+    display: none; padding: 12px 14px; border-radius: var(--r-sm);
+    background: var(--k-danger-bg); border: 1px solid #e8a9a1;
+    color: var(--k-danger); font-size: 13px; line-height: 1.5; margin-bottom: 12px;
+  }
+  .error-banner.show { display: block; }
+
+  /* QR info footer */
+  .qr-footer {
+    width: 100%; max-width: 560px; margin: 16px 16px 0;
+    padding: 12px 16px; border-radius: var(--r-md);
+    background: var(--k-surface); border: 1px solid var(--k-border);
+    display: flex; align-items: center; gap: 16px;
+    font-size: 12px; color: var(--k-ink-l);
+  }
+  .qr-box {
+    width: 48px; height: 48px; border-radius: 8px;
+    background: var(--k-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .card { margin: 16px 12px 0; padding: 18px; }
+    .intro-banner { margin: 16px 12px 0; }
+    .qr-footer { margin: 12px 12px 0; }
+    .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cat-grid.sensitive { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">LF</div>
+    <div class="header-title">
+      <h1 class="t" data-th="แจ้งพบสิ่งของ" data-en="Report a Found Item">แจ้งพบสิ่งของ</h1>
+      <p class="t" data-th="KMUTT Campus Lost &amp; Found" data-en="KMUTT Campus Lost &amp; Found">KMUTT Campus Lost &amp; Found</p>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-th" onclick="setLang('th')">ไทย</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <!-- Intro banner -->
+  <div class="intro-banner">
+    <div class="intro-icon">📋</div>
+    <div class="intro-text">
+      <h2 class="t" data-th="สแกน QR เพื่อแจ้งพบสิ่งของ" data-en="Scan QR to report a found item">สแกน QR เพื่อแจ้งพบสิ่งของ</h2>
+      <p class="t"
+         data-th="ไม่ต้องสมัครสมาชิก — กรอกข้อมูลสิ่งของที่พบและส่งได้เลย ระบบจะแสดงในบอร์ดประกาศทันที"
+         data-en="No account needed — fill in the form and submit. The item will appear on the bulletin board immediately.">
+        ไม่ต้องสมัครสมาชิก — กรอกข้อมูลสิ่งของที่พบและส่งได้เลย ระบบจะแสดงในบอร์ดประกาศทันที
+      </p>
+    </div>
+  </div>
+
+  <!-- Main form card -->
+  <div class="card" id="form-card">
+
+    <!-- Step dots -->
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+      <div class="step-dot" id="dot-3"></div>
+    </div>
+
+    <form id="walkin-form" novalidate>
+
+      <!-- STEP 1: Category + Title + Location -->
+      <div id="step-1">
+        <div class="field">
+          <label class="field-label t" data-th="ประเภทสิ่งของ *" data-en="Item Category *">ประเภทสิ่งของ *</label>
+          <input type="hidden" id="cat" value="" />
+
+          <div class="cat-grid" id="cat-grid-general" role="radiogroup">
+            <button type="button" class="cat-tile" data-cat="electronics" onclick="selectCat('electronics')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="อิเล็กทรอนิกส์" data-en="Electronics">อิเล็กทรอนิกส์</span>
+            </button>
+            <button type="button" class="cat-tile" data-cat="bag_wallet" onclick="selectCat('bag_wallet')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l1 12H4L5 8ZM9 8V6a3 3 0 0 1 6 0v2"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="กระเป๋า / กระเป๋าสตางค์" data-en="Bag &amp; Wallet">กระเป๋า / กระเป๋าสตางค์</span>
+            </button>
+            <button type="button" class="cat-tile" data-cat="clothing" onclick="selectCat('clothing')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8l-4-5H8L4 8l3 1v11h10V9l3-1Z"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="เสื้อผ้า" data-en="Clothing">เสื้อผ้า</span>
+            </button>
+            <button type="button" class="cat-tile" data-cat="stationery" onclick="selectCat('stationery')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="เครื่องเขียน" data-en="Stationery">เครื่องเขียน</span>
+            </button>
+            <button type="button" class="cat-tile" data-cat="accessory" onclick="selectCat('accessory')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="เครื่องประดับ" data-en="Accessory">เครื่องประดับ</span>
+            </button>
+            <button type="button" class="cat-tile" data-cat="other" onclick="selectCat('other')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="อื่น ๆ" data-en="Other">อื่น ๆ</span>
+            </button>
+          </div>
+
+          <div class="cat-divider">
+            <span class="cat-divider-label t" data-th="⚠ สิ่งของสำคัญ" data-en="⚠ Sensitive items">⚠ สิ่งของสำคัญ</span>
+          </div>
+          <div class="cat-grid sensitive" id="cat-grid-sensitive" role="radiogroup">
+            <button type="button" class="cat-tile sensitive" data-cat="student_id" onclick="selectCat('student_id')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 10a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm-1 4h6m4-6h4m-4 3h4m-4 3h3"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="บัตรนักศึกษา" data-en="Student ID">บัตรนักศึกษา</span>
+            </button>
+            <button type="button" class="cat-tile sensitive" data-cat="national_id" onclick="selectCat('national_id')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="บัตรประชาชน" data-en="National ID">บัตรประชาชน</span>
+            </button>
+            <button type="button" class="cat-tile sensitive" data-cat="bank_card" onclick="selectCat('bank_card')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20M6 14h4"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="บัตรธนาคาร" data-en="Bank Card">บัตรธนาคาร</span>
+            </button>
+            <button type="button" class="cat-tile sensitive" data-cat="passport" onclick="selectCat('passport')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M8 18h8"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="หนังสือเดินทาง" data-en="Passport">หนังสือเดินทาง</span>
+            </button>
+            <button type="button" class="cat-tile sensitive" data-cat="key" onclick="selectCat('key')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7a5 5 0 1 1 2.9 9.1L16 17l-2 2-2-2 2-2-1-1-7 7H3v-3l8-8"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="กุญแจ / คีย์การ์ด" data-en="Key / Keycard">กุญแจ / คีย์การ์ด</span>
+            </button>
+            <button type="button" class="cat-tile sensitive" data-cat="document" onclick="selectCat('document')" role="radio" aria-checked="false">
+              <span class="cat-tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+              </span>
+              <span class="cat-tile-label t" data-th="เอกสารสำคัญ" data-en="Document">เอกสารสำคัญ</span>
+            </button>
+          </div>
+          <div class="err-msg t" id="err-cat" data-th="กรุณาเลือกประเภทสิ่งของ" data-en="Please select a category" style="margin-top:8px">กรุณาเลือกประเภทสิ่งของ</div>
+
+          <!-- Sensitive warning -->
+          <div class="sensitive-warn" id="sensitive-warn">
+            <span style="font-size:20px; flex-shrink:0; line-height:1">⚠️</span>
+            <div>
+              <strong class="t" data-th="สิ่งของสำคัญ — ควรส่งให้เจ้าหน้าที่รักษาความปลอดภัย" data-en="Sensitive item — please hand to Security Office">สิ่งของสำคัญ — ควรส่งให้เจ้าหน้าที่รักษาความปลอดภัย</strong><br>
+              <span class="t"
+                data-th="สิ่งของประเภทนี้ไม่สามารถรับคืนผ่านแอปได้โดยตรง ขอแนะนำให้นำส่งงานรักษาความปลอดภัย (โทร. 02-470-9999)"
+                data-en="This type of item cannot be returned through the app. We recommend handing it to campus Security (tel. 02-470-9999).">
+                สิ่งของประเภทนี้ไม่สามารถรับคืนผ่านแอปได้โดยตรง ขอแนะนำให้นำส่งงานรักษาความปลอดภัย (โทร. 02-470-9999)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="field" id="title-field">
+          <label class="field-label t" data-th="ชื่อสิ่งของ *" data-en="Item Title *">ชื่อสิ่งของ *</label>
+          <div id="title-general">
+            <input type="text" id="title" placeholder="" />
+            <div class="err-msg t" id="err-title" data-th="กรุณาระบุชื่อสิ่งของ" data-en="Please enter the item title">กรุณาระบุชื่อสิ่งของ</div>
+            <div class="quickpick" id="quickpick" style="display:none">
+              <span class="quickpick-label t" data-th="เลือกด่วน" data-en="Quick pick">เลือกด่วน</span>
+              <div class="chips-row" id="chips-row"></div>
+            </div>
+          </div>
+          <div id="title-sensitive" style="display:none">
+            <div class="title-locked">
+              <div>
+                <div class="title-locked-text" id="title-sensitive-text">—</div>
+                <span class="title-locked-hint t" data-th="กรอกอัตโนมัติจากประเภทสิ่งของ" data-en="Auto-filled from item type">กรอกอัตโนมัติจากประเภทสิ่งของ</span>
+              </div>
+              <div class="title-locked-check">✓</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="field">
+          <label class="field-label t" data-th="สถานที่พบ *" data-en="Location Found *">สถานที่พบ *</label>
+          <input type="text" id="location" placeholder="" />
+          <div class="err-msg t" id="err-location" data-th="กรุณาระบุสถานที่พบ" data-en="Please enter the location">กรุณาระบุสถานที่พบ</div>
+        </div>
+
+        <button type="button" class="btn-submit" onclick="goStep(2)">
+          <span class="t" data-th="ถัดไป →" data-en="Next →">ถัดไป →</span>
+        </button>
+      </div>
+
+      <!-- STEP 2: Description + Photo -->
+      <div id="step-2" style="display:none">
+        <div class="field">
+          <label class="field-label">
+            <span class="t" data-th="รายละเอียด" data-en="Description">รายละเอียด</span>
+            <span style="font-weight:400; text-transform:none; font-size:11px; color:var(--k-ink-l)">
+              (<span class="t" data-th="ไม่บังคับ" data-en="optional">ไม่บังคับ</span>)
+            </span>
+          </label>
+          <textarea id="description" rows="4" placeholder=""></textarea>
+        </div>
+
+        <div class="field" id="photo-field">
+          <label class="field-label">
+            <span class="t" data-th="รูปภาพ" data-en="Photo">รูปภาพ</span>
+            <span style="font-weight:400; text-transform:none; font-size:11px; color:var(--k-ink-l)">
+              (<span class="t" data-th="ไม่บังคับ" data-en="optional">ไม่บังคับ</span>)
+            </span>
+          </label>
+          <div class="photo-drop" id="photo-drop" onclick="document.getElementById('photo-input').click()">
+            <div class="photo-drop-icon">📷</div>
+            <div class="photo-drop-label t" data-th="แตะเพื่อเลือกรูปภาพ" data-en="Tap to select a photo">แตะเพื่อเลือกรูปภาพ</div>
+            <input type="file" id="photo-input" accept="image/*" onchange="onPhotoSelected(this)" />
+          </div>
+          <div class="photo-preview" id="photo-preview">
+            <img id="photo-img" src="" alt="preview" style="display:none" />
+            <button type="button" onclick="removePhoto()" style="
+              position:absolute; top:8px; right:8px; width:28px; height:28px;
+              border-radius:50%; background:rgba(0,0,0,0.6); color:#fff;
+              border:0; cursor:pointer; font-size:16px; line-height:1;
+              display:flex; align-items:center; justify-content:center;">×</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px">
+          <button type="button" class="btn-submit"
+                  style="background:transparent; color:var(--k-ink); border:1.5px solid var(--k-border-s); flex:0 0 100px"
+                  onclick="goStep(1)">
+            ← <span class="t" data-th="ย้อนกลับ" data-en="Back">ย้อนกลับ</span>
+          </button>
+          <button type="button" class="btn-submit" style="flex:1" onclick="goStep(3)">
+            <span class="t" data-th="ตรวจสอบ →" data-en="Review →">ตรวจสอบ →</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Review + Submit -->
+      <div id="step-3" style="display:none">
+        <div style="margin-bottom:16px; padding:14px; background:var(--k-bg); border-radius:12px; border:1px solid var(--k-border)">
+          <div style="font:700 13px var(--f-en); color:var(--k-ink-m); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px">
+            <span class="t" data-th="ตรวจสอบข้อมูล" data-en="Review your submission">ตรวจสอบข้อมูล</span>
+          </div>
+          <table style="width:100%; border-collapse:collapse; font-size:13.5px">
+            <tr>
+              <td style="padding:5px 0; color:var(--k-ink-m); width:38%"><span class="t" data-th="ประเภท" data-en="Category">ประเภท</span></td>
+              <td id="rev-cat" style="padding:5px 0; font-weight:600"></td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0; color:var(--k-ink-m)"><span class="t" data-th="ชื่อสิ่งของ" data-en="Title">ชื่อสิ่งของ</span></td>
+              <td id="rev-title" style="padding:5px 0; font-weight:600"></td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0; color:var(--k-ink-m)"><span class="t" data-th="สถานที่" data-en="Location">สถานที่</span></td>
+              <td id="rev-location" style="padding:5px 0; font-weight:600"></td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0; color:var(--k-ink-m); vertical-align:top"><span class="t" data-th="รายละเอียด" data-en="Description">รายละเอียด</span></td>
+              <td id="rev-desc" style="padding:5px 0"></td>
+            </tr>
+            <tr id="rev-photo-row">
+              <td style="padding:5px 0; color:var(--k-ink-m)"><span class="t" data-th="รูปภาพ" data-en="Photo">รูปภาพ</span></td>
+              <td id="rev-photo" style="padding:5px 0"></td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="error-banner" id="error-banner"></div>
+
+        <div class="recaptcha-notice">
+          <span class="t" data-th="ป้องกันโดย reCAPTCHA —" data-en="Protected by reCAPTCHA —">ป้องกันโดย reCAPTCHA —</span>
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+            <span class="t" data-th="นโยบายความเป็นส่วนตัว" data-en="Privacy Policy">นโยบายความเป็นส่วนตัว</span>
+          </a>
+          &amp;
+          <a href="https://policies.google.com/terms" target="_blank" rel="noopener">
+            <span class="t" data-th="ข้อกำหนดของ Google" data-en="Google Terms">ข้อกำหนดของ Google</span>
+          </a>
+        </div>
+
+        <div style="display:flex; gap:10px">
+          <button type="button" class="btn-submit"
+                  style="background:transparent; color:var(--k-ink); border:1.5px solid var(--k-border-s); flex:0 0 100px"
+                  onclick="goStep(2)">
+            ← <span class="t" data-th="แก้ไข" data-en="Edit">แก้ไข</span>
+          </button>
+          <button type="submit" class="btn-submit" id="btn-submit" style="flex:1">
+            <span class="t" data-th="ส่งข้อมูล ✓" data-en="Submit ✓">ส่งข้อมูล ✓</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- Success screen -->
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">✅</div>
+      <h2 class="t" data-th="ส่งข้อมูลสำเร็จ!" data-en="Submitted successfully!">ส่งข้อมูลสำเร็จ!</h2>
+      <p id="success-msg"></p>
+      <div id="success-callout" style="
+        display:none; max-width:380px; margin:0 auto 16px; padding:12px 14px;
+        border-radius:var(--r-sm); background:var(--k-warn-bg);
+        border:1px solid #e0aa40; text-align:left; font-size:13px;
+        line-height:1.55; color:var(--k-ink);"></div>
+      <div class="success-ref" id="success-ref"></div>
+      <button class="btn-submit" style="max-width:240px; margin:20px auto 0; display:block" onclick="resetForm()">
+        <span class="t" data-th="แจ้งอีกครั้ง" data-en="Report another item">แจ้งอีกครั้ง</span>
+      </button>
+    </div>
+
+  </div><!-- /.card -->
+
+  <!-- QR footer -->
+  <div class="qr-footer">
+    <div class="qr-box">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="14" height="14" rx="2" fill="#fff" opacity=".9"/>
+        <rect x="5" y="5" width="8" height="8" rx="1" fill="#d98a0e"/>
+        <rect x="20" y="2" width="14" height="14" rx="2" fill="#fff" opacity=".9"/>
+        <rect x="23" y="5" width="8" height="8" rx="1" fill="#d98a0e"/>
+        <rect x="2" y="20" width="14" height="14" rx="2" fill="#fff" opacity=".9"/>
+        <rect x="5" y="23" width="8" height="8" rx="1" fill="#d98a0e"/>
+        <rect x="20" y="20" width="4" height="4" fill="#fff" opacity=".6"/>
+        <rect x="26" y="20" width="4" height="4" fill="#fff" opacity=".6"/>
+        <rect x="20" y="26" width="4" height="4" fill="#fff" opacity=".6"/>
+        <rect x="26" y="26" width="4" height="4" fill="#fff" opacity=".6"/>
+      </svg>
+    </div>
+    <div>
+      <div style="font:600 12px var(--f-en); color:var(--k-ink); margin-bottom:2px">
+        <span class="t" data-th="ฟอร์มนี้เชื่อมต่อกับ QR Code ที่ติดตั้งตามจุดต่าง ๆ ในมหาวิทยาลัย" data-en="This form is linked to QR codes placed around campus">
+          ฟอร์มนี้เชื่อมต่อกับ QR Code ที่ติดตั้งในมหาวิทยาลัย
+        </span>
+      </div>
+      <div style="font-size:11px">
+        source: qr_walk_in · <span class="t" data-th="ไม่ต้องล็อกอิน" data-en="No login required">ไม่ต้องล็อกอิน</span> · reCAPTCHA
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────────
+// Replace with your reCAPTCHA v3 site key from console.cloud.google.com/security/recaptcha
+const RECAPTCHA_SITE_KEY = '6Lc7FuQsAAAAAKd9Ds7zMYB9MZ2uLVwL454xtpFr';
+
+// ─── Language system ─────────────────────────────────────────────────────────
+let currentLang = 'th';
+
+const PLACEHOLDERS = {
+  th: { location: 'เช่น ห้องสมุด ชั้น 2, หน้าตึก SIT', description: 'ลักษณะของสิ่งของ สี ยี่ห้อ หรือรายละเอียดอื่น ๆ', title: 'เช่น กระเป๋าสตางค์หนังสีดำ' },
+  en: { location: 'e.g. Library 2nd floor, in front of SIT building', description: 'Color, brand, size, or any distinguishing details', title: 'e.g. Black leather wallet' },
+};
+
+const CAT_META = {
+  electronics: { chips: [['iPhone','iPhone'],['AirPods','AirPods'],['โน้ตบุ๊ก','Laptop'],['ที่ชาร์จ','Charger'],['หูฟัง','Earphones'],['พาวเวอร์แบงค์','Power bank']], th: 'เช่น iPhone 16, AirPods', en: 'e.g. iPhone 16, AirPods' },
+  bag_wallet:  { chips: [['กระเป๋าสตางค์','Wallet'],['เป้สะพายหลัง','Backpack'],['กระเป๋าผ้า','Tote bag'],['กระเป๋าสะพาย','Shoulder bag']], th: 'เช่น กระเป๋าสตางค์หนังสีดำ', en: 'e.g. Black leather wallet' },
+  clothing:    { chips: [['แจ็คเก็ต','Jacket'],['ฮู้ดดี้','Hoodie'],['หมวก','Hat'],['ผ้าพันคอ','Scarf']], th: 'เช่น ฮู้ดดี้สีกรมท่า KMUTT', en: 'e.g. Navy KMUTT hoodie' },
+  stationery:  { chips: [['เครื่องคิดเลข','Calculator'],['หนังสือเรียน','Textbook'],['สมุดโน้ต','Notebook'],['USB','USB drive']], th: 'เช่น เครื่องคิดเลข Casio', en: 'e.g. Casio calculator' },
+  accessory:   { chips: [['แว่นตา','Glasses'],['นาฬิกา','Watch'],['ต่างหู','Earring'],['สร้อยข้อมือ','Bracelet']], th: 'เช่น แว่นตากรอบดำ', en: 'e.g. Black framed glasses' },
+  other:       { chips: [['ขวดน้ำ','Water bottle'],['ร่ม','Umbrella'],['กล่องข้าว','Lunch box'],['แท็กกระเป๋า','Bag tag']], th: 'เช่น ขวดน้ำ Hydro Flask', en: 'e.g. Hydro Flask water bottle' },
+};
+
+const SENSITIVE_TITLES = {
+  student_id:  { th: 'บัตรนักศึกษา',        en: 'Student ID card'   },
+  national_id: { th: 'บัตรประชาชน',          en: 'National ID card'  },
+  bank_card:   { th: 'บัตรธนาคาร / เครดิต', en: 'Bank / debit card' },
+  passport:    { th: 'หนังสือเดินทาง',        en: 'Passport'          },
+  key:         { th: 'กุญแจ / คีย์การ์ด',     en: 'Key or keycard'    },
+  document:    { th: 'เอกสารสำคัญ',           en: 'Official document' },
+};
+
+const SENSITIVE_CATS = ['student_id','national_id','bank_card','passport','key','document'];
+
+// Stores the selected photo as base64 data URL for submission
+let previewDataUrl = null;
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.body.classList.toggle('en', lang === 'en');
+  document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.querySelectorAll('.t[data-' + lang + ']').forEach(el => {
+    el.textContent = el.getAttribute('data-' + lang);
+  });
+  document.querySelectorAll('[data-' + lang + '-text]').forEach(el => {
+    el.textContent = el.getAttribute('data-' + lang + '-text');
+  });
+  document.querySelectorAll('[data-' + lang + '-html]').forEach(el => {
+    const v = el.getAttribute('data-' + lang + '-html');
+    if (v) { el.innerHTML = v; el.style.display = 'block'; }
+  });
+  const p = PLACEHOLDERS[lang];
+  document.getElementById('location').placeholder    = p.location;
+  document.getElementById('description').placeholder = p.description;
+  const titleEl = document.getElementById('title');
+  if (titleEl) {
+    const catVal = document.getElementById('cat').value;
+    const meta = CAT_META[catVal];
+    titleEl.placeholder = meta ? meta[lang] : p.title;
+  }
+  renderChips(document.getElementById('cat').value);
+  const sVal = document.getElementById('cat').value;
+  if (SENSITIVE_TITLES[sVal]) {
+    document.getElementById('title-sensitive-text').textContent = SENSITIVE_TITLES[sVal][lang];
+  }
+}
+
+// ─── Quick-pick chips ─────────────────────────────────────────────────────────
+function renderChips(catVal) {
+  const wrap = document.getElementById('quickpick');
+  const row = document.getElementById('chips-row');
+  if (!wrap || !row) return;
+  const meta = CAT_META[catVal];
+  if (!meta) { wrap.style.display = 'none'; row.innerHTML = ''; return; }
+  wrap.style.display = 'block';
+  const currentTitle = document.getElementById('title').value.trim();
+  row.innerHTML = '';
+  meta.chips.forEach(([th, en]) => {
+    const label = currentLang === 'th' ? th : en;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip' + (currentTitle === label ? ' selected' : '');
+    btn.textContent = label;
+    btn.onclick = () => {
+      const titleEl = document.getElementById('title');
+      const next = currentLang === 'th' ? th : en;
+      titleEl.value = (titleEl.value.trim() === next) ? '' : next;
+      titleEl.classList.remove('invalid');
+      document.getElementById('err-title').classList.remove('show');
+      renderChips(catVal);
+    };
+    row.appendChild(btn);
+  });
+}
+
+// ─── Category selection ───────────────────────────────────────────────────────
+function selectCat(val) {
+  document.getElementById('cat').value = val;
+  document.querySelectorAll('.cat-tile').forEach(t => {
+    const on = t.getAttribute('data-cat') === val;
+    t.classList.toggle('selected', on);
+    t.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+  document.getElementById('err-cat').classList.remove('show');
+  document.getElementById('cat-grid-general').classList.remove('invalid');
+  document.getElementById('cat-grid-sensitive').classList.remove('invalid');
+
+  const isSensitive = SENSITIVE_CATS.includes(val);
+  document.getElementById('sensitive-warn').classList.toggle('show', isSensitive);
+
+  const photoField = document.getElementById('photo-field');
+  if (photoField) {
+    photoField.style.display = isSensitive ? 'none' : 'block';
+    if (isSensitive) removePhoto();
+  }
+
+  const titleGeneral = document.getElementById('title-general');
+  const titleSensitive = document.getElementById('title-sensitive');
+  if (isSensitive) {
+    titleGeneral.style.display = 'none';
+    titleSensitive.style.display = 'block';
+    const def = SENSITIVE_TITLES[val];
+    if (def) {
+      document.getElementById('title-sensitive-text').textContent = def[currentLang];
+      document.getElementById('title').value = def.en;
+    }
+    document.getElementById('title').classList.remove('invalid');
+    document.getElementById('err-title').classList.remove('show');
+  } else {
+    titleGeneral.style.display = 'block';
+    titleSensitive.style.display = 'none';
+    const titleEl = document.getElementById('title');
+    if (Object.values(SENSITIVE_TITLES).some(t => t.en === titleEl.value || t.th === titleEl.value)) {
+      titleEl.value = '';
+    }
+    const meta = CAT_META[val];
+    titleEl.placeholder = meta ? meta[currentLang] : PLACEHOLDERS[currentLang].title;
+    renderChips(val);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const titleEl = document.getElementById('title');
+  if (titleEl) {
+    titleEl.addEventListener('input', () => {
+      titleEl.classList.remove('invalid');
+      document.getElementById('err-title').classList.remove('show');
+      renderChips(document.getElementById('cat').value);
+    });
+  }
+});
+
+// ─── Photo preview ────────────────────────────────────────────────────────────
+function onPhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  // Limit file size to 4 MB before base64 encoding
+  if (file.size > 4 * 1024 * 1024) {
+    alert(currentLang === 'th' ? 'ไฟล์ใหญ่เกิน 4 MB' : 'File exceeds 4 MB limit');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewDataUrl = e.target.result;
+    const img = document.getElementById('photo-img');
+    img.src = previewDataUrl;
+    img.style.display = 'block';
+    document.getElementById('photo-preview').style.display = 'block';
+    document.getElementById('photo-drop').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  previewDataUrl = null;
+  document.getElementById('photo-input').value = '';
+  const img = document.getElementById('photo-img');
+  img.src = ''; img.style.display = 'none';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-drop').style.display = 'block';
+}
+
+// ─── Step navigation ──────────────────────────────────────────────────────────
+function goStep(n) {
+  if (n === 2) {
+    const cat = document.getElementById('cat').value;
+    const titleEl = document.getElementById('title');
+    const titleVal = (titleEl.value || '').trim();
+    const isSensitive = SENSITIVE_CATS.includes(cat);
+    const loc = document.getElementById('location').value.trim();
+    let ok = true;
+    if (!cat) {
+      document.getElementById('err-cat').classList.add('show');
+      document.getElementById('cat-grid-general').classList.add('invalid');
+      document.getElementById('cat-grid-sensitive').classList.add('invalid');
+      ok = false;
+    }
+    if (!isSensitive && !titleVal) {
+      document.getElementById('err-title').classList.add('show');
+      titleEl.classList.add('invalid');
+      ok = false;
+    } else {
+      document.getElementById('err-title').classList.remove('show');
+      titleEl.classList.remove('invalid');
+    }
+    if (!loc) {
+      document.getElementById('err-location').classList.add('show');
+      document.getElementById('location').classList.add('invalid');
+      ok = false;
+    } else {
+      document.getElementById('err-location').classList.remove('show');
+      document.getElementById('location').classList.remove('invalid');
+    }
+    if (!ok) return;
+  }
+
+  if (n === 3) {
+    const catVal = document.getElementById('cat').value;
+    const catTile = document.querySelector('.cat-tile[data-cat="' + catVal + '"] .cat-tile-label');
+    const catText = catTile ? (catTile.getAttribute('data-' + currentLang) || catTile.textContent) : catVal;
+    document.getElementById('rev-cat').textContent = catText;
+    const isSensitive = SENSITIVE_CATS.includes(catVal);
+    const titleVal = isSensitive && SENSITIVE_TITLES[catVal]
+      ? SENSITIVE_TITLES[catVal][currentLang]
+      : document.getElementById('title').value.trim();
+    document.getElementById('rev-title').textContent = titleVal;
+    document.getElementById('rev-location').textContent = document.getElementById('location').value.trim();
+    const desc = document.getElementById('description').value.trim();
+    const notSpecified = currentLang === 'th' ? '(ไม่ระบุ)' : '(not specified)';
+    const descEl = document.getElementById('rev-desc');
+    descEl.textContent = desc || notSpecified;
+    descEl.style.color = desc ? '' : 'var(--k-ink-l)';
+    const photoRow = document.getElementById('rev-photo-row');
+    photoRow.style.display = isSensitive ? 'none' : '';
+    const photoEl = document.getElementById('rev-photo');
+    photoEl.textContent = previewDataUrl
+      ? (currentLang === 'th' ? '✓ แนบรูปภาพแล้ว' : '✓ Photo attached')
+      : (currentLang === 'th' ? '(ไม่มีรูปภาพ)' : '(no photo)');
+    photoEl.style.color = previewDataUrl ? 'var(--k-success)' : 'var(--k-ink-l)';
+    document.getElementById('error-banner').classList.remove('show');
+  }
+
+  [1, 2, 3].forEach(i => {
+    const el = document.getElementById('step-' + i);
+    if (el) el.style.display = i === n ? 'block' : 'none';
+    const dot = document.getElementById('dot-' + i);
+    if (dot) dot.classList.toggle('active', i <= n);
+  });
+}
+
+// ─── Form submit → real API call ─────────────────────────────────────────────
+document.getElementById('walkin-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = currentLang === 'th' ? '⏳ กำลังส่ง…' : '⏳ Submitting…';
+  document.getElementById('error-banner').classList.remove('show');
+
+  try {
+    // Get reCAPTCHA v3 token
+    let token = '';
+    if (typeof grecaptcha !== 'undefined' && RECAPTCHA_SITE_KEY !== 'RECAPTCHA_V3_SITE_KEY') {
+      await new Promise(resolve => grecaptcha.ready(resolve));
+      token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'walkin_submit'});
+    }
+
+    const catVal = document.getElementById('cat').value;
+    const isSensitive = SENSITIVE_CATS.includes(catVal);
+    const titleVal = isSensitive && SENSITIVE_TITLES[catVal]
+      ? SENSITIVE_TITLES[catVal].en
+      : document.getElementById('title').value.trim();
+
+    const payload = {
+      token,
+      category: catVal,
+      title: titleVal,
+      location: document.getElementById('location').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      photoDataUrl: previewDataUrl || null,
+    };
+
+    const res = await fetch('/api/walkin', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+    showSuccess(data.refId, isSensitive);
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="t">' + (currentLang === 'th' ? 'ส่งข้อมูล ✓' : 'Submit ✓') + '</span>';
+    const banner = document.getElementById('error-banner');
+    banner.textContent = currentLang === 'th'
+      ? '❌ เกิดข้อผิดพลาด: ' + err.message
+      : '❌ Error: ' + err.message;
+    banner.classList.add('show');
+  }
+});
+
+function showSuccess(refId, isSensitive) {
+  document.getElementById('walkin-form').style.display = 'none';
+  document.querySelector('.step-indicator').style.display = 'none';
+  const ss = document.getElementById('success-screen');
+  ss.classList.add('show');
+
+  const msgTh = 'ขอบคุณที่แจ้งพบสิ่งของ ข้อมูลถูกบันทึกในระบบแล้ว';
+  const msgEn = 'Thank you for reporting. Your submission has been recorded.';
+  const msg = document.getElementById('success-msg');
+  msg.setAttribute('data-th-text', msgTh);
+  msg.setAttribute('data-en-text', msgEn);
+
+  const callout = document.getElementById('success-callout');
+  if (isSensitive) {
+    callout.setAttribute('data-th-html', '<strong style="color:var(--k-warn)">⚠️ สิ่งของสำคัญ — กรุณาส่งมอบที่เคาน์เตอร์</strong><br>กรุณามอบสิ่งของให้เจ้าหน้าที่รักษาความปลอดภัย ณ จุดนี้');
+    callout.setAttribute('data-en-html', '<strong style="color:var(--k-warn)">⚠️ Sensitive item — please hand to the staff at this counter</strong><br>Please give the item to Security staff here.');
+  } else {
+    callout.setAttribute('data-th-html', '<strong>ℹ️ สิ่งของจะถูกเก็บไว้ที่งานรักษาความปลอดภัย</strong><br>กรุณามอบสิ่งของให้เจ้าหน้าที่ ณ จุดนี้');
+    callout.setAttribute('data-en-html', '<strong>ℹ️ The item will be kept at the Security Office</strong><br>Please give the item to the staff here.');
+  }
+
+  const refEl = document.getElementById('success-ref');
+  refEl.setAttribute('data-th-text', 'รหัสอ้างอิง: ' + refId);
+  refEl.setAttribute('data-en-text', 'Reference ID: ' + refId);
+
+  setLang(currentLang);
+}
+
+// ─── Reset form ───────────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('walkin-form').reset();
+  previewDataUrl = null;
+  document.getElementById('cat').value = '';
+  document.querySelectorAll('.cat-tile').forEach(t => {
+    t.classList.remove('selected');
+    t.setAttribute('aria-checked', 'false');
+  });
+  const titleEl = document.getElementById('title');
+  if (titleEl) { titleEl.value = ''; titleEl.classList.remove('invalid'); titleEl.placeholder = PLACEHOLDERS[currentLang].title; }
+  document.getElementById('err-title').classList.remove('show');
+  document.getElementById('title-general').style.display = 'block';
+  document.getElementById('title-sensitive').style.display = 'none';
+  document.getElementById('quickpick').style.display = 'none';
+  document.getElementById('chips-row').innerHTML = '';
+  document.getElementById('walkin-form').style.display = 'block';
+  document.querySelector('.step-indicator').style.display = 'flex';
+  document.getElementById('success-screen').classList.remove('show');
+  document.getElementById('sensitive-warn').classList.remove('show');
+  removePhoto();
+  const photoField = document.getElementById('photo-field');
+  if (photoField) photoField.style.display = 'block';
+  const btn = document.getElementById('btn-submit');
+  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="t">' + (currentLang === 'th' ? 'ส่งข้อมูล ✓' : 'Submit ✓') + '</span>'; }
+  goStep(1);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+setLang('th');
+</script>
+</body>
+</html>

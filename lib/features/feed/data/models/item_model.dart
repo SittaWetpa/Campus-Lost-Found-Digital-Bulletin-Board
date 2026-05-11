@@ -14,7 +14,7 @@ class ItemModel {
   final String source;
   final bool isSensitive;
   final DateTime createdAt;
-  final DateTime occurredAt;
+  final DateTime? occurredAt;
   final DateTime? editedAt;
   final DateTime? expiresAt;
   final String? claimedBy;
@@ -34,7 +34,7 @@ class ItemModel {
     required this.imageUrls,
     required this.userId,
     required this.createdAt,
-    required this.occurredAt,
+    this.occurredAt,
     this.source = 'web',
     this.isSensitive = false,
     this.editedAt,
@@ -65,8 +65,7 @@ class ItemModel {
         isSensitive: data['isSensitive'] as bool? ?? false,
         // serverTimestamp is null during the pending-write window; fall back to now
         createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        // user-supplied; never null on a well-formed doc — let it throw if missing
-        occurredAt: (data['occurredAt'] as Timestamp).toDate(),
+        occurredAt: (data['occurredAt'] as Timestamp?)?.toDate(),
         editedAt: (data['editedAt'] as Timestamp?)?.toDate(),
         expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
         claimedBy: data['claimedBy'] as String?,
@@ -89,7 +88,7 @@ class ItemModel {
         contact: item.contact,
         imageUrls: item.imageUrls,
         userId: item.userId,
-        source: item.source == ItemSource.qrWalkIn ? 'qr_walk_in' : 'web',
+        source: item.source.firestoreValue,
         isSensitive: item.isSensitive,
         createdAt: item.createdAt,
         occurredAt: item.occurredAt,
@@ -103,8 +102,9 @@ class ItemModel {
       );
 
   /// Returns the mutable fields to write to Firestore.
-  /// createdAt and editedAt are excluded — the datasource sets them
-  /// via FieldValue.serverTimestamp() to guarantee server-side timestamps.
+  /// createdAt, editedAt are excluded — the datasource sets them via
+  /// FieldValue.serverTimestamp(). source is excluded — the Admin SDK
+  /// (walk-in Cloud Function) is the only writer of 'qr_walk_in'.
   Map<String, dynamic> toFirestore() => {
         'title': title,
         'description': description,
@@ -114,9 +114,9 @@ class ItemModel {
         'contact': contact,
         'imageUrls': imageUrls,
         'userId': userId,
-        'source': source,
         'isSensitive': isSensitive,
-        'occurredAt': Timestamp.fromDate(occurredAt),
+        if (occurredAt != null)
+          'occurredAt': Timestamp.fromDate(occurredAt!),
         if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
         if (claimedBy != null) 'claimedBy': claimedBy,
         if (secretQuestion != null) 'secretQuestion': secretQuestion,
@@ -163,7 +163,7 @@ class ItemModel {
         'source': source,
         'isSensitive': isSensitive,
         'createdAt': createdAt.toIso8601String(),
-        'occurredAt': occurredAt.toIso8601String(),
+        if (occurredAt != null) 'occurredAt': occurredAt!.toIso8601String(),
         'editedAt': editedAt?.toIso8601String(),
         'expiresAt': expiresAt?.toIso8601String(),
         'claimedBy': claimedBy,
@@ -186,7 +186,9 @@ class ItemModel {
         source: map['source'] as String? ?? 'web',
         isSensitive: map['isSensitive'] as bool? ?? false,
         createdAt: DateTime.parse(map['createdAt'] as String),
-        occurredAt: DateTime.parse(map['occurredAt'] as String),
+        occurredAt: map['occurredAt'] == null
+            ? null
+            : DateTime.parse(map['occurredAt'] as String),
         editedAt: map['editedAt'] == null
             ? null
             : DateTime.parse(map['editedAt'] as String),

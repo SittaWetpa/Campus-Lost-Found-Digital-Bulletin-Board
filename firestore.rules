@@ -37,10 +37,14 @@ service cloud.firestore {
     }
 
     // Items: any authenticated user may read; only the Poster may create/edit/delete
+    // source:'qr_walk_in' is written exclusively by the Admin SDK (walkin Cloud Function)
+    // — client apps must not set this field.
     match /items/{itemId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
                     && request.resource.data.userId == request.auth.uid
+                    && (!('source' in request.resource.data)
+                        || request.resource.data.source == 'web')
                     && (
                       !request.resource.data.isSensitive
                       || (
