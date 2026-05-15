@@ -13,6 +13,8 @@
 | `flutter test test/unit/` | Unit tests only | During feature development |
 | `flutter test test/features/` | Feature widget tests only | During UI development |
 | `flutter test --coverage` | Full suite + generates `coverage/lcov.info` | For WBS 3.1 / 3.2 submission |
+| `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Web integration smoke tests (requires chromedriver on PATH) | WBS 3.2 web verification |
+| `flutter test integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Same tests via modern flutter-test runner | Alternative to flutter drive |
 | `cd test/firestore_rules && npm test` | Firestore security rules (Node.js) | After editing `firestore.rules` |
 | `cd test/functions && npm install && npm test` | Cloud Function + REST API unit tests (Node.js Jest) | After editing `functions/index.js` |
 
@@ -215,7 +217,9 @@ Run: `flutter test --coverage` and `flutter drive --target=test_driver/app.dart 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 3.1 | Android build & verification | Full suite via `flutter test` | All | ⬜ pending full suite |
-| 3.2 | Web build & verification | Full suite on Chrome via `flutter drive` | Integration | ⬜ not yet written |
+| 3.2 | Web build smoke tests (boot, auth guard, email validation, register nav, deep-link guard, image_picker_for_web compile check) | `integration_test/wbs_3_2_web_smoke_test.dart` | Integration | ✅ 6 smoke tests (requires chromedriver) |
+| 3.2 | `flutter build web --release` zero-error build | Manual — verified 2026-05-15 | Smoke | ✅ passes |
+| 3.2 | Firebase Web config, CORS, base href, Hive-IndexedDB, shared_preferences-localStorage | `CROSS_PLATFORM.md` checklist | Manual | ✅ documented |
 
 ---
 
@@ -250,7 +254,7 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
 | 2.0 Data Layer | 335 + 24 (npm) | 359 |
-| 3.0 Cross-Platform | 0 | — |
+| 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
 | 4.0 Architecture | 37 | 37 |
 | 5.0 Quality Gates | 0 | — |
 | **Total** | **510 Dart + 24 npm** | **526 passing + 24 npm** |
@@ -259,4 +263,4 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 
 ---
 
-*Last updated: 2026-05-10 (WBS 2.8 — Similar Posts Recommendation (category-based). Replaced old title-prefix query with `getRecentInCategory`. New files: `ItemTaxonomy` enum (8 values + metadata), `CategoryPicker` widget (4×2 icon grid), `SimilarPostsPanel` widget (category-based), `SimilarItemsNotifier` provider, `similar_items_provider.dart`. Updated: `Item` entity, `ItemModel`, `ItemRemoteDatasource`, `ItemRepository`, `ItemRepositoryImpl`, `PostFormScreen` (full UX overhaul — quick-pick chips, adaptive placeholders, photo row redesign, sensitive explanation box, photo safety hint), `firestore.indexes.json`, `firestore.rules`. Deleted: `GetSimilarFounderPostsUseCase`, `SimilarPostsNotifier`, old test file. Added 21 new Dart tests + 5 npm rules tests across 5 new/updated test files. Old WBS 2.8 test deleted (use case removed). All Dart tests pass.)*
+*Last updated: 2026-05-15 (WBS 3.2 — Web Build, Testing & Verification. Added: `test_driver/integration_test.dart`, `integration_test/wbs_3_2_web_smoke_test.dart` (6 smoke tests), `CROSS_PLATFORM.md` (feature-parity matrix + manual verification steps), `integration_test: sdk: flutter` dev dependency, two new run commands. `flutter build web --release` verified passing. Previous entry: WBS 2.8 — Similar Posts Recommendation (category-based). Replaced old title-prefix query with `getRecentInCategory`. New files: `ItemTaxonomy` enum (8 values + metadata), `CategoryPicker` widget (4×2 icon grid), `SimilarPostsPanel` widget (category-based), `SimilarItemsNotifier` provider, `similar_items_provider.dart`. Updated: `Item` entity, `ItemModel`, `ItemRemoteDatasource`, `ItemRepository`, `ItemRepositoryImpl`, `PostFormScreen` (full UX overhaul — quick-pick chips, adaptive placeholders, photo row redesign, sensitive explanation box, photo safety hint), `firestore.indexes.json`, `firestore.rules`. Deleted: `GetSimilarFounderPostsUseCase`, `SimilarPostsNotifier`, old test file. Added 21 new Dart tests + 5 npm rules tests across 5 new/updated test files. Old WBS 2.8 test deleted (use case removed). All Dart tests pass.)*
