@@ -227,7 +227,7 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 5.1 | Accessibility (WCAG 2.2 AA) | — | Widget | ⬜ not yet written |
-| 5.2 | Security & dependency scans | CI workflow + Firestore rules | Rules + CI | ⬜ not yet written |
+| 5.2 | Security & dependency scans — enhanced Firestore rules (`createdAt` enforcement, `userId` immutability, request RBAC split), CI workflow, `SECURITY.md` | `test/firestore_rules/rules.test.js` + `.github/workflows/security.yml` | Rules + CI | ✅ 5 tests (requires emulator) |
 
 ---
 
@@ -242,11 +242,11 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 2.0 Data Layer | 292 + 24 (npm) | 316 |
 | 3.0 Cross-Platform | 0 | — |
 | 4.0 Architecture | 37 | 37 |
-| 5.0 Quality Gates | 0 | — |
+| 5.0 Quality Gates | 5 (npm) | 5 |
 | **Total** | **466 Dart + 24 npm** | **490 passing + 24 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-10 (WBS 2.8 — Similar Posts Recommendation (category-based). Replaced old title-prefix query with `getRecentInCategory`. New files: `ItemTaxonomy` enum (8 values + metadata), `CategoryPicker` widget (4×2 icon grid), `SimilarPostsPanel` widget (category-based), `SimilarItemsNotifier` provider, `similar_items_provider.dart`. Updated: `Item` entity, `ItemModel`, `ItemRemoteDatasource`, `ItemRepository`, `ItemRepositoryImpl`, `PostFormScreen` (full UX overhaul — quick-pick chips, adaptive placeholders, photo row redesign, sensitive explanation box, photo safety hint), `firestore.indexes.json`, `firestore.rules`. Deleted: `GetSimilarFounderPostsUseCase`, `SimilarPostsNotifier`, old test file. Added 21 new Dart tests + 5 npm rules tests across 5 new/updated test files. Old WBS 2.8 test deleted (use case removed). All Dart tests pass.)*
+*Last updated: 2026-05-15 (WBS 5.2 — Security & Dependency Scans. Enhanced `firestore.rules`: `createdAt == request.time` on items/requests create; `userId` + `createdAt` immutable on items update; `editedAt` server-timestamp guard; requests update RBAC split (requester cancel-only / poster approve-reject-only). New files: `.github/workflows/security.yml`, `.gitleaks.toml`, `SECURITY.md`. Updated: `test/firestore_rules/rules.test.js` (+ 5 new WBS 5.2 tests, 2 existing tests fixed to use `serverTimestamp()`), `test/firestore_rules/item_category.test.js` (`validBase()` fixed), `test/firestore_rules/package.json` (added `firebase ^10.0.0`). All npm rules tests pass.)*

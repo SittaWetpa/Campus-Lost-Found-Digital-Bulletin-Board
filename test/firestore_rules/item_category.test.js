@@ -20,6 +20,7 @@ import {
   assertFails,
   assertSucceeds,
 } from '@firebase/rules-unit-testing';
+import { serverTimestamp } from 'firebase/firestore';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -61,7 +62,7 @@ const validBase = () => ({
   imageUrls: [],
   userId: POSTER_UID,
   isSensitive: false,
-  createdAt: new Date(),
+  createdAt: serverTimestamp(), // WBS 5.2: must equal request.time
 });
 
 describe('WBS 2.8 — itemCategory field validation on create', () => {

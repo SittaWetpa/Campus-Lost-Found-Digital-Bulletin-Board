@@ -1,0 +1,40 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [release, develop]
+
+jobs:
+  dependency-scan:
+    name: Dart Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Audit for High/Critical CVEs
+        run: |
+          OUTPUT=$(dart pub outdated --mode=security --no-color 2>&1)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -qiE '\b(high|critical)\b'; then
+            echo "::error::High or Critical vulnerability detected. Resolve before merging."
+            exit 1
+          fi
+
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

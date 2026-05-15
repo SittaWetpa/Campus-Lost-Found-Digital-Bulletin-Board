@@ -30,6 +30,7 @@ import {
   assertFails,
   assertSucceeds,
 } from '@firebase/rules-unit-testing';
+import { serverTimestamp } from 'firebase/firestore';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -174,7 +175,7 @@ describe('WBS 2.1 Test case 3 — Authenticated reads on items are allowed', () 
         contact: '0823456789',
         imageUrls: [],
         userId: POSTER_UID,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(), // WBS 5.2: must equal request.time
       }),
     );
   });
@@ -387,7 +388,7 @@ describe('WBS 2.4.1 — Resubmit policy rules-layer contract', () => {
           studentId: '63070001',
           type: 'claim',
           status: 'pending',
-          createdAt: new Date(),
+          createdAt: serverTimestamp(), // WBS 5.2: must equal request.time
           visitorAnswer: 'Brown',
         }),
     );
@@ -424,6 +425,108 @@ describe('WBS 2.4.1 — Resubmit policy rules-layer contract', () => {
         wbs: '2.4.1',
         reason: 'allowed',
       }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WBS 5.2 — Enhanced Security Rules
+// (wbs_dictionary.md: server-side timestamp enforcement, userId immutability,
+//  and role-scoped request update RBAC)
+// ---------------------------------------------------------------------------
+
+describe('WBS 5.2 — Enhanced Security Rules', () => {
+  const POSTER_UID = 'uid-poster-5-2';
+  const OTHER_UID = 'uid-other-5-2';
+  const REQUESTER_UID = 'uid-requester-5-2';
+  const ITEM_ID = 'item-5-2';
+  const REQUEST_ID = 'req-5-2';
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await db.collection('items').doc(ITEM_ID).set({
+        title: 'Lost wallet',
+        category: 'seeker',
+        itemCategory: 'bag_wallet',
+        status: 'active',
+        location: 'Library',
+        contact: '0800000000',
+        imageUrls: [],
+        userId: POSTER_UID,
+        createdAt: new Date(),
+      });
+      await db
+        .collection('items')
+        .doc(ITEM_ID)
+        .collection('requests')
+        .doc(REQUEST_ID)
+        .set({
+          requesterId: REQUESTER_UID,
+          requesterName: 'Bob',
+          status: 'pending',
+          createdAt: new Date(),
+        });
+    });
+  });
+
+  // Test 1: cross-owner update denied
+  test('user cannot edit an item they do not own', async () => {
+    const authDb = testEnv.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(
+      authDb.collection('items').doc(ITEM_ID).update({ title: 'Hijacked' }),
+    );
+  });
+
+  // Test 2: client-forged createdAt on item create is denied
+  test('item create with a client-side createdAt timestamp is denied', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertFails(
+      authDb.collection('items').doc('item-forged-ts').set({
+        title: 'Forged',
+        category: 'seeker',
+        itemCategory: 'other',
+        status: 'active',
+        location: 'Library',
+        contact: '',
+        imageUrls: [],
+        userId: POSTER_UID,
+        createdAt: new Date(), // client-forged — must equal request.time
+      }),
+    );
+  });
+
+  // Test 3: update that changes userId is denied
+  test('poster cannot change the userId field on their own item', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertFails(
+      authDb.collection('items').doc(ITEM_ID).update({ userId: OTHER_UID }),
+    );
+  });
+
+  // Test 4: requester cannot self-approve their request
+  test('requester cannot approve their own request', async () => {
+    const authDb = testEnv.authenticatedContext(REQUESTER_UID).firestore();
+    await assertFails(
+      authDb
+        .collection('items')
+        .doc(ITEM_ID)
+        .collection('requests')
+        .doc(REQUEST_ID)
+        .update({ status: 'approved' }),
+    );
+  });
+
+  // Test 5: poster cannot cancel a request (only requester may cancel)
+  test('poster cannot cancel a request', async () => {
+    const authDb = testEnv.authenticatedContext(POSTER_UID).firestore();
+    await assertFails(
+      authDb
+        .collection('items')
+        .doc(ITEM_ID)
+        .collection('requests')
+        .doc(REQUEST_ID)
+        .update({ status: 'cancelled' }),
     );
   });
 });

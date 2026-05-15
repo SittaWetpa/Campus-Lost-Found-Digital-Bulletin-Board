@@ -1,0 +1,7 @@
+title = "Campus Lost & Found — gitleaks configuration"
+
+[allowlist]
+  description = "Firebase web config is intentionally public. The API key in firebase_options.dart is an app identifier, not a server secret; access control is enforced by Firestore and Storage security rules."
+  paths = [
+    "lib/config/firebase_options.dart",
+  ]
