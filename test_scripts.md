@@ -195,7 +195,10 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.15 | QR walk-in: valid submit → 201 + source field; missing fields → 400; rate limit → 429; reCAPTCHA fail → 400; sensitive → isSensitive:true | `functions/test/walkin.test.js` | Node.js | ✅ 7 tests |
 | 2.15 | ItemCard: walk-in ribbon rendered for source==qrWalkIn; absent for web source; ribbon uses blue container | `test/features/feed/presentation/widgets/item_card_test.dart` | Widget | ✅ 3 tests |
 | 2.15 | Firestore rules: client write with source:"qr_walk_in" denied | — | Rules | ⬜ requires Firebase emulator |
-| 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
+| 2.16 | `NotificationType.fromString()` (4 valid + 3 error cases); `AppNotification` constructor + `copyWith()` (incl. null sentinel); `DeviceToken` + `DevicePlatform` (android/web only) | `test/unit/notifications/app_notification_entity_test.dart` | Unit | ✅ 29 tests |
+| 2.16 | `NotificationService.registerToken()` — arrayUnion contract; `unregisterToken()` — arrayRemove contract | `test/unit/notifications/notification_service_test.dart` | Unit | ✅ 2 tests |
+| 2.16 | Settings toggle "Receive notifications" off → `PreferenceRepository.setNotificationsEnabled(false)` | `test/features/profile/presentation/screens/settings_screen_test.dart` (test 03) | Widget | ✅ covered |
+| 2.16 | CF `onNewRequest`: T1 payload (app/enabled/valid token); walk-in (userId=walkin, no user doc) skips FCM + doc write; in-app doc written to `users/{uid}/notifications/req_{requestId}`; stale token → arrayRemove; CF `onRequestStatusChange`: T3 on approved + doc write; T4 on rejected; non-qualifying change skips FCM | `functions/test/notifications.test.js` | Node.js | ✅ 7 tests; 2 skipped (manual integration) |
 | 2.18 | UserModel.fromFirestore reads `isAdmin` (true / false / missing-defaults-to-false; toEntity carries it) | `test/unit/auth/user_model_is_admin_test.dart` | Unit | ✅ 4 tests |
 | 2.18 | `FirestoreUserDatasource.createUser` stamps `isAdmin: false` on new accounts | `test/unit/auth/user_remote_datasource_test.dart` (added row to existing file) | Unit | ✅ 1 test |
 | 2.18 | Settings screen — Developer section gated on `currentUser.isAdmin` | `test/features/profile/presentation/screens/settings_screen_admin_test.dart` | Widget | ✅ 2 tests |

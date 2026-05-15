@@ -8,6 +8,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_filter_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
+import 'package:campus_lost_found/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
 import 'package:campus_lost_found/shared/widgets/offline_banner.dart';
 
@@ -80,6 +81,52 @@ class FeedScreen extends ConsumerWidget {
   }
 }
 
+class _NotificationBellButton extends ConsumerWidget {
+  const _NotificationBellButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread =
+        ref.watch(myUnreadNotificationCountProvider).valueOrNull ?? 0;
+    final bell = IconButton(
+      icon: const Icon(Icons.notifications_outlined),
+      color: AppTokens.ink700,
+      onPressed: () => context.push(AppRoutes.notifications),
+      tooltip: 'Notifications',
+    );
+    if (unread == 0) return bell;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        bell,
+        Positioned(
+          right: 6,
+          top: 6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+            decoration: BoxDecoration(
+              color: AppTokens.seeker,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTokens.bg, width: 1.5),
+            ),
+            child: Text(
+              unread > 99 ? '99+' : '$unread',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.firstName,
@@ -124,6 +171,7 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          const _NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.format_list_bulleted),
             color: AppTokens.ink700,

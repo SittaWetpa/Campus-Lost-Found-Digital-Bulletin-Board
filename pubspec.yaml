@@ -55,6 +55,9 @@ dependencies:
   # Remote Config (WBS 2.13)
   firebase_remote_config: ^5.1.3
 
+  # Push Notifications (WBS 2.16)
+  firebase_messaging: ^15.1.0
+
   # Routing (WBS 4.3)
   go_router: ^14.3.0
 

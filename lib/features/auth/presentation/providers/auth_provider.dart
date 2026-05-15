@@ -5,6 +5,7 @@ import 'package:campus_lost_found/features/auth/data/repositories/auth_repositor
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
 import 'package:campus_lost_found/features/auth/domain/repositories/auth_repository.dart';
 import 'package:campus_lost_found/features/auth/domain/usecases/sign_in.dart';
+import 'package:campus_lost_found/features/notifications/presentation/providers/notification_service_provider.dart';
 
 part 'auth_provider.g.dart';
 
@@ -31,17 +32,26 @@ class LoginNotifier extends _$LoginNotifier {
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await SignIn(ref.read(authRepositoryProvider)).call(
+      final authUser = await SignIn(ref.read(authRepositoryProvider)).call(
         email: email,
         password: password,
       );
+      final ns = ref.read(notificationServiceProvider);
+      await ns.requestPermission().catchError((_) {});
+      ns.registerToken(authUser.uid).ignore();
     });
   }
 
   Future<void> signOut() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signOut(),
-    );
+    state = await AsyncValue.guard(() async {
+      final uid = ref.read(authStateProvider).valueOrNull?.uid;
+      if (uid != null) {
+        await ref.read(notificationServiceProvider)
+            .unregisterToken(uid)
+            .catchError((_) {});
+      }
+      await ref.read(authRepositoryProvider).signOut();
+    });
   }
 }

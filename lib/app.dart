@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,11 +7,51 @@ import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 
-class CampusLostFoundApp extends ConsumerWidget {
+class CampusLostFoundApp extends ConsumerStatefulWidget {
   const CampusLostFoundApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CampusLostFoundApp> createState() => _CampusLostFoundAppState();
+}
+
+class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
+  StreamSubscription<RemoteMessage>? _messageSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _initMessaging();
+  }
+
+  void _initMessaging() {
+    try {
+      // Cold-start tap (app was terminated)
+      FirebaseMessaging.instance.getInitialMessage().then((message) {
+        if (message != null) _routeToItem(message);
+      });
+      // Background tap (app was in background)
+      _messageSub = FirebaseMessaging.onMessageOpenedApp.listen(_routeToItem);
+    } catch (_) {
+      // Firebase not yet available (e.g., widget tests without Firebase init)
+    }
+  }
+
+  void _routeToItem(RemoteMessage message) {
+    final itemId = message.data['itemId'] as String?;
+    if (itemId == null || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appRouterProvider).push(AppRoutes.itemDetailPath(itemId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final baseSans = GoogleFonts.plusJakartaSansTextTheme();
     return MaterialApp.router(
@@ -68,12 +110,14 @@ class CampusLostFoundApp extends ConsumerWidget {
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: AppTokens.seeker),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           ),
         ),
       ),

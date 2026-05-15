@@ -1,10 +1,11 @@
 const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onDocumentCreated, onDocumentUpdated} = require("firebase-functions/v2/firestore");
 const {initializeApp} = require("firebase-admin/app");
 const {getFirestore, FieldValue} = require("firebase-admin/firestore");
 const {getStorage} = require("firebase-admin/storage");
 const {getAuth} = require("firebase-admin/auth");
+const {getMessaging} = require("firebase-admin/messaging");
 const {defineSecret} = require("firebase-functions/params");
 const {randomInt} = require("crypto");
 
@@ -429,5 +430,195 @@ exports.walkin = onRequest(
         }
 
         return res.status(201).json({success: true, refId});
+    },
+);
+
+// ── WBS 2.16 — Push Notifications ────────────────────────────────────────────
+
+// Helper: remove stale FCM tokens reported by FCM as unregistered.
+async function _pruneStaleTokens(db, userPath, tokens, responses) {
+    const stale = responses
+        .map((r, i) => (!r.success &&
+            r.error?.code === "messaging/registration-token-not-registered"
+            ? tokens[i] : null))
+        .filter(Boolean);
+    if (stale.length > 0) {
+        await db.doc(userPath).update({
+            fcmTokens: FieldValue.arrayRemove(...stale),
+        });
+    }
+}
+
+// Helper: write an in-app notification document. Idempotent via deterministic id —
+// safe under at-least-once trigger delivery.
+async function _writeNotificationDoc(db, recipientId, notificationId, data) {
+    await db
+        .doc(`users/${recipientId}/notifications/${notificationId}`)
+        .set({
+            ...data,
+            isRead: false,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+}
+
+// T1 / T2 — notify item poster when a new request arrives (app-sourced only).
+exports.onNewRequest = onDocumentCreated(
+    {
+        document: "items/{itemId}/requests/{requestId}",
+        region: "asia-southeast1",
+    },
+    async (event) => {
+        const reqData = event.data.data();
+        const {itemId, requestId} = event.params;
+
+        const db = getFirestore();
+
+        const itemSnap = await db.doc(`items/${itemId}`).get();
+        if (!itemSnap.exists) return;
+        const item = itemSnap.data();
+
+        const userPath = `users/${item.userId}`;
+        const userSnap = await db.doc(userPath).get();
+        if (!userSnap.exists) return;
+        const user = userSnap.data();
+
+        // notificationsEnabled defaults to true (per CLAUDE.md) — only an
+        // explicit `false` opts out. Users who registered before WBS 2.16
+        // have no such field and must still receive notifications.
+        if (user.notificationsEnabled === false) return;
+
+        const isClaim = reqData.type === "claim";
+        const notifTitle = isClaim ? "New Claim Request" : "New Found Report";
+        const notifBody = isClaim
+            ? `${reqData.requesterName} submitted a claim for ${item.title}`
+            : `${reqData.requesterName} reported finding ${item.title}`;
+        const dataType = isClaim ? "claimRequest" : "foundReport";
+
+        // Write the in-app notification doc first — even if FCM push fails
+        // (or there are no tokens), the recipient will still see it in the
+        // Notification Center. Deterministic id dedupes against retries.
+        await _writeNotificationDoc(db, item.userId, `req_${requestId}`, {
+            type: dataType,
+            recipientId: item.userId,
+            itemId,
+            itemTitle: item.title,
+            requesterName: reqData.requesterName,
+            requestId,
+        });
+
+        const tokens = user.fcmTokens || [];
+        if (tokens.length === 0) return;
+        const result = await getMessaging().sendEachForMulticast({
+            tokens,
+            notification: {title: notifTitle, body: notifBody},
+            data: {type: dataType, itemId, requestId},
+        });
+
+        await _pruneStaleTokens(db, userPath, tokens, result.responses);
+    },
+);
+
+// Daily auto-archive — delete in-app notifications that have been read for ≥ 30 days.
+// Requires the collection-group index on notifications(isRead ASC, createdAt ASC).
+exports.autoArchiveReadNotifications = onSchedule(
+    {schedule: "every 24 hours", region: "asia-southeast1"},
+    async () => {
+        const db = getFirestore();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+
+        const snap = await db.collectionGroup("notifications")
+            .where("isRead", "==", true)
+            .where("createdAt", "<", cutoff)
+            .get();
+
+        if (snap.empty) return;
+
+        // Firestore batches max out at 500 writes.
+        const commits = [];
+        let batch = db.batch();
+        let count = 0;
+        for (const doc of snap.docs) {
+            batch.delete(doc.ref);
+            count++;
+            if (count === 500) {
+                commits.push(batch.commit());
+                batch = db.batch();
+                count = 0;
+            }
+        }
+        if (count > 0) commits.push(batch.commit());
+        await Promise.all(commits);
+        console.log(
+            `autoArchiveReadNotifications: deleted ${snap.size} read notifications.`,
+        );
+    },
+);
+
+// T3 / T4 — notify requester when their request status changes to approved/rejected.
+exports.onRequestStatusChange = onDocumentUpdated(
+    {
+        document: "items/{itemId}/requests/{requestId}",
+        region: "asia-southeast1",
+    },
+    async (event) => {
+        const before = event.data.before.data();
+        const after = event.data.after.data();
+        const {itemId, requestId} = event.params;
+
+        if (before.status === after.status) return;
+        if (after.status !== "approved" && after.status !== "rejected") return;
+
+        const db = getFirestore();
+
+        const itemSnap = await db.doc(`items/${itemId}`).get();
+        if (!itemSnap.exists) return;
+        const item = itemSnap.data();
+
+        const requesterId = after.requesterId;
+        if (!requesterId) return;
+
+        const userPath = `users/${requesterId}`;
+        const userSnap = await db.doc(userPath).get();
+        if (!userSnap.exists) return;
+        const user = userSnap.data();
+
+        // Default `true` — only an explicit opt-out blocks the notification.
+        if (user.notificationsEnabled === false) return;
+
+        const isApproved = after.status === "approved";
+        const notifTitle = isApproved
+            ? "Your request was approved"
+            : "Your request was declined";
+        const notifBody = isApproved
+            ? `Your request for ${item.title} has been approved`
+            : `Your request for ${item.title} has been declined`;
+        const dataType = isApproved ? "requestApproved" : "requestDeclined";
+
+        // Deterministic id per (requestId, status) so the approve-then-reopen-then-
+        // approve case (should it ever arise) doesn't overwrite the prior record.
+        await _writeNotificationDoc(
+            db,
+            requesterId,
+            `req_${requestId}_${after.status}`,
+            {
+                type: dataType,
+                recipientId: requesterId,
+                itemId,
+                itemTitle: item.title,
+                // requesterName intentionally omitted — T3/T4 are self-directed.
+                requestId,
+            },
+        );
+
+        const tokens = user.fcmTokens || [];
+        if (tokens.length === 0) return;
+        const result = await getMessaging().sendEachForMulticast({
+            tokens,
+            notification: {title: notifTitle, body: notifBody},
+            data: {type: dataType, itemId, requestId},
+        });
+
+        await _pruneStaleTokens(db, userPath, tokens, result.responses);
     },
 );

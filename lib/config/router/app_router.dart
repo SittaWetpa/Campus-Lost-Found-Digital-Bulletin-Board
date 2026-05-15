@@ -20,6 +20,7 @@ import 'package:campus_lost_found/features/post/presentation/screens/post_form_s
 import 'package:campus_lost_found/features/requests/presentation/screens/claim_request_screen.dart';
 import 'package:campus_lost_found/features/requests/presentation/screens/found_report_screen.dart';
 import 'package:campus_lost_found/features/requests/presentation/screens/request_detail_screen.dart';
+import 'package:campus_lost_found/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 part 'app_router.g.dart';
@@ -37,6 +38,9 @@ abstract final class AppRoutes {
   // Post management
   static const post     = '/post';
   static const editPost = '/post/:id/edit';
+
+  // Notifications (WBS 2.16)
+  static const notifications = '/notifications';
 
   // Profile
   static const myPosts     = '/my-posts';
@@ -176,6 +180,10 @@ GoRouter appRouter(AppRouterRef ref) {
         path: AppRoutes.editPost,
         builder: (context, state) =>
             PostFormScreen(editId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: AppRoutes.myPosts,

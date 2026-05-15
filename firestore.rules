@@ -16,6 +16,20 @@ service cloud.firestore {
                     && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data)
                         .affectedKeys().hasAny(['emailVerified', 'createdAt', 'isAdmin']);
+
+      // WBS 2.16 — In-app notifications (Notification Center).
+      // Documents are written by Cloud Functions (Admin SDK bypasses these rules)
+      // when a request lifecycle event occurs. Recipients may read, flip isRead,
+      // and delete; clients may never create.
+      match /notifications/{notificationId} {
+        allow read, delete: if request.auth != null
+                            && request.auth.uid == userId;
+        allow update: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.diff(resource.data)
+                          .affectedKeys().hasOnly(['isRead']);
+        allow create: if false;
+      }
     }
 
     // OTP verifications: Admin SDK only — no client access
@@ -76,10 +90,22 @@ service cloud.firestore {
         allow read: if request.auth != null
                     && (resource.data.requesterId == request.auth.uid
                         || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid);
+        // Enforce the status state machine — only valid transitions per actor are allowed.
+        // Prevents requesters from self-approving, which would produce a spurious T3 notification
+        // and leave the request/item in an inconsistent state (WBS 2.16 security fix).
         allow update: if request.auth != null
-                      && (resource.data.requesterId == request.auth.uid
-                          || get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid)
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                      && (
+                        // Poster: approve or reject a pending request
+                        (get(/databases/$(database)/documents/items/$(itemId)).data.userId == request.auth.uid
+                         && resource.data.status == 'pending'
+                         && request.resource.data.status in ['approved', 'rejected'])
+                        ||
+                        // Requester: cancel their own pending request only
+                        (resource.data.requesterId == request.auth.uid
+                         && resource.data.status == 'pending'
+                         && request.resource.data.status == 'cancelled')
+                      );
       }
     }
 

@@ -34,6 +34,8 @@ class FirestoreUserDatasource implements UserRemoteDatasource {
       'emailVerified': false,
       'createdAt': FieldValue.serverTimestamp(),
       'isAdmin': false,
+      'fcmTokens': [],
+      'notificationsEnabled': true,
     });
   }
 
