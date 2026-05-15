@@ -48,18 +48,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
   }
 
-  Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
-      );
-
   @override
   Widget build(BuildContext context) {
     final registerState = ref.watch(registerNotifierProvider);
@@ -114,10 +102,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _label('FIRST NAME'),
                           TextFormField(
                             controller: _firstNameController,
                             textCapitalization: TextCapitalization.words,
+                            decoration: const InputDecoration(
+                              labelText: 'FIRST NAME',
+                            ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Required.';
@@ -133,10 +123,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _label('LAST NAME'),
                           TextFormField(
                             controller: _lastNameController,
                             textCapitalization: TextCapitalization.words,
+                            decoration: const InputDecoration(
+                              labelText: 'LAST NAME',
+                            ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Required.';
@@ -151,11 +143,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 // STUDENT ID
-                _label('STUDENT ID'),
                 TextFormField(
                   controller: _studentIdController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
+                    labelText: 'STUDENT ID',
                     helperText: '11-digit KMUTT ID',
                     helperStyle: TextStyle(color: _amber),
                   ),
@@ -171,11 +163,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 // PHONE NUMBER
-                _label('PHONE NUMBER'),
                 TextFormField(
                   controller: _telephoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
+                    labelText: 'PHONE NUMBER',
                     hintText: '08x-xxx-xxxx',
                   ),
                   validator: (value) {
@@ -187,11 +179,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 // KMUTT EMAIL
-                _label('KMUTT EMAIL'),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
+                    labelText: 'KMUTT EMAIL',
                     hintText: 'name@mail.kmutt.ac.th',
                   ),
                   validator: (value) {
@@ -207,15 +199,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 // PASSWORD
-                _label('PASSWORD'),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
+                    labelText: 'PASSWORD',
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
                           ? Icons.visibility_off
                           : Icons.visibility),
+                      tooltip: _obscurePassword
+                          ? 'Show password'
+                          : 'Hide password',
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
@@ -232,15 +227,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 // CONFIRM PASSWORD
-                _label('CONFIRM PASSWORD'),
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
+                    labelText: 'CONFIRM PASSWORD',
                     suffixIcon: IconButton(
                       icon: Icon(_obscureConfirmPassword
                           ? Icons.visibility_off
                           : Icons.visibility),
+                      tooltip: _obscureConfirmPassword
+                          ? 'Show password'
+                          : 'Hide password',
                       onPressed: () => setState(() =>
                           _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),

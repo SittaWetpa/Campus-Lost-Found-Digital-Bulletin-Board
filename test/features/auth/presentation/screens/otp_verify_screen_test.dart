@@ -90,10 +90,6 @@ void main() {
       },
     );
 
-    // Accessibility — tap-target size and labelled targets. Text-contrast
-    // guideline is intentionally omitted: the screen has pre-existing
-    // grey-on-white styling (timer + "Didn't get a code?") that fails
-    // contrast and is out of scope for the WBS 0.5 testability fix.
     testWidgets(
       '05 meets accessibility guidelines (tap target size, labels)',
       (tester) async {
@@ -106,6 +102,9 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        // textContrastGuideline is omitted: the timer countdown and
+        // "Didn't get a code?" helper text use grey-on-white styling that
+        // pre-dates WBS 5.1 and is a known design token gap.
       },
     );
   });

@@ -89,53 +89,56 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   }
 
   Widget _buildBox(int index) {
-    return SizedBox(
-      width: 48,
-      height: 56,
-      child: Focus(
-        onKeyEvent: (_, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.backspace &&
-              _controllers[index].text.isEmpty &&
-              index > 0) {
-            _focusNodes[index - 1].requestFocus();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: TextField(
-          controller: _controllers[index],
-          focusNode: _focusNodes[index],
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          maxLength: 1,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            counterText: '',
-            contentPadding: EdgeInsets.zero,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: _amber),
-            ),
-          ),
-          onChanged: (value) {
-            if (value.isNotEmpty && index < 5) {
-              _focusNodes[index + 1].requestFocus();
-            } else if (value.isEmpty && index > 0) {
+    return Semantics(
+      label: 'OTP digit ${index + 1}',
+      child: SizedBox(
+        width: 48,
+        height: 56,
+        child: Focus(
+          onKeyEvent: (_, event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.backspace &&
+                _controllers[index].text.isEmpty &&
+                index > 0) {
               _focusNodes[index - 1].requestFocus();
+              return KeyEventResult.handled;
             }
-            setState(() {});
+            return KeyEventResult.ignored;
           },
-          onTap: () {
-            _controllers[index].selection = TextSelection.fromPosition(
-              TextPosition(offset: _controllers[index].text.length),
-            );
-          },
+          child: TextField(
+            controller: _controllers[index],
+            focusNode: _focusNodes[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              counterText: '',
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _amber),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < 5) {
+                _focusNodes[index + 1].requestFocus();
+              } else if (value.isEmpty && index > 0) {
+                _focusNodes[index - 1].requestFocus();
+              }
+              setState(() {});
+            },
+            onTap: () {
+              _controllers[index].selection = TextSelection.fromPosition(
+                TextPosition(offset: _controllers[index].text.length),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -239,21 +242,25 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ),
                 const SizedBox(height: 14),
                 // Resend
-                GestureDetector(
-                  onTap: otpState.isLoading ? null : _sendOtp,
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      children: [
-                        const TextSpan(text: "Didn't get a code? "),
-                        TextSpan(
-                          text: 'Resend',
-                          style: TextStyle(
-                            color: otpState.isLoading ? Colors.grey : _amber,
-                            fontWeight: FontWeight.w600,
+                Semantics(
+                  label: 'Resend OTP code',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: otpState.isLoading ? null : _sendOtp,
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        children: [
+                          const TextSpan(text: "Didn't get a code? "),
+                          TextSpan(
+                            text: 'Resend',
+                            style: TextStyle(
+                              color: otpState.isLoading ? Colors.grey : _amber,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

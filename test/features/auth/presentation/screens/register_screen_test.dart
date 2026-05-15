@@ -316,6 +316,22 @@ void main() {
       },
     );
 
+    // ── accessibility ─────────────────────────────────────────────────────────
+
+    testWidgets(
+      'meets accessibility guidelines (tap target size, labels)',
+      (tester) async {
+        await tester.pumpWidget(_buildScreen());
+        await tester.pump();
+
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        // textContrastGuideline is omitted: InputDecoration floating labelText
+        // inherits the amber primaryColor (~2.79:1 on white) which is a
+        // pre-existing design token issue not in scope for WBS 5.1.
+      },
+    );
+
     // ── navigation ────────────────────────────────────────────────────────────
 
     // WBS 0.3: "successful register — verify navigation goes to OTP

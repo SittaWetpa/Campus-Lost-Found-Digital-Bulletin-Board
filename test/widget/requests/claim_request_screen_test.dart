@@ -266,4 +266,18 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'meets accessibility guidelines (tap target size, labels)',
+    (tester) async {
+      await tester.pumpWidget(_buildApp(item: _makeItem()));
+      await tester.pumpAndSettle();
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      // textContrastGuideline is omitted: "optional" hint text and the
+      // AppBar action button use amber/grey tones that pre-date WBS 5.1
+      // and are not in scope for this sweep.
+    },
+  );
 }

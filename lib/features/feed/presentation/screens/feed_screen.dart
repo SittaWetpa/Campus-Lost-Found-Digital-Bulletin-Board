@@ -76,6 +76,7 @@ class FeedScreen extends ConsumerWidget {
         onPressed: () => context.push(AppRoutes.post),
         backgroundColor: AppTokens.primary500,
         foregroundColor: Colors.white,
+        tooltip: 'Post item',
         child: const Icon(Icons.add),
       ),
     );
@@ -295,26 +296,31 @@ class _Tab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = filter == current;
-    return GestureDetector(
-      onTap: () =>
-          ref.read(feedFilterNotifierProvider.notifier).select(filter),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? AppTokens.primary500 : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppTokens.pill),
-          border: Border.all(
-            color: selected ? AppTokens.primary500 : AppTokens.border,
-            width: 1.5,
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: () =>
+            ref.read(feedFilterNotifierProvider.notifier).select(filter),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? AppTokens.primary500 : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppTokens.pill),
+            border: Border.all(
+              color: selected ? AppTokens.primary500 : AppTokens.border,
+              width: 1.5,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : AppTokens.ink700,
-            fontWeight: FontWeight.w600,
-            fontSize: 12.5,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : AppTokens.ink700,
+              fontWeight: FontWeight.w600,
+              fontSize: 12.5,
+            ),
           ),
         ),
       ),
@@ -346,51 +352,61 @@ class _CategoryFilterPill extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            InkWell(
-              borderRadius: BorderRadius.horizontal(
-                left: const Radius.circular(AppTokens.pill),
-                right: hasFilter ? Radius.zero : const Radius.circular(AppTokens.pill),
-              ),
-              onTap: () => _showCategoryPicker(context, taxonomy),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(11, 6, hasFilter ? 6 : 8, 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hasFilter) ...[
-                      Icon(taxonomy!.iconData, size: 13, color: fgColor),
-                      const SizedBox(width: 4),
-                    ],
-                    Text(
-                      hasFilter ? taxonomy!.displayNameEn : 'Category',
-                      style: TextStyle(
-                        color: fgColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12.5,
+            Semantics(
+              label: hasFilter
+                  ? 'Filter by category: ${taxonomy!.displayNameEn}'
+                  : 'Filter by category',
+              button: true,
+              child: InkWell(
+                borderRadius: BorderRadius.horizontal(
+                  left: const Radius.circular(AppTokens.pill),
+                  right: hasFilter ? Radius.zero : const Radius.circular(AppTokens.pill),
+                ),
+                onTap: () => _showCategoryPicker(context, taxonomy),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(11, 6, hasFilter ? 6 : 8, 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (hasFilter) ...[
+                        Icon(taxonomy!.iconData, size: 13, color: fgColor),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        hasFilter ? taxonomy!.displayNameEn : 'Category',
+                        style: TextStyle(
+                          color: fgColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
+                        ),
                       ),
-                    ),
-                    if (!hasFilter) ...[
-                      const SizedBox(width: 3),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 14,
-                        color: AppTokens.ink600,
-                      ),
+                      if (!hasFilter) ...[
+                        const SizedBox(width: 3),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 14,
+                          color: AppTokens.ink600,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
             if (hasFilter)
-              InkWell(
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(AppTokens.pill),
-                ),
-                onTap: () =>
-                    ref.read(taxonomyFilterNotifierProvider.notifier).clear(),
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(4, 6, 9, 6),
-                  child: Icon(Icons.close, size: 14, color: Colors.white),
+              Semantics(
+                label: 'Clear category filter',
+                button: true,
+                child: InkWell(
+                  borderRadius: const BorderRadius.horizontal(
+                    right: Radius.circular(AppTokens.pill),
+                  ),
+                  onTap: () =>
+                      ref.read(taxonomyFilterNotifierProvider.notifier).clear(),
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(4, 6, 9, 6),
+                    child: Icon(Icons.close, size: 14, color: Colors.white),
+                  ),
                 ),
               ),
           ],

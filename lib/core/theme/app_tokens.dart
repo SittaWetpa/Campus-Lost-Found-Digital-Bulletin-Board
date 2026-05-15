@@ -9,9 +9,12 @@ abstract final class AppTokens {
   static const ink800 = Color(0xFF2A241B);
   static const ink700 = Color(0xFF423A2D);
   static const ink600 = Color(0xFF5C5242);
-  static const ink500 = Color(0xFF8A7E66);
+  // ink500 fixed from 0xFF8A7E66 (≈3.2:1) to 0xFF6B6050 (≈4.6:1 on cream bg)
+  static const ink500 = Color(0xFF6B6050);
   static const ink100 = Color(0xFFEFE7D2);
 
+  // primary500/primary400 must NOT be used as text color — button/icon fill only.
+  // Use primary600 (Color(0xFFB36F00)) for text-safe amber.
   static const primary500 = Color(0xFFD98A0E);
   static const primary400 = Color(0xFFE9A534);
   static const primary100 = Color(0xFFFFEFCC);

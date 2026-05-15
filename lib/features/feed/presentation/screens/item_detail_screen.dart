@@ -120,12 +120,14 @@ class _ItemDetailView extends ConsumerWidget {
               if (isPoster && item.status == ItemStatus.active) ...[
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Edit post',
                   onPressed: () =>
                       context.push(AppRoutes.editPostPath(item.id)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   color: AppTokens.seeker,
+                  tooltip: 'Delete post',
                   onPressed: () => _onDeleteTap(context, ref, pending),
                 ),
               ],
@@ -600,28 +602,32 @@ class _PosterRow extends StatelessWidget {
           ),
         ),
         if (!isPoster && !isSensitive && !isWalkIn && item.contact.isNotEmpty)
-          GestureDetector(
-            onTap: () => _launchTel(item.contact),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTokens.primary100,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.phone, size: 12, color: AppTokens.primary600),
-                  const SizedBox(width: 4),
-                  Text(
-                    item.contact,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTokens.primary600,
-                      fontWeight: FontWeight.w600,
+          Semantics(
+            label: 'Call poster: ${item.contact}',
+            button: true,
+            child: GestureDetector(
+              onTap: () => _launchTel(item.contact),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTokens.primary100,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone, size: 12, color: AppTokens.primary600),
+                    const SizedBox(width: 4),
+                    Text(
+                      item.contact,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTokens.primary600,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
