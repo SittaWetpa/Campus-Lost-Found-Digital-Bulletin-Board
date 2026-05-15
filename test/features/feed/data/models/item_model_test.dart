@@ -191,6 +191,85 @@ void main() {
     });
   });
 
+  group('ItemModel.fromEntity() — WBS 4.1 mapper (domain → data direction)', () {
+    test(
+      '02a fromEntity maps ItemSource.qrWalkIn to "qr_walk_in" in the model',
+      () {
+        final entity = Item(
+          id: 'item-walkin',
+          title: 'Found Wallet',
+          description: 'Brown wallet',
+          category: ItemCategory.founder,
+          status: ItemStatus.active,
+          location: 'Security Office',
+          contact: '',
+          imageUrls: const [],
+          userId: 'walkin',
+          createdAt: DateTime(2024, 6, 1, 12),
+          source: ItemSource.qrWalkIn,
+        );
+
+        final model = ItemModel.fromEntity(entity);
+
+        expect(model.source, 'qr_walk_in');
+      },
+    );
+
+    test(
+      '02b fromEntity → toEntity round-trip preserves source and itemTaxonomy',
+      () {
+        final original = Item(
+          id: 'item-rt',
+          title: 'Lost Backpack',
+          description: 'Navy blue',
+          category: ItemCategory.seeker,
+          status: ItemStatus.active,
+          location: 'Canteen',
+          contact: '0821234567',
+          imageUrls: const [],
+          userId: 'uid-rt',
+          createdAt: DateTime(2024, 6, 1, 12),
+          source: ItemSource.qrWalkIn,
+          isSensitive: false,
+          posterName: 'Alice',
+          itemTaxonomy: ItemTaxonomy.bagWallet,
+        );
+
+        final roundTripped = ItemModel.fromEntity(original).toEntity();
+
+        expect(roundTripped.source, ItemSource.qrWalkIn);
+        expect(roundTripped.itemTaxonomy, ItemTaxonomy.bagWallet);
+        expect(roundTripped.posterName, 'Alice');
+        expect(roundTripped.category, ItemCategory.seeker);
+        expect(roundTripped.status, ItemStatus.active);
+      },
+    );
+
+    test(
+      '02c toFirestore excludes the source key — only Admin SDK writes qr_walk_in',
+      () {
+        final entity = Item(
+          id: 'item-src',
+          title: 'Found Keys',
+          description: '',
+          category: ItemCategory.founder,
+          status: ItemStatus.active,
+          location: 'Lobby',
+          contact: '',
+          imageUrls: const [],
+          userId: 'uid-src',
+          createdAt: DateTime(2024, 6, 1, 12),
+          source: ItemSource.qrWalkIn,
+        );
+
+        final payload = ItemModel.fromEntity(entity).toFirestore();
+
+        expect(payload.containsKey('source'), isFalse,
+            reason: 'source must never be written by the client SDK');
+      },
+    );
+  });
+
   group('ItemModel round-trip — WBS 2.1 / 2.2', () {
     test('entity → toFirestore → fromFirestore → entity preserves occurredAt',
         () async {

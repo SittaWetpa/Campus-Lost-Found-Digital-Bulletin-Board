@@ -1,56 +1,17 @@
-import 'package:flutter/material.dart';
-
 enum ItemTaxonomy {
-  electronics(
-    id: 'electronics',
-    displayNameEn: 'Electronics',
-    iconData: Icons.devices_outlined,
-  ),
-  bagWallet(
-    id: 'bag_wallet',
-    displayNameEn: 'Bag & Wallet',
-    iconData: Icons.work_outline,
-  ),
-  clothing(
-    id: 'clothing',
-    displayNameEn: 'Clothing',
-    iconData: Icons.checkroom_outlined,
-  ),
-  stationery(
-    id: 'stationery',
-    displayNameEn: 'Stationery',
-    iconData: Icons.menu_book_outlined,
-  ),
-  documentsCards(
-    id: 'documents_cards',
-    displayNameEn: 'Documents',
-    iconData: Icons.badge_outlined,
-  ),
-  keys(
-    id: 'keys',
-    displayNameEn: 'Keys',
-    iconData: Icons.key_outlined,
-  ),
-  accessory(
-    id: 'accessory',
-    displayNameEn: 'Accessory',
-    iconData: Icons.watch_outlined,
-  ),
-  other(
-    id: 'other',
-    displayNameEn: 'Other',
-    iconData: Icons.inbox_outlined,
-  );
+  electronics(id: 'electronics', displayNameEn: 'Electronics'),
+  bagWallet(id: 'bag_wallet', displayNameEn: 'Bag & Wallet'),
+  clothing(id: 'clothing', displayNameEn: 'Clothing'),
+  stationery(id: 'stationery', displayNameEn: 'Stationery'),
+  documentsCards(id: 'documents_cards', displayNameEn: 'Documents'),
+  keys(id: 'keys', displayNameEn: 'Keys'),
+  accessory(id: 'accessory', displayNameEn: 'Accessory'),
+  other(id: 'other', displayNameEn: 'Other');
 
-  const ItemTaxonomy({
-    required this.id,
-    required this.displayNameEn,
-    required this.iconData,
-  });
+  const ItemTaxonomy({required this.id, required this.displayNameEn});
 
   final String id;
   final String displayNameEn;
-  final IconData iconData;
 
   static ItemTaxonomy fromId(String id) => ItemTaxonomy.values.firstWhere(
         (e) => e.id == id,
