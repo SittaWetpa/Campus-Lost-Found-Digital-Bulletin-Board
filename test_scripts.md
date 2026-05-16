@@ -232,7 +232,8 @@ Run: `flutter test test/unit/router/ test/widget/`
 | 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
 | 4.1 | ItemTaxonomy domain entity: pure Dart, no Firebase (01a–01d) | `test/features/post/domain/entities/item_taxonomy_test.dart` | Unit | ✅ 4 tests |
 | 4.1 | ItemModel mapper — domain→data direction, source field exclusion, round-trip (02a–02c) | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 3 tests (added to existing file) |
-| 4.2 | Riverpod state management | — | Unit + Widget | ⬜ not yet written |
+| 4.2 | `feedItemsProvider` emits overridden repo stream + filters apply | `test/features/feed/presentation/providers/feed_provider_test.dart` | Unit | ✅ 2 tests |
+| 4.2 | `authRepositoryProvider` override drives UI through `authStateProvider` | `test/features/auth/presentation/providers/auth_provider_test.dart` | Widget | ✅ 2 tests |
 
 ---
 

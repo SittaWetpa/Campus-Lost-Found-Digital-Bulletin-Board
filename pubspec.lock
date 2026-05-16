@@ -1126,6 +1126,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  riverpod_lint:
+    dependency: "direct dev"
+    description:
+      name: riverpod_lint
+      sha256: "3c67c14ccd16f0c9d53e35ef70d06cd9d072e2fb14557326886bbde903b230a5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.10"
   rx:
     dependency: transitive
     description:
