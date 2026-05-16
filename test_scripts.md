@@ -15,6 +15,7 @@
 | `flutter test --coverage` | Full suite + generates `coverage/lcov.info` | For WBS 3.1 / 3.2 submission |
 | `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Web integration smoke tests (requires chromedriver on PATH) | WBS 3.2 web verification |
 | `flutter test integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Same tests via modern flutter-test runner | Alternative to flutter drive |
+| `flutter test integration_test/wbs_3_1_android_smoke_test.dart -d <android-device-id>` | Android integration smoke tests (requires Android device/emulator attached) | WBS 3.1 Android verification |
 | `cd test/firestore_rules && npm test` | Firestore security rules (Node.js) | After editing `firestore.rules` |
 | `cd test/functions && npm install && npm test` | Cloud Function + REST API unit tests (Node.js Jest) | After editing `functions/index.js` |
 
@@ -68,8 +69,10 @@ test/
 │       │   └── item_model_test.dart                  ← WBS 2.1 / 2.2
 │       └── repositories/
 │           └── item_repository_impl_test.dart        ← WBS 2.3
-├── integration/                  # Integration tests (require Firebase Emulator)
-│   └── wbs_2_1_firestore_rules_test.dart        ← WBS 2.1 (manual placeholder)
+├── integration/                  # Integration tests (require Firebase Emulator or device)
+│   ├── wbs_2_1_firestore_rules_test.dart        ← WBS 2.1 (manual placeholder)
+│   ├── wbs_2_4_1_resubmit_test.dart             ← WBS 2.4.1 (manual placeholder)
+│   └── wbs_3_1_android_build_config_test.dart   ← WBS 3.1 (Android build config statics)
 ├── functions/                    # Node.js Cloud Function unit tests
 │   ├── auto_expire_test.js                      ← WBS 2.14 (Cloud Function)
 │   ├── items_api_test.js                        ← WBS 2.14 (REST API redaction)
@@ -216,7 +219,12 @@ Run: `flutter test --coverage` and `flutter drive --target=test_driver/app.dart 
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 3.1 | Android build & verification | Full suite via `flutter test` | All | ⬜ pending full suite |
+| 3.1 | Android build configuration — google-services + crashlytics plugins, applicationId/namespace match, POST_NOTIFICATIONS permission, deep-link intent filter, singleTop launchMode, gradle wrapper pin, pubspec deps | `test/integration/wbs_3_1_android_build_config_test.dart` | Unit (file-static) | ✅ 9 tests + 5 skipped (M1–M5 device-bound) |
+| 3.1 | Android on-device build smoke — APK installs, Flutter engine renders on Android, platform-detection invariants (kIsWeb/defaultTargetPlatform). Full `app.main()` Login walkthrough skipped (Firebase Firestore on Android emits async errors during `pumpAndSettle` without Emulator backing; covered hermetically by widget tests under `test/widget/auth/` and `test/features/auth/`) | `integration_test/wbs_3_1_android_smoke_test.dart` | Integration | ✅ 2 tests + 1 documented-skip (requires Android device/emulator) |
+| 3.1 | M1 — Full Dart test suite passes (`flutter test` exits with 0 failures) | Full suite via `flutter test` | All | ✅ 647 passed + 10 skipped + 0 failures (verified 2026-05-16) |
+| 3.1 | M2 — Coverage report (`flutter test --coverage` → `coverage/lcov.info` committed) | Full suite via `flutter test --coverage` | All | ✅ `coverage/lcov.info` generated 62 KB / 6,411 lines (verified 2026-05-16) |
+| 3.1 | M3 — App launches on Android device/emulator (`flutter run -d <android>`) | Manual on emulator-5554 | Manual | ⬜ capture launch screenshot |
+| 3.1 | M4 — Core-feature walkthrough on Android: auth, feed, post form, search, request flow incl. cancel, recommendation panel, settings, local storage | Manual walkthrough | Manual | ⬜ capture screenshots/recording per feature |
 | 3.2 | Web build smoke tests (boot, auth guard, email validation, register nav, deep-link guard, image_picker_for_web compile check) | `integration_test/wbs_3_2_web_smoke_test.dart` | Integration | ✅ 6 smoke tests (requires chromedriver) |
 | 3.2 | `flutter build web --release` zero-error build | Manual — verified 2026-05-15 | Smoke | ✅ passes |
 | 3.2 | Firebase Web config, CORS, base href, Hive-IndexedDB, shared_preferences-localStorage | `CROSS_PLATFORM.md` checklist | Manual | ✅ documented |
@@ -256,10 +264,12 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
 | 2.0 Data Layer | 335 + 24 (npm) | 359 |
-| 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
+| 3.0 Cross-Platform | 9 build-config + 2 Android smoke + 6 Web smoke | 11 verified locally; Web smoke requires chromedriver |
 | 4.0 Architecture | 44 | 44 |
 | 5.0 Quality Gates | 17 + 5 (npm) | 22 |
-| **Total** | **527 Dart + 29 npm** | **548 passing + 29 npm** |
+| **Total** | **638 Dart + 29 npm** (per `flutter test`: 647 passed + 10 skipped) | **647 passing + 29 npm** |
+
+> Verified on 2026-05-16: `flutter test` → **647 passed, 10 skipped, 0 failures**. `flutter test --coverage` → `coverage/lcov.info` generated (6,411 lines, 62 KB). `flutter test integration_test/wbs_3_1_android_smoke_test.dart -d emulator-5554` → 2 passed, 1 skipped.
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
