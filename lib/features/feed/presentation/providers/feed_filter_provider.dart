@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
 
 part 'feed_filter_provider.g.dart';
 
@@ -18,4 +19,14 @@ class SearchQueryNotifier extends _$SearchQueryNotifier {
   String build() => '';
 
   void update(String query) => state = query;
+}
+
+@riverpod
+class TaxonomyFilterNotifier extends _$TaxonomyFilterNotifier {
+  @override
+  ItemTaxonomy? build() => null;
+
+  void select(ItemTaxonomy? taxonomy) => state = taxonomy;
+
+  void clear() => state = null;
 }

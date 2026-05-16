@@ -35,7 +35,7 @@ This document describes the threat model, RBAC matrix, and operational security 
 | Sensitive item re-classification | `isSensitive` and `expiresAt` are blocked from all client updates via `diff().affectedKeys()` | `firestore.rules` — items update |
 | Secret answer exposure | Secret answers live in `/items/{id}/private/` readable only by the poster | `firestore.rules` — private sub-collection |
 | Committed secrets (API keys, service accounts) | gitleaks scans every PR; build blocked on any finding | `.github/workflows/security.yml`, `.gitleaks.toml` |
-| Dependency vulnerabilities | `dart pub outdated --mode=security` scans every PR; build blocked on High/Critical | `.github/workflows/security.yml` |
+| Dependency vulnerabilities | `osv-scanner` audits `pubspec.lock` against the OSV CVE database on every PR; build blocked on High/Critical | `.github/workflows/security.yml` |
 | Non-KMUTT email registration | Domain validated server-side before Firebase Auth call with anchored regex | `lib/features/auth/` — `SignUpUseCase` |
 
 ---
@@ -100,17 +100,18 @@ All client access denied (`allow read, write: if false`). Written exclusively by
 
 ## Dependency Vulnerability Policy
 
-Every PR runs:
+Every PR runs `osv-scanner` against `pubspec.lock`:
 
 ```
-dart pub outdated --mode=security --no-color
+osv-scanner --format=json --lockfile=pubspec.lock
 ```
 
-The CI step (`dependency-scan` job in `.github/workflows/security.yml`) fails the build if the output contains the word `high` or `critical` (case-insensitive).
+The CI step (`dependency-scan` job in `.github/workflows/security.yml`) fails the build if the JSON output contains a `severity` of `HIGH` or `CRITICAL`. `dart pub outdated` itself has no CVE severity classification; OSV (https://osv.dev) is the authoritative advisory source for Dart/Flutter packages.
 
 **Remediation steps on a failing scan:**
 
-1. Run `dart pub outdated --mode=security` locally to identify the affected package.
-2. Run `dart pub upgrade <package>` to pull the patched version.
-3. If a non-breaking upgrade is not available, evaluate whether the vulnerable code path is reachable in this app and document the risk.
-4. Re-run the scan locally to confirm it passes before pushing.
+1. Install osv-scanner locally (`go install github.com/google/osv-scanner/cmd/osv-scanner@latest` or download from https://github.com/google/osv-scanner/releases).
+2. Run `osv-scanner --lockfile=pubspec.lock` to identify the affected package and advisory ID.
+3. Run `flutter pub upgrade <package>` (or update the version constraint in `pubspec.yaml`) to pull the patched version.
+4. If a non-breaking upgrade is not available, evaluate whether the vulnerable code path is reachable in this app and document the risk.
+5. Re-run the scan locally to confirm it passes before pushing.

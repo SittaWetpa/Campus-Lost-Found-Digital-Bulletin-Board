@@ -14,11 +14,13 @@ import 'package:campus_lost_found/features/auth/presentation/screens/login_scree
 import 'package:campus_lost_found/features/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:campus_lost_found/features/auth/presentation/screens/register_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/feed_screen.dart';
+import 'package:campus_lost_found/features/feed/presentation/screens/my_posts_screen.dart';
 import 'package:campus_lost_found/features/feed/presentation/screens/item_detail_screen.dart';
 import 'package:campus_lost_found/features/post/presentation/screens/post_form_screen.dart';
 import 'package:campus_lost_found/features/requests/presentation/screens/claim_request_screen.dart';
 import 'package:campus_lost_found/features/requests/presentation/screens/found_report_screen.dart';
 import 'package:campus_lost_found/features/requests/presentation/screens/request_detail_screen.dart';
+import 'package:campus_lost_found/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:campus_lost_found/features/profile/presentation/screens/settings_screen.dart';
 part 'app_router.g.dart';
@@ -36,6 +38,9 @@ abstract final class AppRoutes {
   // Post management
   static const post     = '/post';
   static const editPost = '/post/:id/edit';
+
+  // Notifications (WBS 2.16)
+  static const notifications = '/notifications';
 
   // Profile
   static const myPosts     = '/my-posts';
@@ -177,10 +182,12 @@ GoRouter appRouter(AppRouterRef ref) {
             PostFormScreen(editId: state.pathParameters['id']),
       ),
       GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.myPosts,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('My Posts — WBS 1.7')),
-        ),
+        builder: (context, state) => const MyPostsScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,

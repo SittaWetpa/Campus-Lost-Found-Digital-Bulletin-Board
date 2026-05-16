@@ -1,17 +1,60 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
+import 'package:campus_lost_found/features/feed/data/datasources/item_local_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
+import 'package:campus_lost_found/features/feed/data/models/item_model.dart';
 import 'package:campus_lost_found/features/feed/data/repositories/item_repository_impl.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 
+class _MockItemLocalDatasource extends Mock implements ItemLocalDatasource {}
+
+class _MockSyncMetadataDatasource extends Mock
+    implements SyncMetadataDatasource {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      ItemModel(
+        id: 'x',
+        title: 'x',
+        description: '',
+        category: 'seeker',
+        status: 'active',
+        location: '',
+        contact: '',
+        imageUrls: [],
+        userId: 'u',
+        createdAt: DateTime(2026),
+        occurredAt: DateTime(2026),
+      ),
+    );
+  });
+
   late FakeFirebaseFirestore fakeFirestore;
+  late _MockItemLocalDatasource mockLocal;
+  late _MockSyncMetadataDatasource mockSync;
   late ItemRepositoryImpl repository;
 
   setUp(() async {
     fakeFirestore = FakeFirebaseFirestore();
-    repository = ItemRepositoryImpl(FirestoreItemDatasource(fakeFirestore));
+    mockLocal = _MockItemLocalDatasource();
+    mockSync = _MockSyncMetadataDatasource();
+
+    when(() => mockLocal.getCachedFeed()).thenReturn([]);
+    when(() => mockLocal.getCachedItem(any())).thenReturn(null);
+    when(() => mockLocal.cacheFeed(any())).thenAnswer((_) async {});
+    when(() => mockLocal.cacheItem(any())).thenAnswer((_) async {});
+    when(() => mockSync.setLastSyncedAt(any(), any()))
+        .thenAnswer((_) async {});
+
+    repository = ItemRepositoryImpl(
+      FirestoreItemDatasource(fakeFirestore),
+      mockLocal,
+      mockSync,
+    );
 
     // Seed items
     await fakeFirestore.collection('items').add({
@@ -85,7 +128,8 @@ void main() {
       expect(results, isEmpty);
     });
 
-    test('03 searchItems() result set contains only Active items, never Resolved',
+    test(
+        '03 searchItems() result set contains only Active items, never Resolved',
         () async {
       // Search broad enough to match multiple items
       final results = await repository.searchItems('wallet');
@@ -94,7 +138,8 @@ void main() {
         expect(
           item.status.name,
           equals('active'),
-          reason: 'Item "${item.title}" has status "${item.status.name}" — only active expected',
+          reason:
+              'Item "${item.title}" has status "${item.status.name}" — only active expected',
         );
       }
     });

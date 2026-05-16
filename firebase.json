@@ -1,4 +1,21 @@
 {
+  "hosting": {
+    "public": "hosting",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/api/walkin",
+        "function": {
+          "functionId": "walkin",
+          "region": "asia-southeast1"
+        }
+      },
+      {
+        "source": "/walkin",
+        "destination": "/walkin/index.html"
+      }
+    ]
+  },
   "flutter": {
     "platforms": {
       "android": {

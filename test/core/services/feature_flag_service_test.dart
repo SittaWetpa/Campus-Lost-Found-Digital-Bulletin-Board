@@ -30,6 +30,13 @@ _MockFirebaseRemoteConfig _defaultMock() {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(RemoteConfigSettings(
+      fetchTimeout: Duration.zero,
+      minimumFetchInterval: Duration.zero,
+    ));
+  });
+
   group('FeatureFlagService — WBS 2.13', () {
     // U1 ──────────────────────────────────────────────────────────────────
     test(

@@ -40,5 +40,22 @@ final searchQueryNotifierProvider =
 );
 
 typedef _$SearchQueryNotifier = AutoDisposeNotifier<String>;
+String _$taxonomyFilterNotifierHash() =>
+    r'e9f85dcbb3ec193d27748dec6e4918559d03d346';
+
+/// See also [TaxonomyFilterNotifier].
+@ProviderFor(TaxonomyFilterNotifier)
+final taxonomyFilterNotifierProvider =
+    AutoDisposeNotifierProvider<TaxonomyFilterNotifier, ItemTaxonomy?>.internal(
+  TaxonomyFilterNotifier.new,
+  name: r'taxonomyFilterNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$taxonomyFilterNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$TaxonomyFilterNotifier = AutoDisposeNotifier<ItemTaxonomy?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

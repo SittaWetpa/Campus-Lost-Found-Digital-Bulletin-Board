@@ -144,6 +144,7 @@ class _ClaimRequestScreenState extends ConsumerState<ClaimRequestScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _kInk900),
+          tooltip: 'Back',
           onPressed: () => context.pop(),
         ),
         title: Column(
@@ -547,6 +548,7 @@ class _AlreadySubmittedScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _kInk900),
+          tooltip: 'Back',
           onPressed: () => context.pop(),
         ),
         title: Column(

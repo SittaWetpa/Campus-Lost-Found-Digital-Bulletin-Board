@@ -64,19 +64,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App icon
+                  // App icon (decorative)
                   Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: _amber,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.search,
-                        color: Colors.white,
-                        size: 40,
+                    child: ExcludeSemantics(
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: _amber,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.search,
+                          color: Colors.white,
+                          size: 40,
+                        ),
                       ),
                     ),
                   ),
@@ -109,20 +111,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 36),
-                  // KMUTT EMAIL label + field
-                  const Text(
-                    'KMUTT EMAIL',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  // KMUTT EMAIL field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
+                      labelText: 'KMUTT EMAIL',
                       hintText: 'pun.wo@mail.kmutt.ac.th',
                     ),
                     validator: (value) {
@@ -137,24 +131,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  // PASSWORD label + field
-                  const Text(
-                    'PASSWORD',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  // PASSWORD field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
+                      labelText: 'PASSWORD',
                       suffixIcon: IconButton(
                         icon: Icon(_obscurePassword
                             ? Icons.visibility_off
                             : Icons.visibility),
+                        tooltip: _obscurePassword
+                            ? 'Show password'
+                            : 'Hide password',
                         onPressed: () =>
                             setState(() => _obscurePassword = !_obscurePassword),
                       ),
@@ -180,22 +169,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   // Create account link
-                  GestureDetector(
-                    onTap: () => context.push(AppRoutes.register),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                        children: [
-                          TextSpan(text: 'New to Lost & Found? '),
-                          TextSpan(
-                            text: 'Create account',
-                            style: TextStyle(
-                              color: _amber,
-                              fontWeight: FontWeight.w600,
+                  Semantics(
+                    label: 'Create account',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => context.push(AppRoutes.register),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: const TextSpan(
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                          children: [
+                            TextSpan(text: 'New to Lost & Found? '),
+                            TextSpan(
+                              text: 'Create account',
+                              style: TextStyle(
+                                color: _amber,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

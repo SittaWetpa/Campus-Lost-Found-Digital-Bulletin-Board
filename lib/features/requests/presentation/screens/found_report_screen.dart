@@ -164,6 +164,7 @@ class _FoundReportScreenState extends ConsumerState<FoundReportScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _kInk900),
+          tooltip: 'Back',
           onPressed: () => context.pop(),
         ),
         title: Column(
@@ -333,31 +334,34 @@ class _PhotoPickButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        height: 120,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: _kInk400,
-            width: 1.5,
-            style: BorderStyle.solid,
-          ),
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.transparent,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Dashed border effect via CustomPaint
-            const Icon(Icons.camera_alt_outlined, size: 22, color: _kInk500),
-            const SizedBox(height: 4),
-            const Text(
-              'Attach photo',
-              style: TextStyle(fontSize: 12, color: _kInk500),
+    return Semantics(
+      label: 'Attach photo',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: _kInk400,
+              width: 1.5,
+              style: BorderStyle.solid,
             ),
-          ],
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.transparent,
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.camera_alt_outlined, size: 22, color: _kInk500),
+              SizedBox(height: 4),
+              Text(
+                'Attach photo',
+                style: TextStyle(fontSize: 12, color: _kInk500),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -398,16 +402,20 @@ class _PhotoPreview extends StatelessWidget {
           Positioned(
             top: 4,
             right: 4,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  color: Color(0x99000000),
-                  shape: BoxShape.circle,
+            child: Semantics(
+              label: 'Remove photo',
+              button: true,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: Color(0x99000000),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 14, color: Colors.white),
                 ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
               ),
             ),
           ),
@@ -444,6 +452,7 @@ class _AlreadySubmittedScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _kInk900),
+          tooltip: 'Back',
           onPressed: () => context.pop(),
         ),
         title: Column(

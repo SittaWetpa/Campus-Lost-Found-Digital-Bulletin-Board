@@ -995,4 +995,26 @@ void main() {
           reason: 'Picker must not open until the user confirms');
     },
   );
+
+  testWidgets(
+    'meets accessibility guidelines (tap target size, labels)',
+    (tester) async {
+      final mockRepo = _MockPostRepository();
+      when(() => mockRepo.createItem(any())).thenAnswer((inv) async {
+        final item = inv.positionalArguments[0] as Item;
+        return item.copyWith(id: 'firestore-id');
+      });
+
+      await tester.pumpWidget(_app(postRepository: mockRepo, profile: _testUser));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('go-post'));
+      await tester.pumpAndSettle();
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      // textContrastGuideline is omitted: the "POST" AppBar action button
+      // uses amber text (~2.53:1 on the AppBar background) — a pre-existing
+      // design token issue not in scope for WBS 5.1.
+    },
+  );
 }

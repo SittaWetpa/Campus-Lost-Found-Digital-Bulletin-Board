@@ -76,4 +76,32 @@ class UserModel {
         createdAt: createdAt,
         isAdmin: isAdmin,
       );
+
+  Map<String, dynamic> toHiveMap() => {
+        'uid': uid,
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'studentId': studentId,
+        'telephone': telephone,
+        'avatarUrl': avatarUrl,
+        'emailVerified': emailVerified,
+        'createdAt': createdAt?.toIso8601String(),
+        'isAdmin': isAdmin,
+      };
+
+  factory UserModel.fromHiveMap(Map map) => UserModel(
+        uid: map['uid'] as String,
+        email: map['email'] as String? ?? '',
+        firstName: map['firstName'] as String? ?? '',
+        lastName: map['lastName'] as String? ?? '',
+        studentId: map['studentId'] as String? ?? '',
+        telephone: map['telephone'] as String? ?? '',
+        avatarUrl: map['avatarUrl'] as String?,
+        emailVerified: map['emailVerified'] as bool? ?? false,
+        createdAt: map['createdAt'] == null
+            ? null
+            : DateTime.parse(map['createdAt'] as String),
+        isAdmin: map['isAdmin'] as bool? ?? false,
+      );
 }

@@ -1,0 +1,10 @@
+name: domain_lints
+description: Custom lint rules — domain layer must not import Firebase or Flutter packages.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  custom_lint_builder: ^0.6.4

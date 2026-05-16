@@ -13,6 +13,8 @@
 | `flutter test test/unit/` | Unit tests only | During feature development |
 | `flutter test test/features/` | Feature widget tests only | During UI development |
 | `flutter test --coverage` | Full suite + generates `coverage/lcov.info` | For WBS 3.1 / 3.2 submission |
+| `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Web integration smoke tests (requires chromedriver on PATH) | WBS 3.2 web verification |
+| `flutter test integration_test/wbs_3_2_web_smoke_test.dart -d chrome` | Same tests via modern flutter-test runner | Alternative to flutter drive |
 | `cd test/firestore_rules && npm test` | Firestore security rules (Node.js) | After editing `firestore.rules` |
 | `cd test/functions && npm install && npm test` | Cloud Function + REST API unit tests (Node.js Jest) | After editing `functions/index.js` |
 
@@ -125,7 +127,7 @@ Run: `flutter test test/features/`
 | 1.4 | PostDraft entity (factories + sensitive-item invariants) | `test/unit/post/post_draft_test.dart` | Unit | ✅ 21 tests |
 | 1.5 | Search bar widget | — | Widget | ⬜ not yet written |
 | 1.6 | Settings & profile screen | `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 4 tests |
-| 1.7 | My posts screen | — | Widget | ⬜ not yet written |
+| 1.7 | My posts screen | `test/features/feed/presentation/screens/my_posts_screen_test.dart` | Widget | ✅ 3 tests |
 | 1.8 | Edit profile & avatar screen | `test/features/profile/presentation/screens/edit_profile_screen_test.dart` | Widget | ✅ 4 tests |
 
 ---
@@ -177,7 +179,12 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.10 | ItemRequest.editedAt field + copyWith (WBS 2.4 schema gap) | `test/unit/requests/item_request_entity_test.dart` (added 3 tests) | Unit | ✅ 3 tests |
 | 2.10 | ClaimRequestScreen — SQ block shown/hidden, empty-answer error, poster's answer not displayed, AlreadySubmitted screen | `test/widget/requests/claim_request_screen_test.dart` | Widget | ✅ 5 tests |
 | 2.10 | FoundReportScreen — no Secret Question block or answer field | `test/widget/requests/found_report_screen_test.dart` | Widget | ✅ 1 test |
-| 2.11 | Hive offline-first cache | — | Unit + Widget | ⬜ not yet written |
+| 2.11 | Hive item local datasource (cold start, cacheFeed order, replace, cacheItem upsert, remove, full round-trip, nullable fields) | `test/features/feed/data/datasources/item_local_datasource_test.dart` | Unit | ✅ 7 tests |
+| 2.11 | Hive sync metadata datasource (cold start, round-trip, independent keys, overwrite) | `test/core/services/sync_metadata_datasource_test.dart` | Unit | ✅ 4 tests |
+| 2.11 | Hive user local datasource (cold start, cache+retrieve, upsert, round-trip all fields, nullable fields) | `test/features/auth/data/datasources/user_local_datasource_test.dart` | Unit | ✅ 5 tests |
+| 2.11 | ItemRepositoryImpl offline — watchFeed fallback + write-through + error propagation; getItemById cache fallback; watchItem fallback + write-through + error propagation; watchMyItems fallback + write-through + error propagation | `test/features/feed/data/repositories/item_repository_impl_offline_test.dart` | Unit | ✅ 11 tests |
+| 2.11 | UserRepositoryImpl offline — watchUser cache seed + write-through + error propagation; getUserById cache fallback + empty miss | `test/features/auth/data/repositories/user_repository_impl_offline_test.dart` | Unit | ✅ 5 tests |
+| 2.11 | Offline banner widget — hidden when online, visible when offline, "No cached data" label, relative time display | `test/shared/widgets/offline_banner_test.dart` | Widget | ✅ 4 tests |
 | 2.12 | Crashlytics & logging — AppLogger.error() routes to log with level=error; AppLogger.info() routes to log with level=info | `test/unit/observability/app_logger_test.dart` | Unit | ✅ 2 tests |
 | 2.13 | FeatureFlagService — RC getters, network-failure fallback, malformed-JSON fallback | `test/core/services/feature_flag_service_test.dart` | Unit | ✅ 4 tests |
 | 2.13 | PostFormScreen — secretQuestionEnabled flag hides/shows SECRET QUESTION section | `test/features/post/presentation/screens/post_form_screen_test.dart` | Widget | ✅ 2 tests |
@@ -187,8 +194,13 @@ Run: `flutter test test/unit/` and `cd test/firestore_rules && npm test`
 | 2.14 | Firestore rules: `isSensitive` and `expiresAt` immutable after creation (poster + visitor denied; allowed-field update succeeds) | `test/firestore_rules/rules.test.js` | Node.js | ✅ 4 tests (requires emulator) |
 | 2.14 | Post Form: Founder → select Sensitive → description/contact/SQ hidden; General → fields restored; Seeker → selector hidden | `test/widget/post/post_form_screen_test.dart` | Widget | ✅ 3 tests |
 | 2.15 | UploadPostPhotosUseCase (3-photo cap, storage upload) | `test/unit/post/upload_post_photos_use_case_test.dart` | Unit | ✅ 5 tests |
-| 2.15 | QR walk-in web form | — | Widget | ⬜ not yet written |
-| 2.16 | Push notifications | — | Unit + Widget | ⬜ not yet written |
+| 2.15 | QR walk-in: valid submit → 201 + source field; missing fields → 400; rate limit → 429; reCAPTCHA fail → 400; sensitive → isSensitive:true | `functions/test/walkin.test.js` | Node.js | ✅ 7 tests |
+| 2.15 | ItemCard: walk-in ribbon rendered for source==qrWalkIn; absent for web source; ribbon uses blue container | `test/features/feed/presentation/widgets/item_card_test.dart` | Widget | ✅ 3 tests |
+| 2.15 | Firestore rules: client write with source:"qr_walk_in" denied | — | Rules | ⬜ requires Firebase emulator |
+| 2.16 | `NotificationType.fromString()` (4 valid + 3 error cases); `AppNotification` constructor + `copyWith()` (incl. null sentinel); `DeviceToken` + `DevicePlatform` (android/web only) | `test/unit/notifications/app_notification_entity_test.dart` | Unit | ✅ 29 tests |
+| 2.16 | `NotificationService.registerToken()` — arrayUnion contract; `unregisterToken()` — arrayRemove contract | `test/unit/notifications/notification_service_test.dart` | Unit | ✅ 2 tests |
+| 2.16 | Settings toggle "Receive notifications" off → `PreferenceRepository.setNotificationsEnabled(false)` | `test/features/profile/presentation/screens/settings_screen_test.dart` (test 03) | Widget | ✅ covered |
+| 2.16 | CF `onNewRequest`: T1 payload (app/enabled/valid token); walk-in (userId=walkin, no user doc) skips FCM + doc write; in-app doc written to `users/{uid}/notifications/req_{requestId}`; stale token → arrayRemove; CF `onRequestStatusChange`: T3 on approved + doc write; T4 on rejected; non-qualifying change skips FCM | `functions/test/notifications.test.js` | Node.js | ✅ 7 tests; 2 skipped (manual integration) |
 | 2.18 | UserModel.fromFirestore reads `isAdmin` (true / false / missing-defaults-to-false; toEntity carries it) | `test/unit/auth/user_model_is_admin_test.dart` | Unit | ✅ 4 tests |
 | 2.18 | `FirestoreUserDatasource.createUser` stamps `isAdmin: false` on new accounts | `test/unit/auth/user_remote_datasource_test.dart` (added row to existing file) | Unit | ✅ 1 test |
 | 2.18 | Settings screen — Developer section gated on `currentUser.isAdmin` | `test/features/profile/presentation/screens/settings_screen_admin_test.dart` | Widget | ✅ 2 tests |
@@ -205,7 +217,9 @@ Run: `flutter test --coverage` and `flutter drive --target=test_driver/app.dart 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 3.1 | Android build & verification | Full suite via `flutter test` | All | ⬜ pending full suite |
-| 3.2 | Web build & verification | Full suite on Chrome via `flutter drive` | Integration | ⬜ not yet written |
+| 3.2 | Web build smoke tests (boot, auth guard, email validation, register nav, deep-link guard, image_picker_for_web compile check) | `integration_test/wbs_3_2_web_smoke_test.dart` | Integration | ✅ 6 smoke tests (requires chromedriver) |
+| 3.2 | `flutter build web --release` zero-error build | Manual — verified 2026-05-15 | Smoke | ✅ passes |
+| 3.2 | Firebase Web config, CORS, base href, Hive-IndexedDB, shared_preferences-localStorage | `CROSS_PLATFORM.md` checklist | Manual | ✅ documented |
 
 ---
 
@@ -216,7 +230,8 @@ Run: `flutter test test/unit/router/ test/widget/`
 |---|---|---|---|---|
 | 4.3 | Route constants | `test/unit/router/app_routes_test.dart` | Unit | ✅ 36 tests |
 | 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
-| 4.1 | Clean architecture skeleton | — | Unit | ⬜ not yet written |
+| 4.1 | ItemTaxonomy domain entity: pure Dart, no Firebase (01a–01d) | `test/features/post/domain/entities/item_taxonomy_test.dart` | Unit | ✅ 4 tests |
+| 4.1 | ItemModel mapper — domain→data direction, source field exclusion, round-trip (02a–02c) | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 3 tests (added to existing file) |
 | 4.2 | Riverpod state management | — | Unit + Widget | ⬜ not yet written |
 
 ---
@@ -226,7 +241,7 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 5.1 | Accessibility (WCAG 2.2 AA) | — | Widget | ⬜ not yet written |
+| 5.1 | Accessibility (WCAG 2.2 AA) — `androidTapTargetGuideline`, `labeledTapTargetGuideline`, `textContrastGuideline` added to 13 existing test files; 1 new test file created | `test/widget/notifications/notifications_screen_test.dart` (new); `test/features/auth/presentation/screens/login_screen_test.dart`; `test/features/auth/presentation/screens/register_screen_test.dart`; `test/features/auth/presentation/screens/otp_verify_screen_test.dart`; `test/widget/feed/feed_screen_test.dart`; `test/widget/feed/item_detail_screen_test.dart`; `test/features/feed/presentation/screens/my_posts_screen_test.dart`; `test/widget/post/post_form_screen_test.dart`; `test/features/post/presentation/screens/edit_post_screen_test.dart`; `test/widget/requests/claim_request_screen_test.dart`; `test/widget/requests/found_report_screen_test.dart`; `test/widget/feed/request_detail_screen_test.dart`; `test/features/profile/presentation/screens/edit_profile_screen_test.dart`; `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 14 a11y test blocks; see `A11Y_AUDIT.md` for documented omissions |
 | 5.2 | Security & dependency scans — enhanced Firestore rules (`createdAt` enforcement, `userId` immutability, request RBAC split), CI workflow, `SECURITY.md` | `test/firestore_rules/rules.test.js` + `.github/workflows/security.yml` | Rules + CI | ✅ 5 tests (requires emulator) |
 
 ---
@@ -239,14 +254,14 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 |---|---|---|
 | 0.0 Auth | 55 | 55 |
 | 1.0 Flutter UI | 82 | 82 |
-| 2.0 Data Layer | 292 + 24 (npm) | 316 |
-| 3.0 Cross-Platform | 0 | — |
-| 4.0 Architecture | 37 | 37 |
-| 5.0 Quality Gates | 5 (npm) | 5 |
-| **Total** | **466 Dart + 24 npm** | **490 passing + 24 npm** |
+| 2.0 Data Layer | 335 + 24 (npm) | 359 |
+| 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
+| 4.0 Architecture | 44 | 44 |
+| 5.0 Quality Gates | 17 + 5 (npm) | 22 |
+| **Total** | **527 Dart + 29 npm** | **548 passing + 29 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-15 (WBS 5.2 — Security & Dependency Scans. Enhanced `firestore.rules`: `createdAt == request.time` on items/requests create; `userId` + `createdAt` immutable on items update; `editedAt` server-timestamp guard; requests update RBAC split (requester cancel-only / poster approve-reject-only). New files: `.github/workflows/security.yml`, `.gitleaks.toml`, `SECURITY.md`. Updated: `test/firestore_rules/rules.test.js` (+ 5 new WBS 5.2 tests, 2 existing tests fixed to use `serverTimestamp()`), `test/firestore_rules/item_category.test.js` (`validBase()` fixed), `test/firestore_rules/package.json` (added `firebase ^10.0.0`). All npm rules tests pass.)*
+*Last updated: 2026-05-15 (WBS 5.2 — Security & Dependency Scans. Enhanced `firestore.rules`: `createdAt == request.time` on items/requests create; `userId` + `createdAt` immutable on items update; `editedAt` server-timestamp guard; requests update RBAC split (requester cancel-only / poster approve-reject-only). New files: `.github/workflows/security.yml`, `.gitleaks.toml`, `SECURITY.md`. Updated: `test/firestore_rules/rules.test.js` (+ 5 new WBS 5.2 tests, 2 existing tests fixed to use `serverTimestamp()`), `test/firestore_rules/item_category.test.js` (`validBase()` fixed), `test/firestore_rules/package.json` (added `firebase ^10.0.0`). All npm rules tests pass. Previous entries: WBS 5.1 — Accessibility Sweep (WCAG 2.2 AA), WBS 4.1 — Clean Architecture, WBS 3.2 — Web Build, Testing & Verification, WBS 2.16 — Push Notifications, WBS 2.15 — QR Walk-in.)*

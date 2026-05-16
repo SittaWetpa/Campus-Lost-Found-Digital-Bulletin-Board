@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
+import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/widgets/item_category_chip.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/photo_gallery.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/request_card.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/sensitive_banner.dart';
@@ -14,6 +17,7 @@ import 'package:campus_lost_found/features/requests/domain/entities/item_request
 import 'package:campus_lost_found/features/requests/domain/entities/resubmit_decision.dart';
 import 'package:campus_lost_found/features/requests/presentation/providers/item_request_provider.dart';
 import 'package:campus_lost_found/features/requests/presentation/widgets/resubmit_banner.dart';
+import 'package:campus_lost_found/shared/widgets/confirm_dialog.dart';
 import 'package:campus_lost_found/shared/widgets/walk_in_badge.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
@@ -102,11 +106,11 @@ class _ItemDetailView extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5EDE0),
+      backgroundColor: AppTokens.bg,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            backgroundColor: const Color(0xFFF5EDE0),
+            backgroundColor: AppTokens.bg,
             elevation: 0,
             pinned: true,
             title: Text(
@@ -116,12 +120,14 @@ class _ItemDetailView extends ConsumerWidget {
               if (isPoster && item.status == ItemStatus.active) ...[
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Edit post',
                   onPressed: () =>
                       context.push(AppRoutes.editPostPath(item.id)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  color: Theme.of(context).colorScheme.error,
+                  color: AppTokens.seeker,
+                  tooltip: 'Delete post',
                   onPressed: () => _onDeleteTap(context, ref, pending),
                 ),
               ],
@@ -133,8 +139,6 @@ class _ItemDetailView extends ConsumerWidget {
               children: [
                 if (item.imageUrls.isNotEmpty)
                   PhotoGallery(photos: item.imageUrls),
-                if (isSensitive)
-                  SensitiveBanner(securityPhone: securityPhone),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
                   child: Column(
@@ -148,11 +152,7 @@ class _ItemDetailView extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Text(
                         item.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 22,
-                          height: 1.25,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
                       _MetaRow(item: item, isSensitive: isSensitive),
@@ -163,11 +163,11 @@ class _ItemDetailView extends ConsumerWidget {
                           style: const TextStyle(
                             fontSize: 14.5,
                             height: 1.55,
-                            color: Color(0xFF374151),
+                            color: AppTokens.ink800,
                           ),
                         ),
                       ],
-                      const Divider(height: 32),
+                      const Divider(height: 32, color: AppTokens.border),
                       _PosterRow(
                         item: item,
                         isPoster: isPoster,
@@ -179,7 +179,7 @@ class _ItemDetailView extends ConsumerWidget {
                           !isSensitive &&
                           item.secretQuestion != null &&
                           flags.secretQuestionEnabled)
-                        _SecretQuestionNotice(),
+                        const _SecretQuestionNotice(),
                       const SizedBox(height: 16),
                       if (!isPoster && item.status == ItemStatus.active)
                         _VisitorActions(
@@ -207,6 +207,12 @@ class _ItemDetailView extends ConsumerWidget {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTokens.primary600,
+                              side: const BorderSide(color: AppTokens.primary400),
+                              shape: const StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
                             onPressed: actionState.isLoading
                                 ? null
                                 : () => _confirmResolve(context, ref),
@@ -233,56 +239,45 @@ class _ItemDetailView extends ConsumerWidget {
     );
   }
 
-  void _confirmCancelRequest(
+  Future<void> _confirmCancelRequest(
     BuildContext context,
     WidgetRef ref,
     String itemId,
     String requestId,
-  ) {
-    showDialog<void>(
+  ) async {
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Cancel your request?'),
-        content: const Text(
-          "The poster will see this request as cancelled. "
+      title: 'Cancel your request?',
+      body: 'The poster will see this request as cancelled. '
           'You can submit a new request later if needed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Keep'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref
-                  .read(itemDetailActionNotifierProvider.notifier)
-                  .cancel(itemId: itemId, requestId: requestId);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Request cancelled')),
-                );
-              }
-            },
-            child: const Text('Yes, cancel it'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Yes, cancel it',
+      cancelLabel: 'Keep',
+      tone: ConfirmTone.danger,
     );
+    if (!confirmed || !context.mounted) return;
+    await ref
+        .read(itemDetailActionNotifierProvider.notifier)
+        .cancel(itemId: itemId, requestId: requestId);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request cancelled')),
+      );
+    }
   }
 
-  void _onDeleteTap(
+  Future<void> _onDeleteTap(
     BuildContext context,
     WidgetRef ref,
     List<ItemRequest> pending,
-  ) {
+  ) async {
     if (pending.isNotEmpty) {
-      showDialog<void>(
+      await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
+          backgroundColor: AppTokens.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTokens.rMd),
+          ),
           title: const Text('Resolve requests first'),
           content: Text(
             'This post has ${pending.length} pending request(s). '
@@ -290,6 +285,9 @@ class _ItemDetailView extends ConsumerWidget {
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: AppTokens.ink700,
+              ),
               onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
             ),
@@ -298,69 +296,43 @@ class _ItemDetailView extends ConsumerWidget {
       );
       return;
     }
-    showDialog<void>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete this post?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref
-                  .read(itemDetailActionNotifierProvider.notifier)
-                  .delete(item.id);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Post deleted')),
-                );
-                context.pop();
-              }
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete this post?',
+      body: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: ConfirmTone.danger,
     );
+    if (!confirmed || !context.mounted) return;
+    await ref
+        .read(itemDetailActionNotifierProvider.notifier)
+        .delete(item.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post deleted')),
+      );
+      context.pop();
+    }
   }
 
-  void _confirmResolve(BuildContext context, WidgetRef ref) {
-    showDialog<void>(
+  Future<void> _confirmResolve(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Mark as resolved?'),
-        content: const Text(
+      title: 'Mark as resolved?',
+      body:
           'Confirm you have handed this sensitive item to the Security Office.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref
-                  .read(itemDetailActionNotifierProvider.notifier)
-                  .resolve(item);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Post marked as resolved')),
-                );
-              }
-            },
-            child: const Text('Yes, mark resolved'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Yes, mark resolved',
+      cancelLabel: 'Cancel',
+      tone: ConfirmTone.success,
     );
+    if (!confirmed || !context.mounted) return;
+    await ref.read(itemDetailActionNotifierProvider.notifier).resolve(item);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post marked as resolved')),
+      );
+    }
   }
 }
 
@@ -387,14 +359,16 @@ class _ChipsRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _CategoryChip(category: item.category),
+        if (item.itemTaxonomy != null)
+          ItemCategoryChip(taxonomy: item.itemTaxonomy!),
         _StatusBadge(status: item.status),
         if (isSensitive)
-          _chip('🔒 Sensitive', const Color(0xFFF59E0B), const Color(0xFFFEF3C7)),
+          _chip('🔒 Sensitive', AppTokens.warn, AppTokens.warnBg),
         if (isWalkIn) const WalkInBadge(),
         if (item.editedAt != null)
           Text(
             'Edited · ${_relativeTime(item.editedAt!)}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            style: const TextStyle(fontSize: 12, color: AppTokens.ink500),
           ),
       ],
     );
@@ -427,16 +401,16 @@ class _CategoryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: isFounder ? const Color(0xFFDCFCE7) : const Color(0xFFFFE4E6),
+        color: isFounder ? AppTokens.successBg : AppTokens.seekerBg,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        isFounder ? 'FOUND · FOUNDER' : 'LOST · SEEKER',
+        isFounder ? 'Found · Founder' : 'Lost · Seeker',
         style: TextStyle(
-          color: isFounder ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
-          fontSize: 10,
+          color: isFounder ? AppTokens.success : AppTokens.seeker,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
+          letterSpacing: 0.02,
         ),
       ),
     );
@@ -454,13 +428,13 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6),
+        color: isActive ? AppTokens.successBg : AppTokens.ink100,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         status.name.toUpperCase(),
         style: TextStyle(
-          color: isActive ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
+          color: isActive ? AppTokens.success : AppTokens.ink600,
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.3,
@@ -478,17 +452,19 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWalkIn = item.source == ItemSource.qrWalkIn;
     return Wrap(
       spacing: 12,
       runSpacing: 4,
       children: [
         _metaItem(Icons.location_on_outlined, item.location),
-        _metaItem(Icons.access_time, _formatFull(item.occurredAt)),
-        if (isSensitive && item.expiresAt != null)
+        if (item.occurredAt != null)
+          _metaItem(Icons.access_time, _formatFull(item.occurredAt!)),
+        if ((isSensitive || isWalkIn) && item.expiresAt != null)
           _metaItem(
             Icons.hourglass_bottom_outlined,
             'Expires ${_shortDate(item.expiresAt!)}',
-            color: const Color(0xFFD97706),
+            color: AppTokens.warn,
           ),
       ],
     );
@@ -497,13 +473,13 @@ class _MetaRow extends StatelessWidget {
   Widget _metaItem(IconData icon, String text, {Color? color}) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color ?? const Color(0xFF6B7280)),
+          Icon(icon, size: 14, color: color ?? AppTokens.ink600),
           const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
               fontSize: 13,
-              color: color ?? const Color(0xFF6B7280),
+              color: color ?? AppTokens.ink600,
             ),
           ),
         ],
@@ -529,56 +505,79 @@ class _PosterRow extends StatelessWidget {
     final isLoading = posterAsync.isLoading;
     final poster = posterAsync.valueOrNull;
 
-    // Prefer live user data; fall back to embedded fields stored at post time.
-    final String? resolvedAvatarUrl = poster?.avatarUrl ?? item.posterAvatarUrl;
+    final String? resolvedAvatarUrl =
+        isWalkIn ? null : (poster?.avatarUrl ?? item.posterAvatarUrl);
     final String name;
-    if (isLoading && item.posterName == null) {
+    if (isWalkIn) {
+      name = 'Anonymous walk-in';
+    } else if (isLoading && item.posterName == null) {
       name = '';
     } else if (poster != null) {
       name = '${poster.firstName} ${poster.lastName}'.trim();
     } else if (item.posterName != null && item.posterName!.isNotEmpty) {
       name = item.posterName!;
-    } else if (isWalkIn) {
-      name = 'Walk-in submission';
     } else {
       name = 'Unknown poster';
     }
 
+    final String subtitle = isWalkIn
+        ? 'Submitted via QR · ${_relativeTime(item.createdAt)}'
+        : 'Posted ${_relativeTime(item.createdAt)}';
+
     final String avatarInitial;
-    if (poster != null && poster.firstName.isNotEmpty) {
+    if (isWalkIn) {
+      avatarInitial = 'QR';
+    } else if (poster != null && poster.firstName.isNotEmpty) {
       avatarInitial = poster.firstName[0].toUpperCase();
     } else if (item.posterName != null && item.posterName!.isNotEmpty) {
       avatarInitial = item.posterName![0].toUpperCase();
-    } else if (isWalkIn) {
-      avatarInitial = 'W';
     } else {
       avatarInitial = '?';
     }
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: const Color(0xFFE5E7EB),
-          backgroundImage: resolvedAvatarUrl != null
-              ? NetworkImage(resolvedAvatarUrl)
-              : null,
-          child: resolvedAvatarUrl == null
-              ? isLoading && item.posterName == null
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      avatarInitial,
-                      style: const TextStyle(
-                        color: Color(0xFF374151),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
-              : null,
-        ),
+        if (isWalkIn)
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppTokens.ink100,
+              shape: BoxShape.circle,
+            ),
+            child: const Text(
+              'QR',
+              style: TextStyle(
+                color: AppTokens.ink500,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          )
+        else
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppTokens.ink100,
+            backgroundImage: resolvedAvatarUrl != null
+                ? NetworkImage(resolvedAvatarUrl)
+                : null,
+            child: resolvedAvatarUrl == null
+                ? isLoading && item.posterName == null
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        avatarInitial,
+                        style: const TextStyle(
+                          color: AppTokens.ink700,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                : null,
+          ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -589,39 +588,47 @@ class _PosterRow extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
+                  color: AppTokens.ink800,
                 ),
               ),
               Text(
-                'Posted ${_relativeTime(item.createdAt)}',
+                subtitle,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF9CA3AF),
+                  color: AppTokens.ink500,
                 ),
               ),
             ],
           ),
         ),
-        if (!isPoster && !isSensitive && item.contact.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.phone, size: 12, color: Color(0xFF3B82F6)),
-                const SizedBox(width: 4),
-                Text(
-                  item.contact,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF3B82F6),
-                    fontWeight: FontWeight.w500,
-                  ),
+        if (!isPoster && !isSensitive && !isWalkIn && item.contact.isNotEmpty)
+          Semantics(
+            label: 'Call poster: ${item.contact}',
+            button: true,
+            child: GestureDetector(
+              onTap: () => _launchTel(item.contact),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTokens.primary100,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone, size: 12, color: AppTokens.primary600),
+                    const SizedBox(width: 4),
+                    Text(
+                      item.contact,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTokens.primary600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
       ],
@@ -630,31 +637,42 @@ class _PosterRow extends StatelessWidget {
 }
 
 class _SecretQuestionNotice extends StatelessWidget {
+  const _SecretQuestionNotice();
+
+  // Prototype uses a CSS dashed border; Flutter's Border.all only renders solid.
+  // We approximate with a 1px solid primary-400 outline on surface-2 — the closest
+  // stock-Flutter analogue without pulling in a `dotted_border` dependency.
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: const Color(0xFF93C5FD),
-          style: BorderStyle.solid,
-        ),
+        color: AppTokens.surface2,
+        borderRadius: BorderRadius.circular(AppTokens.rSm),
+        border: Border.all(color: AppTokens.primary400),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined, size: 18, color: Color(0xFF2563EB)),
+          Icon(Icons.shield_outlined, size: 18, color: AppTokens.primary600),
           SizedBox(width: 10),
           Expanded(
-            child: Text(
-              "This item is protected by a secret question. You'll need to answer it to submit a claim.",
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.5,
-                color: Color(0xFF374151),
+            child: Text.rich(
+              TextSpan(
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: AppTokens.ink700,
+                ),
+                children: [
+                  TextSpan(text: 'This item is protected by a '),
+                  TextSpan(
+                    text: 'secret question',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: ". You'll need to answer it to submit a claim."),
+                ],
               ),
             ),
           ),
@@ -690,30 +708,52 @@ class _VisitorActions extends ConsumerWidget {
     if (isSensitive || isWalkIn) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD97706),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              shape: const StadiumBorder(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTokens.warn,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: const StadiumBorder(),
+              ),
+              icon: const Icon(Icons.phone, size: 16),
+              label: Text('Contact Security Office · $securityPhone'),
+              onPressed: () => _launchTel(securityPhone),
             ),
-            icon: const Icon(Icons.phone, size: 16),
-            label: Text('Contact Security Office · $securityPhone'),
-            onPressed: () {},
-          ),
+            if (isSensitive) ...[
+              const SizedBox(height: 14),
+              const SensitiveBanner(),
+            ],
+            if (!isSensitive && isWalkIn) ...[
+              const SizedBox(height: 10),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'This item was handed in anonymously through the QR walk-in form. '
+                  'To claim it, please visit the Security Office in person with proof of ownership.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTokens.ink600,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       );
     }
 
     if (myRequest != null) {
       return Card(
-        color: Colors.white,
+        color: AppTokens.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(AppTokens.rSm),
+          side: const BorderSide(color: AppTokens.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -728,7 +768,7 @@ class _VisitorActions extends ConsumerWidget {
                     'Your request · ${_relativeTime(myRequest!.createdAt)}',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF9CA3AF),
+                      color: AppTokens.ink500,
                     ),
                   ),
                 ],
@@ -737,6 +777,12 @@ class _VisitorActions extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTokens.ink800,
+                    side: const BorderSide(color: AppTokens.border),
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
                   onPressed: () => RequestDetailRoute(
                     itemId: item.id,
                     reqId: myRequest!.id,
@@ -750,10 +796,10 @@ class _VisitorActions extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      foregroundColor: AppTokens.seeker,
+                      side: const BorderSide(color: AppTokens.seeker),
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                     ),
                     onPressed: onCancelRequest,
                     child: const Text('Cancel request'),
@@ -791,10 +837,10 @@ class _VisitorActions extends ConsumerWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFCA8A04),
+                backgroundColor: AppTokens.primary500,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFE5E7EB),
-                disabledForegroundColor: const Color(0xFF9CA3AF),
+                disabledBackgroundColor: AppTokens.ink100,
+                disabledForegroundColor: AppTokens.ink500,
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: const StadiumBorder(),
               ),
@@ -835,14 +881,10 @@ class _RequestStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color color, Color bg) = switch (status) {
-      RequestStatus.pending =>
-        (const Color(0xFFD97706), const Color(0xFFFEF3C7)),
-      RequestStatus.approved =>
-        (const Color(0xFF16A34A), const Color(0xFFDCFCE7)),
-      RequestStatus.rejected =>
-        (const Color(0xFFDC2626), const Color(0xFFFFE4E6)),
-      RequestStatus.cancelled =>
-        (const Color(0xFF6B7280), const Color(0xFFF3F4F6)),
+      RequestStatus.pending => (AppTokens.warn, AppTokens.warnBg),
+      RequestStatus.approved => (AppTokens.success, AppTokens.successBg),
+      RequestStatus.rejected => (AppTokens.seeker, AppTokens.seekerBg),
+      RequestStatus.cancelled => (AppTokens.ink600, AppTokens.ink100),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -854,6 +896,7 @@ class _RequestStatusBadge extends StatelessWidget {
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -879,20 +922,23 @@ class _RequestsInbox extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Requests inbox',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 15,
+                    color: AppTokens.ink900,
+                  ),
             ),
             Text(
               '${requests.length} total · ${pending.length} pending',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 12, color: AppTokens.ink500),
             ),
           ],
         ),
         const SizedBox(height: 4),
         const Text(
           'Tap a request to review and approve or reject.',
-          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+          style: TextStyle(fontSize: 12, color: AppTokens.ink600),
         ),
         if (pending.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -900,21 +946,21 @@ class _RequestsInbox extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFF59E0B)),
+              color: AppTokens.warnBg,
+              borderRadius: BorderRadius.circular(AppTokens.rSm),
+              border: Border.all(color: AppTokens.warnBorder),
             ),
             child: Row(
               children: [
                 const Icon(Icons.notifications_active,
-                    size: 16, color: Color(0xFFD97706)),
+                    size: 16, color: AppTokens.warn),
                 const SizedBox(width: 8),
                 Text(
                   'Action needed · ${pending.length} request${pending.length > 1 ? 's' : ''} waiting',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF92400E),
+                    color: AppTokens.warn,
                   ),
                 ),
               ],
@@ -923,15 +969,19 @@ class _RequestsInbox extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         if (requests.isEmpty)
-          const Card(
-            color: Colors.white,
+          Card(
+            color: AppTokens.surface,
             elevation: 0,
-            child: Padding(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTokens.rSm),
+              side: const BorderSide(color: AppTokens.border),
+            ),
+            child: const Padding(
               padding: EdgeInsets.all(20),
               child: Center(
                 child: Text(
                   'No requests yet.',
-                  style: TextStyle(color: Color(0xFF9CA3AF)),
+                  style: TextStyle(color: AppTokens.ink500),
                 ),
               ),
             ),
@@ -953,6 +1003,11 @@ class _RequestsInbox extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+Future<void> _launchTel(String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone);
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
 
 String _relativeTime(DateTime dt) {
   final diff = DateTime.now().difference(dt);

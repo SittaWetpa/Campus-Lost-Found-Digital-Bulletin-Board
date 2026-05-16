@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:campus_lost_found/core/theme/app_tokens.dart';
 
 class PhotoGallery extends StatefulWidget {
   const PhotoGallery({super.key, required this.photos});
@@ -30,8 +31,8 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   Widget build(BuildContext context) {
     if (widget.photos.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: 220,
+    return AspectRatio(
+      aspectRatio: 16 / 9,
       child: Stack(
         children: [
           GestureDetector(
@@ -42,7 +43,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
               height: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) =>
-                  Container(color: const Color(0xFFE5E7EB)),
+                  Container(color: AppTokens.ink100),
             ),
           ),
           // Tap-to-expand hint

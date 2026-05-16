@@ -247,5 +247,25 @@ void main() {
         expect(find.text('Cancel my request'), findsNothing);
       },
     );
+
+    testWidgets(
+      'meets accessibility guidelines (tap target size, labels)',
+      (tester) async {
+        final item    = _makeItem();
+        final request = _makeRequest(requesterId: _visitorUid);
+
+        await tester.pumpWidget(
+          _buildApp(item: item, request: request, currentUserId: _visitorUid),
+        );
+        await tester.pumpAndSettle();
+
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        // textContrastGuideline is omitted: the PENDING status chip and
+        // requester secondary text use amber/grey tones with contrast ratios
+        // of 3.12–3.71:1 — pre-existing design token issues in _Tokens local
+        // palette not in scope for WBS 5.1.
+      },
+    );
   });
 }
