@@ -45,10 +45,11 @@ A Flutter mobile application for reporting and finding lost items on campus. Stu
 - **Claim Request / Found Report** — request and approval system with Cancel (undo) support
 - **Similar Posts Recommendation** — suggests matching Founder Posts before a user creates a new Seeker Post
 - **Secret Question Verification** — Poster sets a secret question on a Founder Post; Visitor must answer correctly before sending a Claim Request to prevent false ownership claims
-- **Sensitive Item Handling** — financial cards, ID cards, passports, and similar items trigger a notification-only flow directing Seekers to the campus security office; sensitive Founder Posts auto-expire after 14 days
-- **QR Walk-in Web Form** — QR codes at campus drop-off points let non-app users (e.g. security staff, dropping-off visitors) submit Founder Posts via a public web form
+- **Sensitive Item Handling** — financial cards, ID cards, passports, and similar items trigger a notification-only flow directing Seekers to the campus security office; sensitive Founder Posts auto-expire after 14 days via a scheduled Cloud Function
+- **QR Walk-in Web Form** — QR codes at campus drop-off points let non-app users (e.g. security staff, dropping-off visitors) submit Founder Posts via a public web form (`POST /items`)
 - **Push Notifications** — real-time push alerts for new Claim Requests / Found Reports, request status changes, and other key events
-- **REST API** — read-only endpoint for external tools to access Active items via API Key
+- **REST API** — `GET /items` (read Active items) and `POST /items` (walk-in submission) via API Key
+- **Admin Role & Admin Screens** — `isAdmin` flag granted via Firebase Console (see [ADMIN_ROLE.md](./ADMIN_ROLE.md)); gated admin screens for moderation and the Remote Config rollback runbook ([ROLLBACK_PLAN.md](./ROLLBACK_PLAN.md))
 - **Offline Cache** — browse recent posts even without an internet connection
 
 ---
@@ -61,7 +62,7 @@ A Flutter mobile application for reporting and finding lost items on campus. Stu
 
 - Flutter SDK `>=3.0.0`
 - Dart SDK `>=3.0.0`
-- Node.js `>=18` (for Cloud Functions)
+- Node.js `22` (for Cloud Functions — deployed to `asia-southeast1`)
 - Firebase CLI (`npm install -g firebase-tools`)
 - FlutterFire CLI (`dart pub global activate flutterfire_cli`)
 - A Firebase project with the following services enabled:
@@ -193,7 +194,7 @@ test/
 
 The app exposes a read-only REST API via Firebase Cloud Functions for external integrations.
 
-**Base URL**: `https://<region>-<project-id>.cloudfunctions.net`
+**Base URL**: `https://asia-southeast1-<project-id>.cloudfunctions.net`
 
 ### `GET /items`
 
@@ -231,6 +232,34 @@ x-api-key: <your-api-key>
 **Error Responses**
 - `401 Unauthorized` — missing or invalid API Key
 - `400 Bad Request` — invalid query params
+
+### `POST /items`
+
+Creates a Founder Post from a QR walk-in web form submission (WBS 2.15). Used by non-app users dropping off found items at campus collection points.
+
+**Headers**
+```
+x-api-key: <your-api-key>
+Content-Type: application/json
+```
+
+**Body**
+```json
+{
+  "title": "Black wallet",
+  "description": "Found near the library",
+  "location": "Library 1st floor",
+  "contact": "081-234-5678",
+  "itemCategory": "wallet",
+  "imageUrls": ["https://..."]
+}
+```
+
+The created item is tagged with `source: "qr_walk_in"`.
+
+**Error Responses**
+- `401 Unauthorized` — missing or invalid API Key
+- `400 Bad Request` — missing required fields or invalid `itemCategory`
 
 > ⚠️ API Key is shared securely within the team. Never commit it to the repository.
 
@@ -322,42 +351,6 @@ The PR you opened earlier will update automatically — no need to open a new on
 
 ---
 
-## Branch Ownership
-
-| Branch | Owner | WBS |
-|--------|-------|-----|
-| `film/feat/auth` | Film | 0.1, 0.2 |
-| `film/feat/otp` | Film | 0.5 |
-| `film/feat/schema` | Film | 2.1 |
-| `film/feat/riverpod` | Film | 4.2 |
-| `film/feat/api` | Film | 2.9 |
-| `film/feat/crashlytics` | Film | 2.12 |
-| `film/feat/android` | Film | 3.1 |
-| `film/feat/push` | Film | 2.16 |
-| `film/feat/resubmit` | Film | 2.4.1 |
-| `film/feat/admin` | Film | 2.17 |
-| `posh/feat/auth` | Posh | 0.3 |
-| `posh/feat/router` | Posh | 4.3 |
-| `posh/feat/requests` | Posh | 2.4, 2.5 |
-| `posh/feat/cache` | Posh | 2.11 |
-| `posh/feat/sensitive` | Posh | 2.14 |
-| `van/feat/feed` | Van | 1.2, 1.3, 1.5 |
-| `van/feat/post` | Van | 1.4 |
-| `van/feat/secret-question` | Van | 2.10 |
-| `van/feat/remote-config` | Van | 2.13 |
-| `van/feat/web` | Van | 3.2 |
-| `jed/feat/crud` | Jed | 2.2, 2.3, 2.6, 2.7 |
-| `jed/feat/post` | Jed | 2.8 |
-| `jed/feat/security` | Jed | 5.2 |
-| `shogun/feat/ui` | Shogun | 1.6, 1.7, 1.8 |
-| `shogun/feat/architecture` | Shogun | 4.1 |
-| `shogun/feat/a11y` | Shogun | 5.1 |
-| `shogun/feat/qr` | Shogun | 2.15 |
-
-> **WBS 1.1 (UI/UX Design & Prototype)** is a design task — output is a Figma file, not code. No branch required.
-
----
-
 ## Running Tests
 
 ```bash
@@ -427,7 +420,7 @@ See **[ORCHESTRATION.md](./ORCHESTRATION.md)** for the full step-by-step prompt 
 
 | Name | Role | Tasks |
 |------|------|-------|
-| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.4.1, 2.9, 2.12, 2.16, 2.17, 3.1, 4.2, 6.1 |
+| Film | PM · Architect · QA | 0.1, 0.2, 0.5, 2.1, 2.4.1, 2.9, 2.12, 2.16, 2.17, 2.18, 3.1, 4.2, 6.1 |
 | Van | Frontend Lead | 1.2, 1.3, 1.4, 1.5, 2.10, 2.13, 3.2 |
 | Posh | Auth · Backend | 0.3, 2.4, 2.5, 2.11, 2.14, 4.3 |
 | Jed | Backend · Frontend | 2.2, 2.3, 2.6, 2.7, 2.8, 5.2 |
