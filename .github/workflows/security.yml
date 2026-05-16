@@ -27,9 +27,9 @@ jobs:
       # The scanner reads pubspec.lock and fails on High or Critical findings.
       - name: Install osv-scanner
         run: |
-          curl -sSL -o /tmp/osv-scanner.tar.gz \
-            https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_linux_amd64.tar.gz
-          tar -xzf /tmp/osv-scanner.tar.gz -C /tmp osv-scanner
+          curl -sSL -o /tmp/osv-scanner \
+            https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_linux_amd64
+          chmod +x /tmp/osv-scanner
           sudo mv /tmp/osv-scanner /usr/local/bin/osv-scanner
           osv-scanner --version
 
