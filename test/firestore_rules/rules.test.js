@@ -175,6 +175,7 @@ describe('WBS 2.1 Test case 3 — Authenticated reads on items are allowed', () 
         contact: '0823456789',
         imageUrls: [],
         userId: POSTER_UID,
+        isSensitive: false, // rule at firestore.rules:L61 reads this; undefined throws
         createdAt: serverTimestamp(), // WBS 5.2: must equal request.time
       }),
     );
