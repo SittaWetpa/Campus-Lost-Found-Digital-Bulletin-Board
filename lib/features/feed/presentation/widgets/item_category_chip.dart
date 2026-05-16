@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
 
+extension TaxonomyIcon on ItemTaxonomy {
+  IconData get iconData => switch (this) {
+        ItemTaxonomy.electronics => Icons.devices_outlined,
+        ItemTaxonomy.bagWallet => Icons.work_outline,
+        ItemTaxonomy.clothing => Icons.checkroom_outlined,
+        ItemTaxonomy.stationery => Icons.menu_book_outlined,
+        ItemTaxonomy.documentsCards => Icons.badge_outlined,
+        ItemTaxonomy.keys => Icons.key_outlined,
+        ItemTaxonomy.accessory => Icons.watch_outlined,
+        ItemTaxonomy.other => Icons.inbox_outlined,
+      };
+}
+
 class ItemCategoryChip extends StatelessWidget {
   const ItemCategoryChip({
     super.key,

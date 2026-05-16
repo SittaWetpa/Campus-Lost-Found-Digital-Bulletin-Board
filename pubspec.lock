@@ -153,6 +153,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.4"
+  ci:
+    dependency: transitive
+    description:
+      name: ci
+      sha256: "145d095ce05cddac4d797a158bc4cf3b6016d1fe63d8c3d2fbd7212590adca13"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
+  cli_util:
+    dependency: transitive
+    description:
+      name: cli_util
+      sha256: ff6785f7e9e3c38ac98b2fb035701789de90154024a75b6cb926445e83197d1c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   clock:
     dependency: transitive
     description:
@@ -273,6 +289,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
+  custom_lint:
+    dependency: "direct dev"
+    description:
+      name: custom_lint
+      sha256: "7c0aec12df22f9082146c354692056677f1e70bc43471644d1fdb36c6fdda799"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.4"
+  custom_lint_builder:
+    dependency: transitive
+    description:
+      name: custom_lint_builder
+      sha256: d7dc41e709dde223806660268678be7993559e523eb3164e2a1425fd6f7615a9
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.4"
   custom_lint_core:
     dependency: transitive
     description:
@@ -297,6 +329,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.12"
+  domain_lints:
+    dependency: "direct dev"
+    description:
+      path: "tools/domain_lints"
+      relative: true
+    source: path
+    version: "1.0.0"
   equatable:
     dependency: transitive
     description:
@@ -317,10 +356,10 @@ packages:
     dependency: "direct dev"
     description:
       name: fake_cloud_firestore
-      sha256: "804bfb59108fc93b93c28b61e8142c477bd6f188a12d06875310f0b2f01b3974"
+      sha256: "59dfb28913a6f3234033698833f55b6fbe73dfefe56794ae7e35e18f658ef9be"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.0"
+    version: "3.0.2"
   fake_firebase_security_rules:
     dependency: transitive
     description:
@@ -650,6 +689,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.3"
+  hotreloader:
+    dependency: transitive
+    description:
+      name: hotreloader
+      sha256: "66871df468fc24eee81f1a0a7cb98acc104716f9b7376d355437b48d633c4ebf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.4.0"
   http:
     dependency: "direct main"
     description:
@@ -1091,10 +1138,10 @@ packages:
     dependency: transitive
     description:
       name: rxdart
-      sha256: "5c3004a4a8dbb94bd4bf5412a4def4acdaa12e12f269737a5751369e12d1a962"
+      sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
       url: "https://pub.dev"
     source: hosted
-    version: "0.28.0"
+    version: "0.27.7"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -1340,6 +1387,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.5"
+  uuid:
+    dependency: transitive
+    description:
+      name: uuid
+      sha256: "1fef9e8e11e2991bb773070d4656b7bd5d850967a2456cfc83cf47925ba79489"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.5.3"
   vector_math:
     dependency: transitive
     description:

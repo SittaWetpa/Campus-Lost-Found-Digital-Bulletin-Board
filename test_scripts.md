@@ -230,7 +230,8 @@ Run: `flutter test test/unit/router/ test/widget/`
 |---|---|---|---|---|
 | 4.3 | Route constants | `test/unit/router/app_routes_test.dart` | Unit | ✅ 36 tests |
 | 4.3 | Auth redirect guards | `test/widget/auth/router_redirect_test.dart` | Widget | ✅ 21 tests |
-| 4.1 | Clean architecture skeleton | — | Unit | ⬜ not yet written |
+| 4.1 | ItemTaxonomy domain entity: pure Dart, no Firebase (01a–01d) | `test/features/post/domain/entities/item_taxonomy_test.dart` | Unit | ✅ 4 tests |
+| 4.1 | ItemModel mapper — domain→data direction, source field exclusion, round-trip (02a–02c) | `test/features/feed/data/models/item_model_test.dart` | Unit | ✅ 3 tests (added to existing file) |
 | 4.2 | Riverpod state management | — | Unit + Widget | ⬜ not yet written |
 
 ---
@@ -255,7 +256,7 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 1.0 Flutter UI | 82 | 82 |
 | 2.0 Data Layer | 335 + 24 (npm) | 359 |
 | 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
-| 4.0 Architecture | 37 | 37 |
+| 4.0 Architecture | 44 | 44 |
 | 5.0 Quality Gates | 0 | — |
 | **Total** | **510 Dart + 24 npm** | **526 passing + 24 npm** |
 

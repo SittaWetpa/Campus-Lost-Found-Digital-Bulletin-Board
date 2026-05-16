@@ -8,6 +8,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/user_prov
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_filter_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
+import 'package:campus_lost_found/features/feed/presentation/widgets/item_category_chip.dart';
 import 'package:campus_lost_found/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
 import 'package:campus_lost_found/shared/widgets/offline_banner.dart';
