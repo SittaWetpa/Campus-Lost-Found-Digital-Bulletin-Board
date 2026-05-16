@@ -1,0 +1,99 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [develop, release]
+  push:
+    branches: [develop, release]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-test:
+    name: Flutter unit & widget tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: flutter analyze
+        run: flutter analyze
+
+      - name: flutter test
+        run: flutter test
+
+  functions-test:
+    name: Cloud Functions tests (functions/)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - run: npm ci
+
+      - run: npm test
+
+  functions-esm-test:
+    name: Cloud Functions ESM tests (test/functions/)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: test/functions
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: test/functions/package-lock.json
+
+      - run: npm ci
+
+      - run: npm test
+
+  firestore-rules-test:
+    name: Firestore rules tests (emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: test/firestore_rules/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Install test deps
+        working-directory: test/firestore_rules
+        run: npm ci
+
+      # Emulator reads firestore.rules from the project root via firebase.json.
+      # `emulators:exec` starts the emulator, runs the command, then shuts down.
+      - name: Run rules tests against emulator
+        run: firebase emulators:exec --only firestore --project demo-campus-lost-found "cd test/firestore_rules && npm test"
