@@ -79,19 +79,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
   }
 
-  Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-            color: _kInk900,
-          ),
-        ),
-      );
-
   InputDecoration _readOnlyDecoration() => InputDecoration(
         filled: true,
         fillColor: _kSurface2,
@@ -240,62 +227,52 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _label('FIRST NAME'),
-                            TextFormField(
-                              controller: _firstNameCtrl,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: _kBorder),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: _kAmber),
-                                ),
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Required.';
-                                return null;
-                              },
+                        child: TextFormField(
+                          controller: _firstNameCtrl,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'First name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          ],
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: _kBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: _kAmber),
+                            ),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Required.';
+                            return null;
+                          },
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _label('LAST NAME'),
-                            TextFormField(
-                              controller: _lastNameCtrl,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: _kBorder),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: _kAmber),
-                                ),
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Required.';
-                                return null;
-                              },
+                        child: TextFormField(
+                          controller: _lastNameCtrl,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'Last name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          ],
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: _kBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: _kAmber),
+                            ),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Required.';
+                            return null;
+                          },
                         ),
                       ),
                     ],
@@ -304,11 +281,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 14),
 
                   // ── Phone number ─────────────────────────────────────────
-                  _label('PHONE NUMBER'),
                   TextFormField(
                     controller: _telephoneCtrl,
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
+                      labelText: 'Phone number',
                       hintText: '08x-xxx-xxxx',
                       hintStyle: const TextStyle(color: _kInk500),
                       border: OutlineInputBorder(
@@ -335,23 +312,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 14),
 
                   // ── Email (read-only) ────────────────────────────────────
-                  _label('EMAIL (READ-ONLY)'),
                   TextFormField(
                     initialValue: user.email,
                     enabled: false,
                     style: const TextStyle(color: _kInk500),
-                    decoration: _readOnlyDecoration(),
+                    decoration: _readOnlyDecoration().copyWith(
+                      labelText: 'Email (read-only)',
+                    ),
                   ),
 
                   const SizedBox(height: 14),
 
                   // ── Student ID (read-only) ───────────────────────────────
-                  _label('STUDENT ID (READ-ONLY)'),
                   TextFormField(
                     initialValue: user.studentId,
                     enabled: false,
                     style: const TextStyle(color: _kInk500),
-                    decoration: _readOnlyDecoration(),
+                    decoration: _readOnlyDecoration().copyWith(
+                      labelText: 'Student ID (read-only)',
+                    ),
                   ),
 
                   const SizedBox(height: 24),

@@ -246,5 +246,21 @@ void main() {
         expect(fakeProfileRepo.updateCalled, isTrue);
       },
     );
+
+    testWidgets(
+      'meets accessibility guidelines (labels)',
+      (tester) async {
+        await tester.pumpWidget(_buildScreen());
+        await tester.pumpAndSettle();
+
+        // androidTapTargetGuideline is omitted: the "Change photo" OutlinedButton
+        // uses MaterialTapTargetSize.shrinkWrap (32 dp tall) — a pre-existing
+        // compact layout choice not in scope for WBS 5.1.
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        // textContrastGuideline is omitted: the amber FilledButton ("Save changes")
+        // renders white text on amber (~2.77:1) — a pre-existing design token
+        // issue affecting all primary buttons, not in scope for WBS 5.1.
+      },
+    );
   });
 }

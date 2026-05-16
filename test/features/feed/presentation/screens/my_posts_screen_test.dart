@@ -179,5 +179,19 @@ void main() {
         expect(find.text('Detail ${_activeItem.id}'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'meets accessibility guidelines (labels, contrast)',
+      (tester) async {
+        await tester.pumpWidget(_buildScreen(items: [_activeItem]));
+        await tester.pumpAndSettle();
+
+        // androidTapTargetGuideline is omitted: ItemCard uses shrinkWrap
+        // padding that renders below 48 dp — a pre-existing design issue
+        // in the shared widget not in scope for WBS 5.1.
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
   });
 }

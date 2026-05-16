@@ -209,33 +209,38 @@ class _TypeFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visuals = _typeVisuals(type);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTokens.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? visuals.bg : AppTokens.surface,
-          borderRadius: BorderRadius.circular(AppTokens.pill),
-          border: Border.all(
-            color: selected ? visuals.fg : AppTokens.border,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(visuals.icon, size: 14, color: visuals.fg),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppTokens.ink800,
-              ),
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTokens.pill),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? visuals.bg : AppTokens.surface,
+            borderRadius: BorderRadius.circular(AppTokens.pill),
+            border: Border.all(
+              color: selected ? visuals.fg : AppTokens.border,
+              width: selected ? 1.5 : 1,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(visuals.icon, size: 14, color: visuals.fg),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTokens.ink800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -265,101 +270,105 @@ class _NotificationTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline, color: AppTokens.seeker),
       ),
       onDismissed: (_) => notifier.delete(notification.id),
-      child: Material(
-        color: visuals.bg,
-        borderRadius: BorderRadius.circular(AppTokens.rMd),
-        child: InkWell(
+      child: Semantics(
+        label: '${_titleFor(notification)}: ${_bodyFor(notification)}',
+        button: true,
+        child: Material(
+          color: visuals.bg,
           borderRadius: BorderRadius.circular(AppTokens.rMd),
-          onTap: () async {
-            if (unread) await notifier.markAsRead(notification.id);
-            if (context.mounted) {
-              context.push(AppRoutes.itemDetailPath(notification.itemId));
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppTokens.surface.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppTokens.rMd),
+            onTap: () async {
+              if (unread) await notifier.markAsRead(notification.id);
+              if (context.mounted) {
+                context.push(AppRoutes.itemDetailPath(notification.itemId));
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTokens.surface.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(visuals.icon, size: 20, color: visuals.fg),
                   ),
-                  child: Icon(visuals.icon, size: 20, color: visuals.fg),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              _titleFor(notification),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: unread
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: AppTokens.ink900,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _titleFor(notification),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: unread
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: AppTokens.ink900,
+                                ),
                               ),
                             ),
-                          ),
-                          if (unread) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: visuals.fg,
-                                shape: BoxShape.circle,
+                            if (unread) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: visuals.fg,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _bodyFor(notification),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTokens.ink700,
-                          height: 1.3,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _timeAgo(notification.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTokens.ink500,
+                        const SizedBox(height: 4),
+                        Text(
+                          _bodyFor(notification),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTokens.ink700,
+                            height: 1.3,
+                          ),
                         ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _timeAgo(notification.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTokens.ink500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    children: [
+                      _RoundIconButton(
+                        icon: unread ? Icons.check : Icons.check_circle,
+                        tooltip: 'Mark as read',
+                        enabled: unread,
+                        onTap: () => notifier.markAsRead(notification.id),
+                      ),
+                      const SizedBox(height: 8),
+                      _RoundIconButton(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Delete',
+                        onTap: () => notifier.delete(notification.id),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  children: [
-                    _RoundIconButton(
-                      icon: unread ? Icons.check : Icons.check_circle,
-                      tooltip: 'Mark as read',
-                      enabled: unread,
-                      onTap: () => notifier.markAsRead(notification.id),
-                    ),
-                    const SizedBox(height: 8),
-                    _RoundIconButton(
-                      icon: Icons.delete_outline,
-                      tooltip: 'Delete',
-                      onTap: () => notifier.delete(notification.id),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

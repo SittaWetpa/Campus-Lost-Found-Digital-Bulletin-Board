@@ -303,33 +303,37 @@ class _DeveloperRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: _kInk900,
+    return Semantics(
+      label: label,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: _kInk900,
+                      ),
                     ),
-                  ),
-                  Text(
-                    sub,
-                    style: const TextStyle(fontSize: 12, color: _kInk500),
-                  ),
-                ],
+                    Text(
+                      sub,
+                      style: const TextStyle(fontSize: 12, color: _kInk500),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right, size: 18, color: _kInk500),
-          ],
+              const Icon(Icons.chevron_right, size: 18, color: _kInk500),
+            ],
+          ),
         ),
       ),
     );

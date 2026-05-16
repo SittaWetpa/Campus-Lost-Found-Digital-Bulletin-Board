@@ -687,51 +687,56 @@ class _CategoryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = category == selected;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? color : Colors.grey.shade300,
-            width: isSelected ? 1.5 : 1,
+    return Semantics(
+      label: '$label — $subtitle',
+      button: true,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.08) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.grey.shade300,
+              width: isSelected ? 1.5 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.15),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? color : Colors.grey.shade700,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.normal,
-                fontSize: 13.5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? color : Colors.grey.shade700,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.normal,
+                  fontSize: 13.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected
-                    ? color.withValues(alpha: 0.8)
-                    : Colors.grey.shade500,
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isSelected
+                      ? color.withValues(alpha: 0.8)
+                      : Colors.grey.shade500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -787,44 +792,49 @@ class _SensitiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? selectedColor.withValues(alpha: 0.08)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? selectedColor : Colors.grey.shade300,
-            width: selected ? 1.5 : 1,
+    return Semantics(
+      label: '$label — $subtitle',
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.08)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? selectedColor : Colors.grey.shade300,
+              width: selected ? 1.5 : 1,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? selectedColor : Colors.grey.shade700,
-                fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.normal,
-                fontSize: 13.5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? selectedColor : Colors.grey.shade700,
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.normal,
+                  fontSize: 13.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: selected
-                    ? selectedColor.withValues(alpha: 0.8)
-                    : Colors.grey.shade500,
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: selected
+                      ? selectedColor.withValues(alpha: 0.8)
+                      : Colors.grey.shade500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -898,31 +908,36 @@ class _QuickPickChips extends StatelessWidget {
           runSpacing: 6,
           children: chips.map((chip) {
             final isActive = currentTitle == chip;
-            return GestureDetector(
-              onTap: () => onChipTap(chip),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? const Color(0xFFFEF3C7)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
+            return Semantics(
+              label: chip,
+              button: true,
+              selected: isActive,
+              child: GestureDetector(
+                onTap: () => onChipTap(chip),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
                     color: isActive
-                        ? _kAmber
-                        : Colors.grey.shade300,
+                        ? const Color(0xFFFEF3C7)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isActive
+                          ? _kAmber
+                          : Colors.grey.shade300,
+                    ),
                   ),
-                ),
-                child: Text(
-                  chip,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isActive
-                        ? const Color(0xFF92400E)
-                        : Colors.grey.shade600,
+                  child: Text(
+                    chip,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isActive
+                          ? const Color(0xFF92400E)
+                          : Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ),
@@ -943,24 +958,28 @@ class _DateTimeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today_outlined,
-                size: 18, color: Colors.grey.shade500),
-            const SizedBox(width: 10),
-            Text(_format(value), style: const TextStyle(fontSize: 15)),
-            const Spacer(),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400),
-          ],
+    return Semantics(
+      label: 'Date and time: ${_format(value)}',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 18, color: Colors.grey.shade500),
+              const SizedBox(width: 10),
+              Text(_format(value), style: const TextStyle(fontSize: 15)),
+              const Spacer(),
+              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+            ],
+          ),
         ),
       ),
     );
@@ -996,39 +1015,43 @@ class _PhotosRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrls.isEmpty) {
-      return MouseRegion(
-        cursor: isUploading
-            ? SystemMouseCursors.forbidden
-            : SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: isUploading ? null : onAddPhoto,
-          child: Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Center(
-              child: isUploading
-                  ? const SizedBox(
-                      height: 30,
-                      width: 30,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_photo_alternate_outlined,
-                            color: Colors.grey.shade400, size: 32),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Add photos (up to 3)',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
+      return Semantics(
+        label: 'Add photos (up to 3)',
+        button: true,
+        child: MouseRegion(
+          cursor: isUploading
+              ? SystemMouseCursors.forbidden
+              : SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: isUploading ? null : onAddPhoto,
+            child: Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Center(
+                child: isUploading
+                    ? const SizedBox(
+                        height: 30,
+                        width: 30,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              color: Colors.grey.shade400, size: 32),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Add photos (up to 3)',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+              ),
             ),
           ),
         ),
@@ -1046,45 +1069,49 @@ class _PhotosRow extends StatelessWidget {
           ),
         ),
         if (imageUrls.length < 3)
-          MouseRegion(
-            cursor: isUploading
-                ? SystemMouseCursors.forbidden
-                : SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: isUploading ? null : onAddPhoto,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.grey.shade400,
-                    width: 1.5,
-                    strokeAlign: BorderSide.strokeAlignInside,
+          Semantics(
+            label: 'Add more photos',
+            button: true,
+            child: MouseRegion(
+              cursor: isUploading
+                  ? SystemMouseCursors.forbidden
+                  : SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: isUploading ? null : onAddPhoto,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.grey.shade400,
+                      width: 1.5,
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                    color: Colors.transparent,
                   ),
-                  color: Colors.transparent,
-                ),
-                child: Center(
-                  child: isUploading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add_a_photo_outlined,
-                                size: 20, color: Colors.grey.shade500),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Add more',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.shade500),
-                            ),
-                          ],
-                        ),
+                  child: Center(
+                    child: isUploading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add_a_photo_outlined,
+                                  size: 20, color: Colors.grey.shade500),
+                              const SizedBox(height: 3),
+                              Text(
+                                'Add more',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey.shade500),
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
               ),
             ),
@@ -1122,16 +1149,20 @@ class _PhotoThumb extends StatelessWidget {
           Positioned(
             top: 3,
             right: 3,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xCC000000),
+            child: Semantics(
+              label: 'Remove photo',
+              button: true,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xCC000000),
+                  ),
+                  child: const Icon(Icons.close,
+                      size: 14, color: Colors.white),
                 ),
-                child: const Icon(Icons.close,
-                    size: 14, color: Colors.white),
               ),
             ),
           ),
@@ -1292,24 +1323,29 @@ class _ContactSourceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? _kAmber : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color: selected ? _kAmber : Colors.grey.shade300),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.grey.shade700,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 13,
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? _kAmber : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: selected ? _kAmber : Colors.grey.shade300),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.grey.shade700,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              fontSize: 13,
+            ),
           ),
         ),
       ),

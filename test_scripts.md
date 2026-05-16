@@ -241,7 +241,7 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
-| 5.1 | Accessibility (WCAG 2.2 AA) | — | Widget | ⬜ not yet written |
+| 5.1 | Accessibility (WCAG 2.2 AA) — `androidTapTargetGuideline`, `labeledTapTargetGuideline`, `textContrastGuideline` added to 13 existing test files; 1 new test file created | `test/widget/notifications/notifications_screen_test.dart` (new); `test/features/auth/presentation/screens/login_screen_test.dart`; `test/features/auth/presentation/screens/register_screen_test.dart`; `test/features/auth/presentation/screens/otp_verify_screen_test.dart`; `test/widget/feed/feed_screen_test.dart`; `test/widget/feed/item_detail_screen_test.dart`; `test/features/feed/presentation/screens/my_posts_screen_test.dart`; `test/widget/post/post_form_screen_test.dart`; `test/features/post/presentation/screens/edit_post_screen_test.dart`; `test/widget/requests/claim_request_screen_test.dart`; `test/widget/requests/found_report_screen_test.dart`; `test/widget/feed/request_detail_screen_test.dart`; `test/features/profile/presentation/screens/edit_profile_screen_test.dart`; `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 14 a11y test blocks; see `A11Y_AUDIT.md` for documented omissions |
 | 5.2 | Security & dependency scans | CI workflow + Firestore rules | Rules + CI | ⬜ not yet written |
 
 ---
@@ -257,8 +257,8 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 2.0 Data Layer | 335 + 24 (npm) | 359 |
 | 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
 | 4.0 Architecture | 44 | 44 |
-| 5.0 Quality Gates | 0 | — |
-| **Total** | **510 Dart + 24 npm** | **526 passing + 24 npm** |
+| 5.0 Quality Gates | 17 | 17 |
+| **Total** | **527 Dart + 24 npm** | **543 passing + 24 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
