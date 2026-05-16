@@ -1,0 +1,68 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [release, develop]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependency-scan:
+    name: Dart Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # OSV (https://osv.dev) is the authoritative CVE source for Dart/Flutter
+      # packages — `dart pub outdated` itself has no severity classification.
+      # The scanner reads pubspec.lock and fails on High or Critical findings.
+      - name: Install osv-scanner
+        run: |
+          curl -sSL -o /tmp/osv-scanner \
+            https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_linux_amd64
+          chmod +x /tmp/osv-scanner
+          sudo mv /tmp/osv-scanner /usr/local/bin/osv-scanner
+          osv-scanner --version
+
+      - name: Audit pubspec.lock for High/Critical CVEs
+        run: |
+          set +e
+          osv-scanner --format=json --lockfile=pubspec.lock > osv-report.json
+          STATUS=$?
+          if [ "$STATUS" -eq 128 ]; then
+            echo "osv-scanner failed to run." >&2
+            exit 1
+          fi
+          # Exit 0 = no vulns, 1 = vulns found. Re-check severity below.
+          if [ ! -s osv-report.json ] || ! grep -q '"vulnerabilities"' osv-report.json; then
+            echo "No vulnerabilities reported."
+            exit 0
+          fi
+          # Fail only on High or Critical severity findings.
+          if grep -qiE '"severity"\s*:\s*"(HIGH|CRITICAL)"' osv-report.json; then
+            echo "::error::High or Critical vulnerability detected. Resolve before merging."
+            cat osv-report.json
+            exit 1
+          fi
+          echo "Only Low/Medium findings — not blocking."
+
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

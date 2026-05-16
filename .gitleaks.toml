@@ -1,0 +1,13 @@
+title = "Campus Lost & Found — gitleaks configuration"
+
+# Extend gitleaks' built-in rules; this file only adds an allowlist for the
+# public Firebase web config. Without `useDefault = true` gitleaks would treat
+# this file as the only ruleset and detect nothing.
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Firebase web config is intentionally public. The API key in firebase_options.dart is an app identifier, not a server secret; access control is enforced by Firestore and Storage security rules."
+  paths = [
+    '''lib/config/firebase_options\.dart''',
+  ]

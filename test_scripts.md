@@ -242,7 +242,7 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 5.1 | Accessibility (WCAG 2.2 AA) — `androidTapTargetGuideline`, `labeledTapTargetGuideline`, `textContrastGuideline` added to 13 existing test files; 1 new test file created | `test/widget/notifications/notifications_screen_test.dart` (new); `test/features/auth/presentation/screens/login_screen_test.dart`; `test/features/auth/presentation/screens/register_screen_test.dart`; `test/features/auth/presentation/screens/otp_verify_screen_test.dart`; `test/widget/feed/feed_screen_test.dart`; `test/widget/feed/item_detail_screen_test.dart`; `test/features/feed/presentation/screens/my_posts_screen_test.dart`; `test/widget/post/post_form_screen_test.dart`; `test/features/post/presentation/screens/edit_post_screen_test.dart`; `test/widget/requests/claim_request_screen_test.dart`; `test/widget/requests/found_report_screen_test.dart`; `test/widget/feed/request_detail_screen_test.dart`; `test/features/profile/presentation/screens/edit_profile_screen_test.dart`; `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 14 a11y test blocks; see `A11Y_AUDIT.md` for documented omissions |
-| 5.2 | Security & dependency scans | CI workflow + Firestore rules | Rules + CI | ⬜ not yet written |
+| 5.2 | Security & dependency scans — enhanced Firestore rules (`createdAt` enforcement, `userId` immutability, request RBAC split), CI workflow, `SECURITY.md` | `test/firestore_rules/rules.test.js` + `.github/workflows/security.yml` | Rules + CI | ✅ 5 tests (requires emulator) |
 
 ---
 
@@ -257,11 +257,11 @@ Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or t
 | 2.0 Data Layer | 335 + 24 (npm) | 359 |
 | 3.0 Cross-Platform | 6 (integration) | requires chromedriver |
 | 4.0 Architecture | 44 | 44 |
-| 5.0 Quality Gates | 17 | 17 |
-| **Total** | **527 Dart + 24 npm** | **543 passing + 24 npm** |
+| 5.0 Quality Gates | 17 + 5 (npm) | 22 |
+| **Total** | **527 Dart + 29 npm** | **548 passing + 29 npm** |
 
 > Phase totals add to 418 Dart; `flutter test` is the source of truth. The small discrepancy vs. `flutter test` is accounting drift (some files cover multiple WBS rows). **`flutter test` is the source of truth.**
 
 ---
 
-*Last updated: 2026-05-15 (WBS 3.2 — Web Build, Testing & Verification. Added: `test_driver/integration_test.dart`, `integration_test/wbs_3_2_web_smoke_test.dart` (6 smoke tests), `CROSS_PLATFORM.md` (feature-parity matrix + manual verification steps), `integration_test: sdk: flutter` dev dependency, two new run commands. `flutter build web --release` verified passing. Previous entry: WBS 2.8 — Similar Posts Recommendation (category-based). Replaced old title-prefix query with `getRecentInCategory`. New files: `ItemTaxonomy` enum (8 values + metadata), `CategoryPicker` widget (4×2 icon grid), `SimilarPostsPanel` widget (category-based), `SimilarItemsNotifier` provider, `similar_items_provider.dart`. Updated: `Item` entity, `ItemModel`, `ItemRemoteDatasource`, `ItemRepository`, `ItemRepositoryImpl`, `PostFormScreen` (full UX overhaul — quick-pick chips, adaptive placeholders, photo row redesign, sensitive explanation box, photo safety hint), `firestore.indexes.json`, `firestore.rules`. Deleted: `GetSimilarFounderPostsUseCase`, `SimilarPostsNotifier`, old test file. Added 21 new Dart tests + 5 npm rules tests across 5 new/updated test files. Old WBS 2.8 test deleted (use case removed). All Dart tests pass.)*
+*Last updated: 2026-05-15 (WBS 5.2 — Security & Dependency Scans. Enhanced `firestore.rules`: `createdAt == request.time` on items/requests create; `userId` + `createdAt` immutable on items update; `editedAt` server-timestamp guard; requests update RBAC split (requester cancel-only / poster approve-reject-only). New files: `.github/workflows/security.yml`, `.gitleaks.toml`, `SECURITY.md`. Updated: `test/firestore_rules/rules.test.js` (+ 5 new WBS 5.2 tests, 2 existing tests fixed to use `serverTimestamp()`), `test/firestore_rules/item_category.test.js` (`validBase()` fixed), `test/firestore_rules/package.json` (added `firebase ^10.0.0`). All npm rules tests pass. Previous entries: WBS 5.1 — Accessibility Sweep (WCAG 2.2 AA), WBS 4.1 — Clean Architecture, WBS 3.2 — Web Build, Testing & Verification, WBS 2.16 — Push Notifications, WBS 2.15 — QR Walk-in.)*
