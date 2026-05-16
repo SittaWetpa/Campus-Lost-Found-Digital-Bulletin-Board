@@ -6,21 +6,11 @@
 // handler is extracted directly. A lightweight req/res pair replaces Express
 // so no HTTP server is needed.
 //
-// Test cases:
-//   WBS 2.14 redaction:
-//   01 — sensitive item → description: '', contact: '', imageUrls: [], isSensitive: true
-//   02 — non-sensitive item → full description, contact, imageUrls
-//   03 — invalid API key → 401
-//   04 — non-GET method → 405
-//   05 — mixed feed: sensitive item redacted, general item full fields
-//
-//   WBS 2.9 new fields & filters:
-//   06 — response includes occurredAt and itemCategory for active items
-//   07 — ?category=founder → Firestore query receives category filter
-//   08 — ?keyword=wallet → Firestore query receives keyword filter
-//   09 — valid API key + active items only → 200 with items array
+// Module system: CommonJS, matching functions/index.js. Uses jest.doMock +
+// jest.resetModules + require() so each test re-loads the function module
+// with a freshly built Firestore mock chain.
 
-import {jest} from "@jest/globals";
+"use strict";
 
 const TEST_API_KEY = "test-key-xyz";
 
@@ -48,7 +38,7 @@ function makeReq({method = "GET", apiKey = TEST_API_KEY, query = {}} = {}) {
 }
 
 function makeRes() {
-    const res = {
+    return {
         _status: null,
         _body: null,
         status(code) {
@@ -60,7 +50,6 @@ function makeRes() {
             return this;
         },
     };
-    return res;
 }
 
 const SENSITIVE_DOC = {
@@ -99,41 +88,52 @@ describe("GET /items", () => {
     let handler;
     let getMock;
     let whereMock;
-    let queryMock;
 
-    beforeEach(async () => {
+    beforeEach(() => {
+        jest.resetModules();
+
         getMock = jest.fn();
         whereMock = jest.fn();
-        queryMock = {
+        const queryMock = {
             where: whereMock.mockReturnThis(),
             limit: jest.fn().mockReturnThis(),
             get: getMock,
         };
         const dbMock = {collection: jest.fn().mockReturnValue(queryMock)};
 
-        jest.unstable_mockModule("firebase-admin/app", () => ({
+        jest.doMock("firebase-admin/app", () => ({
             initializeApp: jest.fn(),
         }));
-        jest.unstable_mockModule("firebase-admin/firestore", () => ({
+        jest.doMock("firebase-admin/firestore", () => ({
             getFirestore: jest.fn().mockReturnValue(dbMock),
+            FieldValue: {serverTimestamp: jest.fn()},
         }));
-        jest.unstable_mockModule("firebase-admin/auth", () => ({
+        jest.doMock("firebase-admin/auth", () => ({
             getAuth: jest.fn(),
         }));
-        jest.unstable_mockModule("firebase-functions/v2/https", () => ({
+        jest.doMock("firebase-admin/storage", () => ({
+            getStorage: jest.fn(),
+        }));
+        jest.doMock("firebase-admin/messaging", () => ({
+            getMessaging: jest.fn(),
+        }));
+        jest.doMock("firebase-functions/v2/https", () => ({
             onRequest: jest.fn((_config, fn) => fn),
-            onCall: jest.fn(),
+            onCall: jest.fn((_config, fn) => fn),
             HttpsError: class HttpsError extends Error {},
         }));
-        jest.unstable_mockModule("firebase-functions/v2/scheduler", () => ({
+        jest.doMock("firebase-functions/v2/scheduler", () => ({
             onSchedule: jest.fn((_, fn) => fn),
         }));
-        jest.unstable_mockModule("firebase-functions/params", () => ({
+        jest.doMock("firebase-functions/v2/firestore", () => ({
+            onDocumentCreated: jest.fn((_, fn) => fn),
+            onDocumentUpdated: jest.fn((_, fn) => fn),
+        }));
+        jest.doMock("firebase-functions/params", () => ({
             defineSecret: jest.fn().mockReturnValue({value: () => TEST_API_KEY}),
         }));
 
-        const mod = await import("../../functions/index.js");
-        handler = mod.items;
+        handler = require("../../functions/index.js").items;
     });
 
     afterEach(() => {
@@ -222,7 +222,7 @@ describe("GET /items", () => {
             expect(sensitiveItem.imageUrls).toEqual([]);
 
             expect(generalItem.isSensitive).toBe(false);
-            expect(generalItem.description).toBe("Has a broken zipper" || "No cash inside");
+            expect(generalItem.description).toBe("No cash inside");
             expect(generalItem.contact).toBe("0812345678");
         },
     );
@@ -269,7 +269,6 @@ describe("GET /items", () => {
             await handler(makeReq({query: {category: "founder"}}), res);
 
             expect(res._status).toBe(200);
-            // Verify the where() chain received the category filter
             const whereCalls = whereMock.mock.calls;
             const categoryFilter = whereCalls.find(
                 ([field, , value]) => field === "category" && value === "founder",

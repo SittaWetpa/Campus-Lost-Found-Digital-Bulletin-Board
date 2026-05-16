@@ -2,19 +2,16 @@
   "name": "campus-lost-found-functions-tests",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "description": "WBS 2.14 — Cloud Function unit tests (Jest with ESM mocks)",
+  "description": "WBS 2.14 — Cloud Function unit tests (Jest with CommonJS mocks; mirrors functions/index.js module system)",
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    "test": "jest"
   },
   "devDependencies": {
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.0",
     "jest": "^29.7.0"
   },
   "jest": {
     "testEnvironment": "node",
     "testMatch": ["**/*.test.js", "**/*_test.js"],
-    "transform": {}
+    "modulePaths": ["<rootDir>/../../functions/node_modules"]
   }
 }

@@ -56,16 +56,6 @@ jobs:
   functions-esm-test:
     name: Cloud Functions ESM tests (test/functions/)
     runs-on: ubuntu-latest
-    # KNOWN BREAKAGE: the tests use `jest.unstable_mockModule` (ESM-only) but
-    # functions/index.js was converted to CommonJS `require(...)`. The mocks
-    # never intercept, the real `defineSecret` runs, and the API key check
-    # rejects every request with 401. Surfacing the failure here is the
-    # signal to fix it; gating PRs on it would block all merges until the
-    # tests are rewritten or functions/index.js is moved back to ESM.
-    continue-on-error: true
-    defaults:
-      run:
-        working-directory: test/functions
     steps:
       - uses: actions/checkout@v4
 
@@ -73,11 +63,26 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: test/functions/package-lock.json
+          cache-dependency-path: |
+            functions/package-lock.json
+            test/functions/package-lock.json
 
-      - run: npm ci
+      # functions/index.js requires firebase-admin/firebase-functions from its
+      # own node_modules. Jest's `modulePaths` config in test/functions points
+      # at functions/node_modules so the test mocks resolve to the same
+      # physical files functions/index.js loads — otherwise the mocks key on a
+      # different path and never intercept.
+      - name: Install functions/ deps (mock source)
+        working-directory: functions
+        run: npm ci
 
-      - run: npm test
+      - name: Install test/functions/ deps
+        working-directory: test/functions
+        run: npm ci
+
+      - name: Run ESM tests
+        working-directory: test/functions
+        run: npm test
 
   firestore-rules-test:
     name: Firestore rules tests (emulator)

@@ -3,13 +3,9 @@
 // Run: cd test/functions && npm test
 //
 // Strategy: mock firebase-admin so the function under test never hits a real
-// Firestore. Three scenarios are verified:
-//   1. One expired-sensitive doc → batch.update called with { status: 'expired' }
-//   2. Empty snapshot (no matching docs)  → batch never committed
-//   3. Non-expired doc (expiresAt > now)  → Firestore returns empty snap
-//      (the WHERE clause filters it out)  → status unchanged
+// Firestore. CommonJS module system, matching functions/index.js.
 
-import {jest} from "@jest/globals";
+"use strict";
 
 // ── Firestore mock helpers ─────────────────────────────────────────────────────
 
@@ -33,48 +29,57 @@ describe("autoExpireSensitivePosts — WBS 2.14", () => {
     let getMock;
     let handler;
 
-    beforeEach(async () => {
+    beforeEach(() => {
+        jest.resetModules();
+
         batchUpdateMock = jest.fn();
         batchCommitMock = jest.fn().mockResolvedValue(undefined);
-
-        const batchMock = {
-            update: batchUpdateMock,
-            commit: batchCommitMock,
-        };
+        const batchMock = {update: batchUpdateMock, commit: batchCommitMock};
 
         // Chain .where().where().where().get() — each .where returns the same
         // query object; .get() returns a snapshot set per test via getMock.
         getMock = jest.fn();
         const queryMock = {where: jest.fn().mockReturnThis(), get: getMock};
-
         const collectionMock = jest.fn().mockReturnValue(queryMock);
-        const dbMock = {collection: collectionMock, batch: jest.fn().mockReturnValue(batchMock)};
+        const dbMock = {
+            collection: collectionMock,
+            batch: jest.fn().mockReturnValue(batchMock),
+        };
 
-        // Intercept firebase-admin/firestore before the module is loaded
-        jest.unstable_mockModule("firebase-admin/app", () => ({
+        jest.doMock("firebase-admin/app", () => ({
             initializeApp: jest.fn(),
             getApp: jest.fn(),
         }));
-        jest.unstable_mockModule("firebase-admin/firestore", () => ({
+        jest.doMock("firebase-admin/firestore", () => ({
             getFirestore: jest.fn().mockReturnValue(dbMock),
+            FieldValue: {serverTimestamp: jest.fn()},
         }));
-        jest.unstable_mockModule("firebase-admin/auth", () => ({
+        jest.doMock("firebase-admin/auth", () => ({
             getAuth: jest.fn(),
         }));
-        jest.unstable_mockModule("firebase-functions/v2/https", () => ({
-            onRequest: jest.fn(),
-            onCall: jest.fn(),
+        jest.doMock("firebase-admin/storage", () => ({
+            getStorage: jest.fn(),
+        }));
+        jest.doMock("firebase-admin/messaging", () => ({
+            getMessaging: jest.fn(),
+        }));
+        jest.doMock("firebase-functions/v2/https", () => ({
+            onRequest: jest.fn((_config, fn) => fn),
+            onCall: jest.fn((_config, fn) => fn),
             HttpsError: class HttpsError extends Error {},
         }));
-        jest.unstable_mockModule("firebase-functions/v2/scheduler", () => ({
+        jest.doMock("firebase-functions/v2/scheduler", () => ({
             onSchedule: jest.fn((_, fn) => fn),
         }));
-        jest.unstable_mockModule("firebase-functions/params", () => ({
+        jest.doMock("firebase-functions/v2/firestore", () => ({
+            onDocumentCreated: jest.fn((_, fn) => fn),
+            onDocumentUpdated: jest.fn((_, fn) => fn),
+        }));
+        jest.doMock("firebase-functions/params", () => ({
             defineSecret: jest.fn().mockReturnValue({value: () => "test-key"}),
         }));
 
-        const mod = await import("../../functions/index.js");
-        handler = mod.autoExpireSensitivePosts;
+        handler = require("../../functions/index.js").autoExpireSensitivePosts;
     });
 
     afterEach(() => {
@@ -110,8 +115,6 @@ describe("autoExpireSensitivePosts — WBS 2.14", () => {
     // never returned by the query. The function sees an empty snapshot and
     // performs no batch write — equivalent to "status unchanged".
     test("03 — non-expired sensitive doc (expiresAt > now) → Firestore returns empty snap → no update", async () => {
-        // The WHERE expiresAt <= now clause means the function will receive
-        // zero docs for a future-dated post. We simulate that here.
         getMock.mockResolvedValue(makeQuerySnap([]));
 
         await handler();
