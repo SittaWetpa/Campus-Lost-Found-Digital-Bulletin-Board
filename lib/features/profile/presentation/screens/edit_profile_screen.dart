@@ -6,7 +6,7 @@ import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/profile/presentation/providers/profile_provider.dart';
 
-const _kAmber    = Color(0xFFD98A0E);
+const _kAmber    = Color(0xFFA06200); // R5(c) — was 0xFFD98A0E; AA-safe for white text + text-on-light
 const _kBg       = Color(0xFFFBF7EC);
 const _kBorder   = Color(0xFFE6DDC4);
 const _kInk500   = Color(0xFF7A6F5B);

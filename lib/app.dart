@@ -94,6 +94,8 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppTokens.surface,
+          // R5(c) — floating label was amber (~2.8:1); ink700 clears AA 4.5:1.
+          floatingLabelStyle: const TextStyle(color: AppTokens.ink700),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -116,6 +118,9 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
+            // R5(c) — white text on primary500 was ~2.8:1; amberAccessible clears AA.
+            backgroundColor: AppTokens.amberAccessible,
+            foregroundColor: AppTokens.onAmber,
             minimumSize: const Size.fromHeight(52),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

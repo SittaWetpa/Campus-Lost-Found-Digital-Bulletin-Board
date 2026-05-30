@@ -82,3 +82,41 @@ One `testWidgets('meets accessibility guidelines …')` block added to each of t
 | Compact `OutlinedButton` ("Edit", "Change photo") | Settings, Edit Profile | 84×32 dp | Remove `MaterialTapTargetSize.shrinkWrap` or add `minimumSize: Size(48, 48)` |
 | Status chip contrast ("PENDING", "APPROVED" etc.) | Request Detail | 3.12–3.71:1 | Darken chip text colors in `_Tokens` local palette |
 | Metadata text (timestamp, location) | Item Detail | ~4.32:1 | Bump `ink500` usages to `ink600` (`0xFF5C5242`) for 11–12 pt text |
+
+---
+
+## R5(c) Remediation — Contrast Debt Cleared (compliance-gap audit)
+
+The "Known Design Debt" above is now resolved. White↔amber contrast is symmetric,
+so a single accessible amber (`0xFFA06200`, ≈4.9:1 vs white / ≈4.6:1 vs cream)
+serves both as a button fill (white text on it) and as amber text. Every screen
+widget test now asserts `textContrastGuideline` (previously omitted on 11 of 14).
+
+### Token / color before → after
+
+| Element | Location | Before | After | Before ratio | After ratio |
+|---|---|---|---|---|---|
+| Primary `FilledButton` fill | `app.dart` theme + local `_kAmber`/`_kPrimary` | `0xFFD98A0E` / `0xFFCA8A04` | `0xFFA06200` (`AppTokens.amberAccessible`) | ~2.77:1 | ~4.9:1 |
+| Floating `labelText` | `app.dart` `inputDecorationTheme` | amber primary | `ink700` (`0xFF423A2D`) | ~2.79:1 | >7:1 |
+| Helper text "11-digit KMUTT ID" | `register_screen.dart` | `_amber` | `0xFF6B6050` | ~2.79:1 | ~4.6:1 |
+| Muted text (`Colors.grey`) | `login_screen.dart`, `otp_verify_screen.dart` | `0xFF9E9E9E` | `0xFF6B6050` | ~2.55:1 | ~4.6:1 |
+| Status accent `success` | `AppTokens` (chips, ACTIVE, "Found · Founder") | `0xFF2F7D3E` | `0xFF2A7038` | ~4.32:1 | ~5.2:1 |
+| Status accent `seeker` | `AppTokens` (chips, error) | `0xFFC94A3E` | `0xFFB23A2E` | ~3.6:1 (on seekerBg) | ~4.6:1 |
+| Status accent `warn` | `AppTokens` + `_Tokens` (PENDING chip) | `0xFFA96C00` | `0xFF8A5800` | ~3.71:1 | ~5.1:1 |
+| Secondary text `ink400` | `claim_request`, `found_report`, `request_detail` `_Tokens` | `0xFF9C9179` | `0xFF6E6450` | ~2.9–3.1:1 | ~5.9:1 |
+| AppBar "POST" action | `post_form_screen.dart` `_kAmber` | `0xFFCA8A04` | `0xFFA06200` | ~2.53:1 | ~4.6:1 |
+
+### Tests
+
+- `textContrastGuideline` re-enabled in all 14 screen test files (the 11 previously
+  omitting it: login, register, otp_verify, item_detail, post_form, edit_post,
+  claim_request, found_report, request_detail, settings, edit_profile).
+- `settings_screen_test` disables `GoogleFonts.config.allowRuntimeFetching` so the
+  guideline's `runAsync` no longer surfaces a font-download exception.
+- Dynamic type: `login_screen_test` adds a 1.5× `TextScaler` test
+  (`MediaQuery.withClampedTextScaling`) asserting no overflow/layout exception.
+
+> `androidTapTargetGuideline` omissions on compact buttons (Settings/Edit Profile
+> "Edit"/"Change photo", ItemCard) and the `edit_post` `labeledTapTarget` mock-leak
+> note are unchanged — those are tap-target/test-isolation items, out of scope for
+> the R5(c) contrast remediation.

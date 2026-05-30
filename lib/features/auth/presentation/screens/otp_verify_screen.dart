@@ -10,6 +10,8 @@ import 'package:campus_lost_found/features/auth/presentation/providers/auth_prov
 import 'package:campus_lost_found/features/auth/presentation/providers/otp_provider.dart';
 
 const _amber = Color(0xFFCA8A04);
+// R5(c) — Colors.grey (~2.6:1) failed AA; this clears 4.5:1 on white/cream.
+const _muted = Color(0xFF6B6050);
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   const OtpVerifyScreen({super.key});
@@ -220,7 +222,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Expires in $_timerText',
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: _muted),
                 ),
                 const SizedBox(height: 20),
                 // Verify button
@@ -249,7 +251,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                     onTap: otpState.isLoading ? null : _sendOtp,
                     child: RichText(
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: const TextStyle(fontSize: 14, color: _muted),
                         children: [
                           const TextSpan(text: "Didn't get a code? "),
                           TextSpan(

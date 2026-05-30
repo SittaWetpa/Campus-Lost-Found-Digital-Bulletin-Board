@@ -117,9 +117,8 @@ void main() {
         // ImagePickerPlatform mock leaks into EditPostScreen's PostFormWidget
         // and produces an unlabelled tap target. This is a pre-existing test
         // isolation issue in post_form_screen_test, not a WBS 5.1 defect.
-        // textContrastGuideline is omitted: the amber FilledButton ("Save")
-        // renders white text on amber (~2.77:1) — a pre-existing design token
-        // issue affecting all primary buttons, not in scope for WBS 5.1.
+        // R5(c) — textContrast re-enabled after the contrast token fix.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
   });

@@ -1043,9 +1043,8 @@ void main() {
 
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      // textContrastGuideline is omitted: the "POST" AppBar action button
-      // uses amber text (~2.53:1 on the AppBar background) — a pre-existing
-      // design token issue not in scope for WBS 5.1.
+      // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
     },
   );
 }

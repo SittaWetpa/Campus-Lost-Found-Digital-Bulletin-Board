@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/features/auth/domain/entities/auth_user.dart';
@@ -216,6 +217,11 @@ void main() {
     testWidgets(
       'meets accessibility guidelines (labels)',
       (tester) async {
+        // R5(c) — disable GoogleFonts runtime HTTP fetch so meetsGuideline's
+        // runAsync doesn't surface a network exception (uses bundled fallback).
+        GoogleFonts.config.allowRuntimeFetching = false;
+        addTearDown(() => GoogleFonts.config.allowRuntimeFetching = true);
+
         await tester.pumpWidget(_buildScreen());
         await tester.pumpAndSettle();
 
@@ -223,11 +229,8 @@ void main() {
         // MaterialTapTargetSize.shrinkWrap (32 dp tall) — a pre-existing
         // compact layout choice not in scope for WBS 5.1.
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: SettingsScreen uses
-        // GoogleFonts.fraunces which triggers an async HTTP fetch in the test
-        // runner; the fetch exception surfaces through meetsGuideline's
-        // runAsync and fails the test. Font download is a pre-existing
-        // test-infrastructure constraint, not a WBS 5.1 issue.
+        // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
   });

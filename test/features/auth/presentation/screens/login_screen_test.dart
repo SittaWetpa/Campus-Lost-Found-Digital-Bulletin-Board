@@ -200,9 +200,38 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: InputDecoration floating labelText
-        // inherits the amber primaryColor (~2.79:1 on white) which is a
-        // pre-existing design token issue not in scope for WBS 5.1.
+        // R5(c) — re-enabled after the contrast token fix (theme floating label
+        // → ink700; amberAccessible for amber-on-text). See A11Y_AUDIT.md.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
+
+    // R5(c) — dynamic type: the screen must not clip/overflow at 1.5x scale.
+    testWidgets(
+      'renders without overflow at 1.5x text scale',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authRepositoryProvider
+                  .overrideWith((_) => const _FakeAuthRepository()),
+              userRepositoryProvider.overrideWith((_) => _FakeUserRepository()),
+            ],
+            child: MaterialApp(
+              home: const LoginScreen(),
+              builder: (context, child) => MediaQuery.withClampedTextScaling(
+                minScaleFactor: 1.5,
+                maxScaleFactor: 1.5,
+                child: child!,
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        // No RenderFlex overflow or layout exception at 1.5x dynamic type.
+        expect(tester.takeException(), isNull);
+        expect(find.byType(LoginScreen), findsOneWidget);
       },
     );
 

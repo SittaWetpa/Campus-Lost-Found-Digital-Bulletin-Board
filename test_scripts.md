@@ -265,6 +265,8 @@ Run: `flutter test test/features/auth/`
 | R5(d) | Feed pagination datasource — `watchFeed(limit:)` bounds the live query; `fetchFeedPage` newest-first bounded; short final page; `fetchMyItemsPage` userId scoping | `test/features/feed/data/datasources/item_remote_datasource_test.dart` (group 05) | Unit | ✅ 4 tests |
 | R5(d) | Feed pagination view-models — `mergeFeedPages` dedup/sort; `FeedPagination`/`MyItemsPagination` loadMore append, cursor forwarding, reachedEnd guard, cross-page dedup | `test/features/feed/presentation/providers/feed_pagination_provider_test.dart` | Unit | ✅ 6 tests |
 | R5(d) | Image upload compression — Add Photo passes `imageQuality`/`maxWidth`/`maxHeight` to the picker | `test/widget/post/post_form_screen_test.dart` (R5(d) case) | Widget | ✅ 1 test |
+| R5(c) | `textContrastGuideline` re-enabled in all 14 screen test files after the contrast token fix (11 previously omitted): login, register, otp_verify, item_detail, post_form, edit_post, claim_request, found_report, request_detail, settings, edit_profile (feed, my_posts, notifications already had it) | the 14 screen `*_test.dart` files | Widget | ✅ 14 a11y blocks now assert contrast |
+| R5(c) | Dynamic type — screen renders without overflow at 1.5× `TextScaler` | `test/features/auth/presentation/screens/login_screen_test.dart` | Widget | ✅ 1 test |
 
 ---
 

@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/register_provider.dart';
 
-const _amber = Color(0xFFCA8A04);
-
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -149,7 +147,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   decoration: const InputDecoration(
                     labelText: 'STUDENT ID',
                     helperText: '11-digit KMUTT ID',
-                    helperStyle: TextStyle(color: _amber),
+                    // R5(c) — amber helper (~2.8:1) failed AA; ink clears 4.5:1.
+                    helperStyle: TextStyle(color: Color(0xFF6B6050)),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {

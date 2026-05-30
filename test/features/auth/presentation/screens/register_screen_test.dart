@@ -326,9 +326,8 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: InputDecoration floating labelText
-        // inherits the amber primaryColor (~2.79:1 on white) which is a
-        // pre-existing design token issue not in scope for WBS 5.1.
+        // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
 

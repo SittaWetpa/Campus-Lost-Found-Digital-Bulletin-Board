@@ -277,7 +277,8 @@ class _FoundReportScreenState extends ConsumerState<FoundReportScreen> {
             // ── Submit button ──────────────────────────────────────────────
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
+                // R5(c) — white-on-amber was ~2.8:1; AA-safe amber clears 4.5:1.
+                backgroundColor: const Color(0xFFA06200),
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: _kInk200,
                 padding: const EdgeInsets.symmetric(vertical: 14),

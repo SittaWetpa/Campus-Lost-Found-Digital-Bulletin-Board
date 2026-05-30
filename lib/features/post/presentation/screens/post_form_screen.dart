@@ -15,7 +15,7 @@ import 'package:campus_lost_found/features/post/presentation/widgets/category_pi
 import 'package:campus_lost_found/features/post/presentation/widgets/similar_posts_panel.dart';
 import 'package:campus_lost_found/shared/widgets/confirm_dialog.dart';
 
-const _kAmber = Color(0xFFCA8A04);
+const _kAmber = Color(0xFFA06200); // R5(c) — was 0xFFCA8A04; AA-safe for white text + text-on-light
 const _kGreen = Color(0xFF16A34A);
 const _kRed = Color(0xFFE11D48);
 const _kBg = Color(0xFFF5EDE0);
