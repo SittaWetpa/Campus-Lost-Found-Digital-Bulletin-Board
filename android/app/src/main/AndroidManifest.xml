@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- FCM push notifications (WBS 2.16) — required on Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Biometric resume guard (R1(b)) — local_auth BiometricPrompt -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <application
         android:label="campus_lost_found"
         android:name="${applicationName}"

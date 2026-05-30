@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
+import 'package:campus_lost_found/features/auth/presentation/widgets/biometric_gate.dart';
 
 class CampusLostFoundApp extends ConsumerStatefulWidget {
   const CampusLostFoundApp({super.key});
@@ -122,6 +123,9 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         ),
       ),
       routerConfig: router,
+      // R1(b) — biometric resume guard wraps all routed content. No-op on Web.
+      builder: (context, child) =>
+          BiometricGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

@@ -255,6 +255,16 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 
 ---
 
+### Phase 6.0 — Compliance Gaps (requirements audit)
+Run: `flutter test test/features/auth/`
+
+| Req | Description | Test file | Type | Status |
+|---|---|---|---|---|
+| R1(b) | Biometric resume guard — `AuthenticateOnResume` use case: graceful fallback when unsupported, success/failure delegation | `test/features/auth/domain/usecases/authenticate_on_resume_test.dart` | Unit | ✅ 3 tests |
+| R1(b) | Resume guard — `BiometricLock` notifier (locks only with session, unlock on pass, stays locked on fail, fallback) + `BiometricGate` overlay rendering | `test/features/auth/presentation/widgets/biometric_gate_test.dart` | Unit + Widget | ✅ 7 tests |
+
+---
+
 ## Coverage Summary
 
 Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or the VS Code Coverage Gutters extension.

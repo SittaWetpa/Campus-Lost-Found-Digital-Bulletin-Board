@@ -83,6 +83,10 @@ dependencies:
   # External app intents — tel: dialer links on detail screen (WBS 1.3, 2.14)
   url_launcher: ^6.3.1
 
+  # Biometric / device-credential resume guard (R1(b)) — Android Keystore-backed.
+  # Web is a no-op (WebAuthn is the intended Web equivalent); guarded by kIsWeb.
+  local_auth: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
