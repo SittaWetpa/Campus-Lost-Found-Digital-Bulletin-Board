@@ -348,15 +348,21 @@ class _NotificationsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: const Text(
-        'Notifications',
-        style: TextStyle(fontSize: 14, color: _kInk900),
+    // Wrapped in a transparent Material so the SwitchListTile paints its ink
+    // splashes on a Material ancestor below _Card's white DecoratedBox, rather
+    // than tripping Flutter's "background may be invisible" assertion.
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile(
+        title: const Text(
+          'Notifications',
+          style: TextStyle(fontSize: 14, color: _kInk900),
+        ),
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: _kAmber,
+        activeTrackColor: const Color(0x66D98A0E),
       ),
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: _kAmber,
-      activeTrackColor: const Color(0x66D98A0E),
     );
   }
 }

@@ -137,6 +137,42 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      # The Google Services Gradle plugin aborts assembleDebug if
+      # android/app/google-services.json is absent, and CLAUDE.md forbids
+      # committing the real file. This smoke test never touches Firebase at
+      # runtime (it does not call app.main()), so a structurally-valid
+      # placeholder with the registered package_name is enough to let the APK
+      # build. Not a real Firebase config — CI builds only, never shipped.
+      - name: Write placeholder google-services.json
+        run: |
+          cat > android/app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "campus-lost-found-ci",
+              "storage_bucket": "campus-lost-found-ci.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.kmutt.campuslostfound.campus_lost_found"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  { "current_key": "ci-placeholder-key-not-a-real-secret" }
+                ],
+                "services": {
+                  "appinvite_service": { "other_platform_oauth_client": [] }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+
       # KVM permissions for hardware-accelerated emulators on GitHub runners.
       - name: Enable KVM
         run: |
