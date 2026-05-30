@@ -113,3 +113,42 @@ jobs:
       # `emulators:exec` starts the emulator, runs the command, then shuts down.
       - name: Run rules tests against emulator
         run: firebase emulators:exec --only firestore --project demo-campus-lost-found "cd test/firestore_rules && npm test"
+
+  android-integration-test:
+    name: Android integration smoke (emulator)
+    # R5(a) — `flutter test` does not run integration_test/; this job boots an
+    # Android emulator so the WBS 3.1 build/render smoke (cases 01–02) actually
+    # executes in CI. Case 03 (full app.main() boot) stays skipped — it needs a
+    # Firebase Local Emulator and is a manual M3/M4 walkthrough.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      # KVM permissions for hardware-accelerated emulators on GitHub runners.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Android integration smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: flutter test integration_test/wbs_3_1_android_smoke_test.dart
