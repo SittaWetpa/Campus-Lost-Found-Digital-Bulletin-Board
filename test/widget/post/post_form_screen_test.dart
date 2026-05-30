@@ -86,6 +86,7 @@ class _FakeFeatureFlags implements FeatureFlagService {
 class _MockImagePickerPlatform extends ImagePickerPlatform
     with MockPlatformInterfaceMixin {
   int callCount = 0;
+  ImagePickerOptions? lastOptions; // R5(d) — capture compression args
 
   @override
   Future<XFile?> getImageFromSource({
@@ -93,6 +94,7 @@ class _MockImagePickerPlatform extends ImagePickerPlatform
     ImagePickerOptions options = const ImagePickerOptions(),
   }) async {
     callCount++;
+    lastOptions = options;
     return null;
   }
 }
@@ -906,6 +908,35 @@ void main() {
           reason: 'No SQ field on Seeker Post → Case 1 dialog must not appear');
       expect(mockPicker.callCount, 1,
           reason: 'Picker should open immediately on Seeker Post');
+    },
+  );
+
+  testWidgets(
+    'R5(d) — Add Photo passes compression args to the picker '
+    '(imageQuality/maxWidth/maxHeight)',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Seeker Post → no Photo Safety dialog, picker opens directly.
+      await tester.ensureVisible(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(mockPicker.lastOptions, isNotNull);
+      expect(mockPicker.lastOptions!.imageQuality, 85);
+      expect(mockPicker.lastOptions!.maxWidth, 1600);
+      expect(mockPicker.lastOptions!.maxHeight, 1600);
     },
   );
 

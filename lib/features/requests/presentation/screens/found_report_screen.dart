@@ -47,8 +47,12 @@ class _FoundReportScreenState extends ConsumerState<FoundReportScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (picked == null) return;
     setState(() => _pickedPhoto = picked);
   }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
@@ -598,12 +599,12 @@ class _MessageCard extends StatelessWidget {
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                req.photoUrl!,
+              child: CachedNetworkImage(
+                imageUrl: req.photoUrl!,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorWidget: (_, __, ___) =>
                     Container(height: 200, color: _Tokens.ink100),
               ),
             ),

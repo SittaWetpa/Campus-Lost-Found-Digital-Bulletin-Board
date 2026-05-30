@@ -5,12 +5,13 @@ import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
+import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_filter_provider.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/feed_pagination_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/feed_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_category_chip.dart';
 import 'package:campus_lost_found/features/notifications/presentation/providers/notification_providers.dart';
-import 'package:campus_lost_found/features/post/domain/entities/item_taxonomy.dart';
 import 'package:campus_lost_found/shared/widgets/offline_banner.dart';
 
 class FeedScreen extends ConsumerWidget {
@@ -45,22 +46,7 @@ class FeedScreen extends ConsumerWidget {
               child: feedAsync.when(
                 data: (items) => items.isEmpty
                     ? const _EmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                        itemCount: items.length,
-                        itemBuilder: (context, i) {
-                          final item = items[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: ItemCard(
-                              item: item,
-                              isOwner: item.userId == currentAuthUser?.uid,
-                              onTap: () =>
-                                  ItemDetailRoute(id: item.id).push(context),
-                            ),
-                          );
-                        },
-                      ),
+                    : _FeedList(items: items, currentUid: currentAuthUser?.uid),
                 loading: () => const Center(
                   child: CircularProgressIndicator(),
                 ),
@@ -78,6 +64,55 @@ class FeedScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         tooltip: 'Post item',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+/// Feed list with startAfter "load more" on scroll (R5(d)). The notifier
+/// guards against concurrent/end-of-list calls, so firing on every near-bottom
+/// scroll notification is safe.
+class _FeedList extends ConsumerWidget {
+  const _FeedList({required this.items, required this.currentUid});
+
+  final List<Item> items;
+  final String? currentUid;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagination = ref.watch(feedPaginationProvider);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 300 &&
+            !pagination.isLoadingMore &&
+            !pagination.reachedEnd) {
+          ref
+              .read(feedPaginationProvider.notifier)
+              .loadMore(items.last.createdAt);
+        }
+        return false;
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        itemCount: items.length + (pagination.isLoadingMore ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i >= items.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final item = items[i];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: ItemCard(
+              item: item,
+              isOwner: item.userId == currentUid,
+              onTap: () => ItemDetailRoute(id: item.id).push(context),
+            ),
+          );
+        },
       ),
     );
   }

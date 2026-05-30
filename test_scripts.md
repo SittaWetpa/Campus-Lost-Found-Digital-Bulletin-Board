@@ -262,6 +262,9 @@ Run: `flutter test test/features/auth/`
 |---|---|---|---|---|
 | R1(b) | Biometric resume guard — `AuthenticateOnResume` use case: graceful fallback when unsupported, success/failure delegation | `test/features/auth/domain/usecases/authenticate_on_resume_test.dart` | Unit | ✅ 3 tests |
 | R1(b) | Resume guard — `BiometricLock` notifier (locks only with session, unlock on pass, stays locked on fail, fallback) + `BiometricGate` overlay rendering | `test/features/auth/presentation/widgets/biometric_gate_test.dart` | Unit + Widget | ✅ 7 tests |
+| R5(d) | Feed pagination datasource — `watchFeed(limit:)` bounds the live query; `fetchFeedPage` newest-first bounded; short final page; `fetchMyItemsPage` userId scoping | `test/features/feed/data/datasources/item_remote_datasource_test.dart` (group 05) | Unit | ✅ 4 tests |
+| R5(d) | Feed pagination view-models — `mergeFeedPages` dedup/sort; `FeedPagination`/`MyItemsPagination` loadMore append, cursor forwarding, reachedEnd guard, cross-page dedup | `test/features/feed/presentation/providers/feed_pagination_provider_test.dart` | Unit | ✅ 6 tests |
+| R5(d) | Image upload compression — Add Photo passes `imageQuality`/`maxWidth`/`maxHeight` to the picker | `test/widget/post/post_form_screen_test.dart` (R5(d) case) | Widget | ✅ 1 test |
 
 ---
 

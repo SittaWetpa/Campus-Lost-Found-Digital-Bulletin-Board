@@ -5,10 +5,12 @@ import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/core/services/sync_metadata_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_local_datasource.dart';
 import 'package:campus_lost_found/features/feed/data/datasources/item_remote_datasource.dart';
+import 'package:campus_lost_found/core/constants/app_constants.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/domain/repositories/item_page_repository.dart';
 import 'package:campus_lost_found/features/feed/domain/repositories/item_repository.dart';
 
-class ItemRepositoryImpl implements ItemRepository {
+class ItemRepositoryImpl implements ItemRepository, ItemPageRepository {
   final ItemRemoteDatasource _remoteDatasource;
   final ItemLocalDatasource _localDatasource;
   final SyncMetadataDatasource _syncMetadata;
@@ -151,6 +153,44 @@ class ItemRepositoryImpl implements ItemRepository {
       return models.map((m) => m.toEntity()).toList();
     } on FirebaseException catch (e) {
       throw ItemFailure(e.message ?? 'Failed to load similar posts.');
+    } catch (_) {
+      throw const ItemFailure('An unexpected error occurred.');
+    }
+  }
+
+  @override
+  Future<List<Item>> fetchFeedPage({
+    DateTime? startAfterCreatedAt,
+    int limit = AppConstants.feedPageSize,
+  }) async {
+    try {
+      final models = await _remoteDatasource.fetchFeedPage(
+        startAfter: startAfterCreatedAt,
+        limit: limit,
+      );
+      return models.map((m) => m.toEntity()).toList();
+    } on FirebaseException catch (e) {
+      throw ItemFailure(e.message ?? 'Failed to load more items.');
+    } catch (_) {
+      throw const ItemFailure('An unexpected error occurred.');
+    }
+  }
+
+  @override
+  Future<List<Item>> fetchMyItemsPage({
+    required String userId,
+    DateTime? startAfterCreatedAt,
+    int limit = AppConstants.feedPageSize,
+  }) async {
+    try {
+      final models = await _remoteDatasource.fetchMyItemsPage(
+        userId: userId,
+        startAfter: startAfterCreatedAt,
+        limit: limit,
+      );
+      return models.map((m) => m.toEntity()).toList();
+    } on FirebaseException catch (e) {
+      throw ItemFailure(e.message ?? 'Failed to load more items.');
     } catch (_) {
       throw const ItemFailure('An unexpected error occurred.');
     }

@@ -1,10 +1,31 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:campus_lost_found/core/constants/app_constants.dart';
 import 'package:campus_lost_found/features/feed/data/models/item_model.dart';
 
 abstract interface class ItemRemoteDatasource {
-  Stream<List<ItemModel>> watchFeed();
+  /// Live first page of the feed, bounded to [limit] docs (R5(d)).
+  Stream<List<ItemModel>> watchFeed({int limit = AppConstants.feedPageSize});
   Stream<ItemModel?> watchItem(String itemId);
-  Stream<List<ItemModel>> watchMyItems(String userId);
+  /// Live first page of a user's items, bounded to [limit] docs (R5(d)).
+  Stream<List<ItemModel>> watchMyItems(
+    String userId, {
+    int limit = AppConstants.feedPageSize,
+  });
+
+  /// startAfter-based "load more" page of active feed items, ordered by
+  /// createdAt desc. Pass the createdAt of the last loaded item as [startAfter]
+  /// to fetch the next [limit] older items (R5(d)).
+  Future<List<ItemModel>> fetchFeedPage({
+    DateTime? startAfter,
+    int limit = AppConstants.feedPageSize,
+  });
+
+  /// startAfter-based "load more" page of a user's items (R5(d)).
+  Future<List<ItemModel>> fetchMyItemsPage({
+    required String userId,
+    DateTime? startAfter,
+    int limit = AppConstants.feedPageSize,
+  });
   Future<ItemModel?> getItemById(String itemId);
   Future<List<ItemModel>> searchByTitle(String keyword);
   /// Returns up to [limit] active, non-sensitive Founder posts in [categoryId],
@@ -39,10 +60,11 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
   CollectionReference get _items => _firestore.collection('items');
 
   @override
-  Stream<List<ItemModel>> watchFeed() {
+  Stream<List<ItemModel>> watchFeed({int limit = AppConstants.feedPageSize}) {
     return _items
         .where('status', isEqualTo: 'active')
         .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
         .map((s) => s.docs.map(ItemModel.fromFirestore).toList());
   }
@@ -55,12 +77,47 @@ class FirestoreItemDatasource implements ItemRemoteDatasource {
   }
 
   @override
-  Stream<List<ItemModel>> watchMyItems(String userId) {
+  Stream<List<ItemModel>> watchMyItems(
+    String userId, {
+    int limit = AppConstants.feedPageSize,
+  }) {
     return _items
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
         .map((s) => s.docs.map(ItemModel.fromFirestore).toList());
+  }
+
+  @override
+  Future<List<ItemModel>> fetchFeedPage({
+    DateTime? startAfter,
+    int limit = AppConstants.feedPageSize,
+  }) async {
+    Query query = _items
+        .where('status', isEqualTo: 'active')
+        .orderBy('createdAt', descending: true);
+    if (startAfter != null) {
+      query = query.startAfter([Timestamp.fromDate(startAfter)]);
+    }
+    final snapshot = await query.limit(limit).get();
+    return snapshot.docs.map(ItemModel.fromFirestore).toList();
+  }
+
+  @override
+  Future<List<ItemModel>> fetchMyItemsPage({
+    required String userId,
+    DateTime? startAfter,
+    int limit = AppConstants.feedPageSize,
+  }) async {
+    Query query = _items
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true);
+    if (startAfter != null) {
+      query = query.startAfter([Timestamp.fromDate(startAfter)]);
+    }
+    final snapshot = await query.limit(limit).get();
+    return snapshot.docs.map(ItemModel.fromFirestore).toList();
   }
 
   @override

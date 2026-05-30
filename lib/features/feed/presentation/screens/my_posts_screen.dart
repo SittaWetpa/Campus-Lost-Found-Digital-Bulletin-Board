@@ -4,6 +4,7 @@ import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
+import 'package:campus_lost_found/features/feed/presentation/providers/feed_pagination_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/providers/item_provider.dart';
 import 'package:campus_lost_found/features/feed/presentation/widgets/item_card.dart';
 
@@ -24,8 +25,12 @@ class _MyPostsScreenState extends ConsumerState<MyPostsScreen> {
     final itemsAsync = uid.isNotEmpty
         ? ref.watch(watchMyItemsProvider(uid))
         : const AsyncData<List<Item>>([]);
+    final pagination = uid.isNotEmpty
+        ? ref.watch(myItemsPaginationProvider(uid))
+        : const PagedItems();
 
-    final all = itemsAsync.valueOrNull ?? [];
+    // Merge the live first page with any startAfter-loaded older pages (R5(d)).
+    final all = mergeFeedPages(itemsAsync.valueOrNull ?? const [], pagination.items);
     final active = all.where((i) => i.status == ItemStatus.active).toList();
     final resolved = all.where((i) => i.status == ItemStatus.resolved).toList();
     final list = _activeTab ? active : resolved;
@@ -107,18 +112,46 @@ class _MyPostsScreenState extends ConsumerState<MyPostsScreen> {
                                 ? "You haven't posted anything yet."
                                 : 'No resolved posts yet.',
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-                            itemCount: list.length,
-                            itemBuilder: (context, i) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: ItemCard(
-                                item: list[i],
-                                isOwner: true,
-                                showStatus: true,
-                                onTap: () =>
-                                    ItemDetailRoute(id: list[i].id).push(context),
-                              ),
+                        : NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (uid.isNotEmpty &&
+                                  list.isNotEmpty &&
+                                  notification.metrics.pixels >=
+                                      notification.metrics.maxScrollExtent -
+                                          300 &&
+                                  !pagination.isLoadingMore &&
+                                  !pagination.reachedEnd) {
+                                ref
+                                    .read(myItemsPaginationProvider(uid)
+                                        .notifier)
+                                    .loadMore(list.last.createdAt);
+                              }
+                              return false;
+                            },
+                            child: ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                              itemCount: list.length +
+                                  (pagination.isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, i) {
+                                if (i >= list.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  );
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: ItemCard(
+                                    item: list[i],
+                                    isOwner: true,
+                                    showStatus: true,
+                                    onTap: () => ItemDetailRoute(id: list[i].id)
+                                        .push(context),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                   ),

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 
@@ -37,12 +38,12 @@ class _PhotoGalleryState extends State<PhotoGallery> {
         children: [
           GestureDetector(
             onTap: () => _openFullScreen(context),
-            child: Image.network(
-              widget.photos[_idx],
+            child: CachedNetworkImage(
+              imageUrl: widget.photos[_idx],
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              errorWidget: (_, __, ___) =>
                   Container(color: AppTokens.ink100),
             ),
           ),
@@ -145,10 +146,10 @@ class _FullScreenViewerState extends State<_FullScreenViewer> {
               minScale: 1,
               maxScale: 4,
               child: Center(
-                child: Image.network(
-                  widget.photos[i],
+                child: CachedNetworkImage(
+                  imageUrl: widget.photos[i],
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorWidget: (_, __, ___) => const Icon(
                     Icons.broken_image_outlined,
                     color: Colors.white54,
                     size: 64,

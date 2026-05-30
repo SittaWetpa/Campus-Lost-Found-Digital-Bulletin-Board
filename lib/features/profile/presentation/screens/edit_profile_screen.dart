@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -58,6 +59,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
+      maxWidth: 512,
+      maxHeight: 512,
     );
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
@@ -170,7 +173,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             radius: 32,
                             backgroundColor: _avatarColor(user.uid),
                             backgroundImage: user.avatarUrl != null
-                                ? NetworkImage(user.avatarUrl!)
+                                ? CachedNetworkImageProvider(user.avatarUrl!)
                                 : null,
                             child: user.avatarUrl == null
                                 ? Text(

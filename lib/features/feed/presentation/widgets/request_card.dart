@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:campus_lost_found/features/requests/domain/entities/item_request.dart';
 
@@ -80,12 +81,12 @@ class RequestCard extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              request.photoUrl!,
+                            child: CachedNetworkImage(
+                              imageUrl: request.photoUrl!,
                               width: 48,
                               height: 48,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorWidget: (_, __, ___) => Container(
                                 width: 48,
                                 height: 48,
                                 color: const Color(0xFFE5E7EB),
