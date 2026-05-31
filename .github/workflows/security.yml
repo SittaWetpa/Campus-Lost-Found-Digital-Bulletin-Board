@@ -60,9 +60,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # gitleaks-action's pull_request mode scans the commit range
+      # `<base>^..<head>`, which aborts with "unknown revision" when the base
+      # commit's parent isn't reachable in the checkout (it never even reaches
+      # the rules — it found 0 leaks before erroring). Scan the working tree
+      # directly instead: it still honours .gitleaks.toml — including the
+      # public Firebase/reCAPTCHA key allowlist — and has no dependency on git
+      # history or the PR diff range.
+      - name: Install gitleaks
+        run: |
+          curl -sSL -o /tmp/gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan working tree for secrets
+        run: gitleaks detect --no-git --redact -v --config=.gitleaks.toml --exit-code=1
