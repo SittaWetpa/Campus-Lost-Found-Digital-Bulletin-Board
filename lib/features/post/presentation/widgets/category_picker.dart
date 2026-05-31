@@ -22,7 +22,11 @@ class CategoryPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GridView.builder(
+        // Cap the grid to a mobile-like width so the 4 tiles keep a fixed
+        // size instead of stretching to fill wide (web) viewports.
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -81,6 +85,7 @@ class CategoryPicker extends StatelessWidget {
               ),
             );
           },
+          ),
         ),
         if (errorText != null) ...[
           const SizedBox(height: 6),
