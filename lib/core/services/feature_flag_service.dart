@@ -19,7 +19,7 @@ class FeatureFlagService implements FeatureFlagRepository {
     await _remoteConfig.setDefaults({
       'secret_question_enabled': true,
       'sensitive_item_enabled': true,
-      'security_office_contact': '02-470-9999',
+      'security_office_contact': '02-470-9820',
       'sensitive_categories':
           '["credit_card","id_card","passport","key","document"]',
     });

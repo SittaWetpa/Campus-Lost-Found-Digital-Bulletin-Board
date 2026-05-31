@@ -401,6 +401,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

@@ -20,7 +20,7 @@ _MockFirebaseRemoteConfig _defaultMock() {
   when(() => rc.getBool('secret_question_enabled')).thenReturn(true);
   when(() => rc.getBool('sensitive_item_enabled')).thenReturn(true);
   when(() => rc.getString('security_office_contact'))
-      .thenReturn('02-470-9999');
+      .thenReturn('02-470-9820');
   when(() => rc.getString('sensitive_categories'))
       .thenReturn('["credit_card","id_card","passport","key","document"]');
   when(() => rc.setDefaults(any())).thenAnswer((_) async {});

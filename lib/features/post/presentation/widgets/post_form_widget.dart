@@ -173,6 +173,7 @@ class _PostFormWidgetState extends State<PostFormWidget> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [

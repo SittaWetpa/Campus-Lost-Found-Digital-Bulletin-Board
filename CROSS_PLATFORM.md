@@ -11,7 +11,7 @@
 | Command | Status | Notes |
 |---|---|---|
 | `flutter build web --release` | ✅ Zero errors | `build/web/` generated; WASM dry-run also passes |
-| `flutter build apk --release` | ✅ Verified (WBS 3.1) | APK generated for Android |
+| `flutter build apk --release` | ✅ Re-verified 2026-05-31 | Builds after bumping the `google-services` Gradle plugin to 4.4.2 (Crashlytics plugin v3 requires ≥4.4.1). Requires `android/app/google-services.json` present locally (gitignored — fetch with `firebase apps:sdkconfig android <appId>` or `flutterfire configure`) |
 
 ---
 
