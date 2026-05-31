@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:campus_lost_found/core/observability/app_logger.dart';
 
-const _kAmber  = Color(0xFFD98A0E);
-const _kBg     = Color(0xFFFBF7EC);
+const _kAmber = Color(0xFFD98A0E);
+const _kBg = Color(0xFFFBF7EC);
 const _kBorder = Color(0xFFE6DDC4);
 const _kInk500 = Color(0xFF7A6F5B);
 const _kInk900 = Color(0xFF1B1610);
@@ -18,6 +18,13 @@ class DebugMenuScreen extends StatelessWidget {
   }
 
   void _triggerNonFatalCrash() {
+    // Production path: non-fatals are recorded via AppLogger.error
+    // (unit-tested in app_logger_test.dart, cases U1/U2).
+    //
+    // NOTE: Crashlytics writes the non-fatal to disk now but only UPLOADS it on
+    // the next app launch. There is no supported mid-session flush while
+    // automatic collection is enabled (sendUnsentReports() is a no-op then), so
+    // to see this event in the console: trigger it, fully restart the app, wait.
     AppLogger.error(
       'Test non-fatal crash triggered from debug menu',
       tag: 'DebugMenuScreen',
@@ -66,7 +73,10 @@ class DebugMenuScreen extends StatelessWidget {
               _triggerNonFatalCrash();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Non-fatal error sent to Crashlytics (release only)'),
+                  content: Text(
+                    'Non-fatal recorded. Fully restart the app to upload it, '
+                    'then check Crashlytics → Non-fatals.',
+                  ),
                 ),
               );
             },
@@ -79,27 +89,27 @@ class DebugMenuScreen extends StatelessWidget {
             onTap: kIsWeb
                 ? null
                 : () => showDialog<void>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Trigger fatal crash?'),
-                        content: const Text(
-                          'The app will crash immediately. This is irreversible.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: _triggerFatalCrash,
-                            child: Text(
-                              'Crash now',
-                              style: TextStyle(color: Colors.red.shade700),
-                            ),
-                          ),
-                        ],
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Trigger fatal crash?'),
+                      content: const Text(
+                        'The app will crash immediately. This is irreversible.',
                       ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: _triggerFatalCrash,
+                          child: Text(
+                            'Crash now',
+                            style: TextStyle(color: Colors.red.shade700),
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
           ),
           if (kIsWeb)
             const Padding(

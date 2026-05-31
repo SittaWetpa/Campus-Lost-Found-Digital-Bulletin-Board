@@ -25,6 +25,14 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      # Formatting gate (D1). Reports any file not matching `dart format`
+      # defaults. Non-blocking for now (no --set-exit-if-changed) because the
+      # pre-existing tree predates this gate — mirrors the analyze step's
+      # tighten-later policy below. To make it blocking after a one-time
+      # `dart format lib test` pass, add `--set-exit-if-changed`.
+      - name: dart format check
+        run: dart format --output=none lib test
+
       # --no-fatal-warnings keeps pre-existing warnings visible in logs but
       # only fails the job on hard errors. Tighten once the warnings are
       # cleaned up in a dedicated pass.

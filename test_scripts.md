@@ -270,6 +270,17 @@ Run: `flutter test test/features/auth/`
 
 ---
 
+### Phase 7.0 — Golden (Visual Regression) Tests
+Run (compare): `flutter test test/golden/widget_golden_test.dart`
+Regenerate after an intentional visual change: `flutter test --update-goldens test/golden/widget_golden_test.dart`
+Reference images live in `test/golden/goldens/` (committed as binary — see `.gitattributes`).
+
+| WBS | Description | Test file | Type | Status |
+|---|---|---|---|---|
+| D4 | Golden snapshots of deterministic presentation widgets — `SensitiveBanner`, `ItemCategoryChip` (electronics + keys), `ItemCard` (seeker + founder walk-in QR ribbon) | `test/golden/widget_golden_test.dart` | Golden | ✅ 5 tests / 5 reference PNGs |
+
+---
+
 ## Coverage Summary
 
 Run `flutter test --coverage` then open `coverage/lcov.info` with `genhtml` or the VS Code Coverage Gutters extension.
