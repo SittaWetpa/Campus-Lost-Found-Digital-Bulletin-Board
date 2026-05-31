@@ -1,0 +1,198 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [develop, release]
+  push:
+    branches: [develop, release]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-test:
+    name: Flutter unit & widget tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      # Formatting gate (D1). Reports any file not matching `dart format`
+      # defaults. Non-blocking for now (no --set-exit-if-changed) because the
+      # pre-existing tree predates this gate — mirrors the analyze step's
+      # tighten-later policy below. To make it blocking after a one-time
+      # `dart format lib test` pass, add `--set-exit-if-changed`.
+      - name: dart format check
+        run: dart format --output=none lib test
+
+      # --no-fatal-warnings keeps pre-existing warnings visible in logs but
+      # only fails the job on hard errors. Tighten once the warnings are
+      # cleaned up in a dedicated pass.
+      - name: flutter analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: flutter test
+        run: flutter test
+
+  functions-test:
+    name: Cloud Functions tests (functions/)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - run: npm ci
+
+      - run: npm test
+
+  functions-esm-test:
+    name: Cloud Functions ESM tests (test/functions/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            functions/package-lock.json
+            test/functions/package-lock.json
+
+      # functions/index.js requires firebase-admin/firebase-functions from its
+      # own node_modules. Jest's `modulePaths` config in test/functions points
+      # at functions/node_modules so the test mocks resolve to the same
+      # physical files functions/index.js loads — otherwise the mocks key on a
+      # different path and never intercept.
+      - name: Install functions/ deps (mock source)
+        working-directory: functions
+        run: npm ci
+
+      - name: Install test/functions/ deps
+        working-directory: test/functions
+        run: npm ci
+
+      - name: Run ESM tests
+        working-directory: test/functions
+        run: npm test
+
+  firestore-rules-test:
+    name: Firestore rules tests (emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: test/firestore_rules/package-lock.json
+
+      # firebase-tools >=14 requires JDK 21+ to run the Firestore emulator.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Install test deps
+        working-directory: test/firestore_rules
+        run: npm ci
+
+      # Emulator reads firestore.rules from the project root via firebase.json.
+      # `emulators:exec` starts the emulator, runs the command, then shuts down.
+      - name: Run rules tests against emulator
+        run: firebase emulators:exec --only firestore --project demo-campus-lost-found "cd test/firestore_rules && npm test"
+
+  android-integration-test:
+    name: Android integration smoke (emulator)
+    # R5(a) — `flutter test` does not run integration_test/; this job boots an
+    # Android emulator so the WBS 3.1 build/render smoke (cases 01–02) actually
+    # executes in CI. Case 03 (full app.main() boot) stays skipped — it needs a
+    # Firebase Local Emulator and is a manual M3/M4 walkthrough.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      # The Google Services Gradle plugin aborts assembleDebug if
+      # android/app/google-services.json is absent, and CLAUDE.md forbids
+      # committing the real file. This smoke test never touches Firebase at
+      # runtime (it does not call app.main()), so a structurally-valid
+      # placeholder with the registered package_name is enough to let the APK
+      # build. Not a real Firebase config — CI builds only, never shipped.
+      - name: Write placeholder google-services.json
+        run: |
+          cat > android/app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "campus-lost-found-ci",
+              "storage_bucket": "campus-lost-found-ci.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.kmutt.campuslostfound.campus_lost_found"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  { "current_key": "ci-placeholder-key-not-a-real-secret" }
+                ],
+                "services": {
+                  "appinvite_service": { "other_platform_oauth_client": [] }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+
+      # KVM permissions for hardware-accelerated emulators on GitHub runners.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Android integration smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: flutter test integration_test/wbs_3_1_android_smoke_test.dart

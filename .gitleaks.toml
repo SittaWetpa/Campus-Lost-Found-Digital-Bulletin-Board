@@ -1,0 +1,15 @@
+title = "Campus Lost & Found — gitleaks configuration"
+
+# Extend gitleaks' built-in rules; this file only adds an allowlist for the
+# public Firebase web config. Without `useDefault = true` gitleaks would treat
+# this file as the only ruleset and detect nothing.
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Firebase/GCP web config and the reCAPTCHA site key are intentionally public client-side identifiers, not server secrets. The API keys in firebase_options.dart and google-services.json are app identifiers; access control is enforced by Firestore and Storage security rules. The reCAPTCHA site key in the walk-in page is designed to be embedded in public HTML."
+  paths = [
+    '''lib/config/firebase_options\.dart''',
+    '''android/app/google-services\.json''',
+    '''hosting/walkin/index\.html''',
+  ]

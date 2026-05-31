@@ -1,0 +1,69 @@
+{
+  "hosting": {
+    "public": "hosting",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/api/walkin",
+        "function": {
+          "functionId": "walkin",
+          "region": "asia-southeast1"
+        }
+      },
+      {
+        "source": "/walkin",
+        "destination": "/walkin/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "campus-lost-found-e58a7",
+          "appId": "1:901205365124:android:703293fa0103261db1cdd1",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "campus-lost-found-e58a7",
+          "configurations": {
+            "android": "1:901205365124:android:703293fa0103261db1cdd1",
+            "web": "1:901205365124:web:765d93e5a5662319b1cdd1"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-southeast1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "remoteconfig": {
+    "template": "remoteconfig.template.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": []
+    }
+  ],
+  "storage": [
+    {
+      "bucket": "campus-lost-found-e58a7.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
+}

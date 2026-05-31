@@ -1,0 +1,17 @@
+{
+  "name": "campus-lost-found-functions-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WBS 2.14 — Cloud Function unit tests (Jest with CommonJS mocks; mirrors functions/index.js module system)",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/*.test.js", "**/*_test.js"],
+    "modulePaths": ["<rootDir>/../../functions/node_modules"]
+  }
+}

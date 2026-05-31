@@ -31,20 +31,85 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  # Firebase core
+  firebase_core: ^3.6.0
+
+  # Auth (WBS 0.1)
+  firebase_auth: ^5.3.1
+
+  # Firestore (WBS 2.1–2.7)
+  cloud_firestore: ^5.4.4
+
+  # Cloud Functions — OTP callables (WBS 0.5)
+  cloud_functions: ^5.1.3
+
+  # HTTP client — external REST API (WBS 2.9)
+  http: ^1.2.0
+
+  # Storage (WBS 1.4, 1.8, 2.4)
+  firebase_storage: ^12.3.2
+
+  # Crashlytics (WBS 2.12) – mobile only, guarded by kIsWeb at call sites
+  firebase_crashlytics: ^4.1.3
+
+  # Remote Config (WBS 2.13)
+  firebase_remote_config: ^5.1.3
+
+  # Push Notifications (WBS 2.16)
+  firebase_messaging: ^15.1.0
+
+  # Routing (WBS 4.3)
+  go_router: ^14.3.0
+
+  # State management (WBS 4.2)
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Offline cache (WBS 2.11)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  connectivity_plus: ^6.0.5
+
+  # Preferences (WBS 2.5)
+  shared_preferences: ^2.3.2
+
+  # Image picker (Web-compatible – WBS 3.2)
+  image_picker: ^1.1.2
+  image_picker_for_web: ^3.0.5
+
+  # Cached network images (R5(d)) — memory + disk cache for remote photos
+  cached_network_image: ^3.4.1
+
+  # Typography — Fraunces (serif titles) + Plus Jakarta Sans (body)
+  google_fonts: ^6.2.1
+
+  # External app intents — tel: dialer links on detail screen (WBS 1.3, 2.14)
+  url_launcher: ^6.3.1
+
+  # Biometric / device-credential resume guard (R1(b)) — Android Keystore-backed.
+  # Web is a no-op (WebAuthn is the intended Web equivalent); guarded by kIsWeb.
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.4.0
+  hive_generator: ^2.0.1
+  mocktail: ^1.0.5
+  fake_cloud_firestore: ^3.0.2
+  # Transitive deps of image_picker, declared explicitly so the
+  # widget test that mocks ImagePickerPlatform.instance can import
+  # them without analyzer warnings.
+  image_picker_platform_interface: ^2.10.0
+  plugin_platform_interface: ^2.1.7
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.10
+  domain_lints:
+    path: tools/domain_lints
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,3 +1,6 @@
+# Claude Code local settings
+.claude/settings.local.json
+
 # Miscellaneous
 *.class
 *.log
@@ -43,3 +46,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node / npm
+node_modules/
+package-lock.json
+# CI needs reproducible installs — lockfiles for these directories ARE committed
+!functions/package-lock.json
+!test/functions/package-lock.json
+!test/firestore_rules/package-lock.json
+
+# Firebase secrets — never commit to a public repo
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.env
+*.env.*
+devtools_options.yaml

@@ -1,5 +1,6 @@
 package com.kmutt.campuslostfound.campus_lost_found
 
-import io.flutter.embedding.android.FlutterActivity
+// R1(b) — local_auth's BiometricPrompt requires a FragmentActivity host.
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity : FlutterFragmentActivity()
