@@ -56,7 +56,11 @@ package-lock.json
 !test/firestore_rules/package-lock.json
 
 # Firebase secrets — never commit to a public repo
-android/app/google-services.json
+# NOTE: android/app/google-services.json is intentionally tracked — it holds
+# only public client identifiers (no oauth/server secret), is already exposed
+# in firebase_options.dart and every shipped APK, and the release build needs
+# it. Access control is enforced by firestore.rules / storage.rules. It is
+# allowlisted in .gitleaks.toml.
 ios/Runner/GoogleService-Info.plist
 .env
 *.env.*
