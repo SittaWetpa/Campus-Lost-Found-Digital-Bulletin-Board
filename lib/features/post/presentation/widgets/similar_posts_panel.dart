@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -79,12 +80,12 @@ class _SimilarItemCard extends StatelessWidget {
             if (item.imageUrls.isNotEmpty) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: Image.network(
-                  item.imageUrls.first,
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrls.first,
                   width: 44,
                   height: 44,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorWidget: (_, __, ___) => Container(
                     width: 44,
                     height: 44,
                     color: Colors.grey.shade200,

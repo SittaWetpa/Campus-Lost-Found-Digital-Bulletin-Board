@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +23,7 @@ const _kPrimary800   = Color(0xFF5C3601);
 const _kInk900       = Color(0xFF1B1610);
 const _kInk800       = Color(0xFF2A241B);
 const _kInk500       = Color(0xFF7A6F5B);
-const _kInk400       = Color(0xFF9C9179);
+const _kInk400       = Color(0xFF6E6450); // R5(c) — was 0xFF9C9179 (~2.9:1)
 const _kInk200       = Color(0xFFE2DAC1);
 const _kInk100       = Color(0xFFF1EBD8);
 
@@ -229,7 +230,8 @@ class _ClaimRequestScreenState extends ConsumerState<ClaimRequestScreen> {
             // ── Submit button ──────────────────────────────────────────────
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
+                // R5(c) — white-on-amber was ~2.8:1; AA-safe amber clears 4.5:1.
+                backgroundColor: const Color(0xFFA06200),
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: _kInk200,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -326,12 +328,12 @@ class _ItemSummaryCard extends StatelessWidget {
           if (imageUrl != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                errorWidget: (_, __, ___) => _photoPlaceholder(),
               ),
             )
           else

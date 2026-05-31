@@ -257,9 +257,8 @@ void main() {
         // uses MaterialTapTargetSize.shrinkWrap (32 dp tall) — a pre-existing
         // compact layout choice not in scope for WBS 5.1.
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: the amber FilledButton ("Save changes")
-        // renders white text on amber (~2.77:1) — a pre-existing design token
-        // issue affecting all primary buttons, not in scope for WBS 5.1.
+        // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
   });

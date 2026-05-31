@@ -86,6 +86,7 @@ class _FakeFeatureFlags implements FeatureFlagService {
 class _MockImagePickerPlatform extends ImagePickerPlatform
     with MockPlatformInterfaceMixin {
   int callCount = 0;
+  ImagePickerOptions? lastOptions; // R5(d) — capture compression args
 
   @override
   Future<XFile?> getImageFromSource({
@@ -93,6 +94,7 @@ class _MockImagePickerPlatform extends ImagePickerPlatform
     ImagePickerOptions options = const ImagePickerOptions(),
   }) async {
     callCount++;
+    lastOptions = options;
     return null;
   }
 }
@@ -910,6 +912,35 @@ void main() {
   );
 
   testWidgets(
+    'R5(d) — Add Photo passes compression args to the picker '
+    '(imageQuality/maxWidth/maxHeight)',
+    (tester) async {
+      final originalInstance = ImagePickerPlatform.instance;
+      final mockPicker = _MockImagePickerPlatform();
+      ImagePickerPlatform.instance = mockPicker;
+      addTearDown(() => ImagePickerPlatform.instance = originalInstance);
+
+      await _navigateToForm(tester, profile: _testUser);
+
+      // Seeker Post → no Photo Safety dialog, picker opens directly.
+      await tester.ensureVisible(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I Lost Something'));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add photos (up to 3)'));
+      await tester.pumpAndSettle();
+
+      expect(mockPicker.lastOptions, isNotNull);
+      expect(mockPicker.lastOptions!.imageQuality, 85);
+      expect(mockPicker.lastOptions!.maxWidth, 1600);
+      expect(mockPicker.lastOptions!.maxHeight, 1600);
+    },
+  );
+
+  testWidgets(
     'Photo Safety Case 1 — Sensitive Item: no dialog on Add Photo; '
     'picker opens directly',
     (tester) async {
@@ -1012,9 +1043,8 @@ void main() {
 
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      // textContrastGuideline is omitted: the "POST" AppBar action button
-      // uses amber text (~2.53:1 on the AppBar background) — a pre-existing
-      // design token issue not in scope for WBS 5.1.
+      // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
     },
   );
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campus_lost_found/core/services/feature_flag_service.dart';
@@ -21,7 +22,7 @@ class _Tokens {
   static const ink700 = Color(0xFF423A2D);
   static const ink600 = Color(0xFF5C5242);
   static const ink500 = Color(0xFF7A6F5B);
-  static const ink400 = Color(0xFF9C9179);
+  static const ink400 = Color(0xFF6E6450); // R5(c) — was 0xFF9C9179 (~3.1:1)
   static const ink200 = Color(0xFFE2DAC1);
   static const ink100 = Color(0xFFF1EBD8);
 
@@ -37,7 +38,7 @@ class _Tokens {
   static const dangerBg = Color(0xFFFBE3DD);
   static const info = Color(0xFF2A5D8F);
   static const infoBg = Color(0xFFE0ECF5);
-  static const warn = Color(0xFFA96C00);
+  static const warn = Color(0xFF8A5800); // R5(c) — was 0xFFA96C00 (~3.7:1 on warnBg)
   static const warnBg = Color(0xFFFCECC3);
 }
 
@@ -598,12 +599,12 @@ class _MessageCard extends StatelessWidget {
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                req.photoUrl!,
+              child: CachedNetworkImage(
+                imageUrl: req.photoUrl!,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorWidget: (_, __, ___) =>
                     Container(height: 200, color: _Tokens.ink100),
               ),
             ),

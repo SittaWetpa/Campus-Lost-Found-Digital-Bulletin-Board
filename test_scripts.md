@@ -220,7 +220,7 @@ Run: `flutter test --coverage` and `flutter drive --target=test_driver/app.dart 
 | WBS | Description | Test file | Type | Status |
 |---|---|---|---|---|
 | 3.1 | Android build configuration — google-services + crashlytics plugins, applicationId/namespace match, POST_NOTIFICATIONS permission, deep-link intent filter, singleTop launchMode, gradle wrapper pin, pubspec deps | `test/integration/wbs_3_1_android_build_config_test.dart` | Unit (file-static) | ✅ 9 tests + 5 skipped (M1–M5 device-bound) |
-| 3.1 | Android on-device build smoke — APK installs, Flutter engine renders on Android, platform-detection invariants (kIsWeb/defaultTargetPlatform). Full `app.main()` Login walkthrough skipped (Firebase Firestore on Android emits async errors during `pumpAndSettle` without Emulator backing; covered hermetically by widget tests under `test/widget/auth/` and `test/features/auth/`) | `integration_test/wbs_3_1_android_smoke_test.dart` | Integration | ✅ 2 tests + 1 documented-skip (requires Android device/emulator) |
+| 3.1 | Android on-device build smoke — APK installs, Flutter engine renders on Android, platform-detection invariants (kIsWeb/defaultTargetPlatform). Full `app.main()` Login walkthrough skipped (Firebase Firestore on Android emits async errors during `pumpAndSettle` without Emulator backing; covered hermetically by widget tests under `test/widget/auth/` and `test/features/auth/`) | `integration_test/wbs_3_1_android_smoke_test.dart` | Integration | ✅ 2 tests + 1 documented-skip — now run in CI by the `android-integration-test` emulator job in `.github/workflows/test.yml` (R5(a)); case 03 stays skipped (needs Firebase Local Emulator, manual M3/M4) |
 | 3.1 | M1 — Full Dart test suite passes (`flutter test` exits with 0 failures) | Full suite via `flutter test` | All | ✅ 647 passed + 10 skipped + 0 failures (verified 2026-05-16) |
 | 3.1 | M2 — Coverage report (`flutter test --coverage` → `coverage/lcov.info` committed) | Full suite via `flutter test --coverage` | All | ✅ `coverage/lcov.info` generated 62 KB / 6,411 lines (verified 2026-05-16) |
 | 3.1 | M3 — App launches on Android device/emulator (`flutter run -d <android>`) | Manual on emulator-5554 | Manual | ⬜ capture launch screenshot |
@@ -252,6 +252,21 @@ Run: `flutter test` (accessibility guidelines are asserted inside widget tests)
 |---|---|---|---|---|
 | 5.1 | Accessibility (WCAG 2.2 AA) — `androidTapTargetGuideline`, `labeledTapTargetGuideline`, `textContrastGuideline` added to 13 existing test files; 1 new test file created | `test/widget/notifications/notifications_screen_test.dart` (new); `test/features/auth/presentation/screens/login_screen_test.dart`; `test/features/auth/presentation/screens/register_screen_test.dart`; `test/features/auth/presentation/screens/otp_verify_screen_test.dart`; `test/widget/feed/feed_screen_test.dart`; `test/widget/feed/item_detail_screen_test.dart`; `test/features/feed/presentation/screens/my_posts_screen_test.dart`; `test/widget/post/post_form_screen_test.dart`; `test/features/post/presentation/screens/edit_post_screen_test.dart`; `test/widget/requests/claim_request_screen_test.dart`; `test/widget/requests/found_report_screen_test.dart`; `test/widget/feed/request_detail_screen_test.dart`; `test/features/profile/presentation/screens/edit_profile_screen_test.dart`; `test/features/profile/presentation/screens/settings_screen_test.dart` | Widget | ✅ 14 a11y test blocks; see `A11Y_AUDIT.md` for documented omissions |
 | 5.2 | Security & dependency scans — enhanced Firestore rules (`createdAt` enforcement, `userId` immutability, request RBAC split), CI workflow, `SECURITY.md` | `test/firestore_rules/rules.test.js` + `.github/workflows/security.yml` | Rules + CI | ✅ 5 tests (requires emulator) |
+
+---
+
+### Phase 6.0 — Compliance Gaps (requirements audit)
+Run: `flutter test test/features/auth/`
+
+| Req | Description | Test file | Type | Status |
+|---|---|---|---|---|
+| R1(b) | Biometric resume guard — `AuthenticateOnResume` use case: graceful fallback when unsupported, success/failure delegation | `test/features/auth/domain/usecases/authenticate_on_resume_test.dart` | Unit | ✅ 3 tests |
+| R1(b) | Resume guard — `BiometricLock` notifier (locks only with session, unlock on pass, stays locked on fail, fallback) + `BiometricGate` overlay rendering | `test/features/auth/presentation/widgets/biometric_gate_test.dart` | Unit + Widget | ✅ 7 tests |
+| R5(d) | Feed pagination datasource — `watchFeed(limit:)` bounds the live query; `fetchFeedPage` newest-first bounded; short final page; `fetchMyItemsPage` userId scoping | `test/features/feed/data/datasources/item_remote_datasource_test.dart` (group 05) | Unit | ✅ 4 tests |
+| R5(d) | Feed pagination view-models — `mergeFeedPages` dedup/sort; `FeedPagination`/`MyItemsPagination` loadMore append, cursor forwarding, reachedEnd guard, cross-page dedup | `test/features/feed/presentation/providers/feed_pagination_provider_test.dart` | Unit | ✅ 6 tests |
+| R5(d) | Image upload compression — Add Photo passes `imageQuality`/`maxWidth`/`maxHeight` to the picker | `test/widget/post/post_form_screen_test.dart` (R5(d) case) | Widget | ✅ 1 test |
+| R5(c) | `textContrastGuideline` re-enabled in all 14 screen test files after the contrast token fix (11 previously omitted): login, register, otp_verify, item_detail, post_form, edit_post, claim_request, found_report, request_detail, settings, edit_profile (feed, my_posts, notifications already had it) | the 14 screen `*_test.dart` files | Widget | ✅ 14 a11y blocks now assert contrast |
+| R5(c) | Dynamic type — screen renders without overflow at 1.5× `TextScaler` | `test/features/auth/presentation/screens/login_screen_test.dart` | Widget | ✅ 1 test |
 
 ---
 

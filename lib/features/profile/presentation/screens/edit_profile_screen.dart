@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,7 +6,7 @@ import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/profile/presentation/providers/profile_provider.dart';
 
-const _kAmber    = Color(0xFFD98A0E);
+const _kAmber    = Color(0xFFA06200); // R5(c) — was 0xFFD98A0E; AA-safe for white text + text-on-light
 const _kBg       = Color(0xFFFBF7EC);
 const _kBorder   = Color(0xFFE6DDC4);
 const _kInk500   = Color(0xFF7A6F5B);
@@ -58,6 +59,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
+      maxWidth: 512,
+      maxHeight: 512,
     );
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
@@ -170,7 +173,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             radius: 32,
                             backgroundColor: _avatarColor(user.uid),
                             backgroundImage: user.avatarUrl != null
-                                ? NetworkImage(user.avatarUrl!)
+                                ? CachedNetworkImageProvider(user.avatarUrl!)
                                 : null,
                             child: user.avatarUrl == null
                                 ? Text(

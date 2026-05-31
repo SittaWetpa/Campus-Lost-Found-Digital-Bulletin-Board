@@ -261,10 +261,8 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: the PENDING status chip and
-        // requester secondary text use amber/grey tones with contrast ratios
-        // of 3.12–3.71:1 — pre-existing design token issues in _Tokens local
-        // palette not in scope for WBS 5.1.
+        // R5(c) — re-enabled after darkening the _Tokens chip/secondary colors.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
   });

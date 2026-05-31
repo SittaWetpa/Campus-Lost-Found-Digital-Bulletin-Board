@@ -115,6 +115,71 @@ void main() {
       });
     });
 
+    // R5(d) — feed pagination: bounded live query + startAfter "load more".
+    group('05 pagination (R5(d))', () {
+      Future<void> seedActive(int n) async {
+        for (var i = 0; i < n; i++) {
+          await fakeFirestore.collection('items').add({
+            'title': 'Item $i',
+            'description': 'desc',
+            'category': 'seeker',
+            'status': 'active',
+            'location': 'Canteen',
+            'contact': '081-000-0000',
+            'imageUrls': <String>[],
+            'occurredAt': Timestamp.fromDate(DateTime(2026, 1, 1)),
+            'userId': 'user-page',
+            // increasing createdAt → i=(n-1) is newest
+            'createdAt': Timestamp.fromDate(DateTime(2026, 1, 1).add(Duration(minutes: i))),
+          });
+        }
+      }
+
+      test('watchFeed(limit:) bounds the live query', () async {
+        await seedActive(5);
+        final models = await datasource.watchFeed(limit: 2).first;
+        expect(models.length, equals(2));
+      });
+
+      test('fetchFeedPage returns newest-first, bounded to limit', () async {
+        await seedActive(5);
+
+        // First page = newest `limit` items, createdAt descending.
+        final page1 = await datasource.fetchFeedPage(limit: 2);
+        expect(page1.map((m) => m.title), equals(['Item 4', 'Item 3']));
+        // (Value-based startAfter paging is not modelled by
+        // fake_cloud_firestore; the cursor wiring is asserted in
+        // feed_pagination_provider_test.dart.)
+      });
+
+      test('fetchFeedPage signals end of list with a short final page',
+          () async {
+        await seedActive(3);
+        final page = await datasource.fetchFeedPage(limit: 20);
+        expect(page.length, equals(3)); // < limit → caller marks reachedEnd
+      });
+
+      test('fetchMyItemsPage is scoped to the userId', () async {
+        await seedActive(2); // userId: user-page
+        await fakeFirestore.collection('items').add({
+          'title': 'Other user',
+          'description': 'desc',
+          'category': 'seeker',
+          'status': 'active',
+          'location': 'Gate',
+          'contact': '081-000-0001',
+          'imageUrls': <String>[],
+          'occurredAt': Timestamp.fromDate(DateTime(2026, 1, 1)),
+          'userId': 'someone-else',
+          'createdAt': Timestamp.now(),
+        });
+
+        final page = await datasource.fetchMyItemsPage(userId: 'user-page');
+        expect(page.length, equals(2));
+        expect(page.every((m) => m.userId == 'user-page'), isTrue);
+      });
+    });
+
     group('04 deleteItem()', () {
       test('document no longer exists after deletion', () async {
         final ref = await fakeFirestore.collection('items').add({

@@ -6,6 +6,8 @@ import 'package:campus_lost_found/core/errors/failures.dart';
 import 'package:campus_lost_found/features/auth/presentation/providers/auth_provider.dart';
 
 const _amber = Color(0xFFCA8A04);
+// R5(c) — Colors.grey (~2.6:1) failed AA; this clears 4.5:1 on white/cream.
+const _muted = Color(0xFF6B6050);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -97,7 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   RichText(
                     textAlign: TextAlign.center,
                     text: const TextSpan(
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      style: TextStyle(fontSize: 14, color: _muted),
                       children: [
                         TextSpan(
                           text: 'KMUTT',
@@ -177,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: RichText(
                         textAlign: TextAlign.center,
                         text: const TextSpan(
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                          style: TextStyle(fontSize: 14, color: _muted),
                           children: [
                             TextSpan(text: 'New to Lost & Found? '),
                             TextSpan(
@@ -196,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const Text(
                     'Only @mail.kmutt.ac.th accounts can sign in.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    style: TextStyle(fontSize: 13, color: _muted),
                   ),
                 ],
               ),

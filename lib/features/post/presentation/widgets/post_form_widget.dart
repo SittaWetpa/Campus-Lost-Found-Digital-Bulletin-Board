@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -97,7 +98,12 @@ class _PostFormWidgetState extends State<PostFormWidget> {
     final remaining = _maxPhotos - _totalPhotos;
     if (remaining <= 0) return;
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(limit: remaining);
+    final picked = await picker.pickMultiImage(
+      limit: remaining,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     for (final file in picked) {
       final bytes = await file.readAsBytes();
       setState(() {
@@ -353,7 +359,7 @@ class _PhotoGrid extends StatelessWidget {
       children: [
         for (int i = 0; i < keptUrls.length; i++)
           _PhotoThumbnail(
-            child: Image.network(keptUrls[i], fit: BoxFit.cover),
+            child: CachedNetworkImage(imageUrl: keptUrls[i], fit: BoxFit.cover),
             onRemove: () => onRemoveKept(i),
           ),
         for (int i = 0; i < newBytes.length; i++)

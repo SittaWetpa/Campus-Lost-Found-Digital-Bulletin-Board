@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,7 @@ import 'package:campus_lost_found/features/post/presentation/widgets/category_pi
 import 'package:campus_lost_found/features/post/presentation/widgets/similar_posts_panel.dart';
 import 'package:campus_lost_found/shared/widgets/confirm_dialog.dart';
 
-const _kAmber = Color(0xFFCA8A04);
+const _kAmber = Color(0xFFA06200); // R5(c) — was 0xFFCA8A04; AA-safe for white text + text-on-light
 const _kGreen = Color(0xFF16A34A);
 const _kRed = Color(0xFFE11D48);
 const _kBg = Color(0xFFF5EDE0);
@@ -213,7 +214,12 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
       if (!mounted) return;
     }
 
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (picked == null) return;
 
     setState(() => _isUploadingPhoto = true);
@@ -1136,10 +1142,10 @@ class _PhotoThumb extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              url,
+            child: CachedNetworkImage(
+              imageUrl: url,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorWidget: (_, __, ___) => Container(
                 color: Colors.grey.shade200,
                 child: Icon(Icons.broken_image,
                     color: Colors.grey.shade400),

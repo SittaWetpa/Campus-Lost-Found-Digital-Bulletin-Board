@@ -47,8 +47,12 @@ class _FoundReportScreenState extends ConsumerState<FoundReportScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (picked == null) return;
     setState(() => _pickedPhoto = picked);
   }
@@ -273,7 +277,8 @@ class _FoundReportScreenState extends ConsumerState<FoundReportScreen> {
             // ── Submit button ──────────────────────────────────────────────
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
+                // R5(c) — white-on-amber was ~2.8:1; AA-safe amber clears 4.5:1.
+                backgroundColor: const Color(0xFFA06200),
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: _kInk200,
                 padding: const EdgeInsets.symmetric(vertical: 14),

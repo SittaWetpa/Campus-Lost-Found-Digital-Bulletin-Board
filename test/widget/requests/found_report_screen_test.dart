@@ -99,9 +99,8 @@ void main() {
 
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      // textContrastGuideline is omitted: the AppBar action button and
-      // helper text use amber/grey tones that pre-date WBS 5.1 and are
-      // not in scope for this sweep.
+      // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
     },
   );
 }

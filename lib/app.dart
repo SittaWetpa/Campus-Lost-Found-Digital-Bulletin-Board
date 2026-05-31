@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_lost_found/config/router/app_router.dart';
 import 'package:campus_lost_found/core/messaging/root_scaffold_messenger.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
+import 'package:campus_lost_found/features/auth/presentation/widgets/biometric_gate.dart';
 
 class CampusLostFoundApp extends ConsumerStatefulWidget {
   const CampusLostFoundApp({super.key});
@@ -93,6 +94,8 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppTokens.surface,
+          // R5(c) — floating label was amber (~2.8:1); ink700 clears AA 4.5:1.
+          floatingLabelStyle: const TextStyle(color: AppTokens.ink700),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -115,6 +118,9 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
+            // R5(c) — white text on primary500 was ~2.8:1; amberAccessible clears AA.
+            backgroundColor: AppTokens.amberAccessible,
+            foregroundColor: AppTokens.onAmber,
             minimumSize: const Size.fromHeight(52),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -122,6 +128,9 @@ class _CampusLostFoundAppState extends ConsumerState<CampusLostFoundApp> {
         ),
       ),
       routerConfig: router,
+      // R1(b) — biometric resume guard wraps all routed content. No-op on Web.
+      builder: (context, child) =>
+          BiometricGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

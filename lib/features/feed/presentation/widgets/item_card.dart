@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:campus_lost_found/core/theme/app_tokens.dart';
 import 'package:campus_lost_found/features/feed/domain/entities/item.dart';
@@ -166,12 +167,12 @@ class _Thumbnail extends StatelessWidget {
     final base = item.imageUrls.isNotEmpty
         ? ClipRRect(
             borderRadius: BorderRadius.circular(AppTokens.rSm),
-            child: Image.network(
-              item.imageUrls.first,
+            child: CachedNetworkImage(
+              imageUrl: item.imageUrls.first,
               width: 72,
               height: 72,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _placeholder,
+              errorWidget: (_, __, ___) => _placeholder,
             ),
           )
         : _placeholder;

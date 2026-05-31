@@ -102,9 +102,8 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        // textContrastGuideline is omitted: the timer countdown and
-        // "Didn't get a code?" helper text use grey-on-white styling that
-        // pre-dates WBS 5.1 and is a known design token gap.
+        // R5(c) — re-enabled after the contrast token fix. See A11Y_AUDIT.md.
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
       },
     );
   });

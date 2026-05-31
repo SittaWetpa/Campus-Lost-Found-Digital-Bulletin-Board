@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +9,7 @@ import 'package:campus_lost_found/features/auth/presentation/providers/auth_prov
 import 'package:campus_lost_found/features/auth/presentation/providers/user_provider.dart';
 import 'package:campus_lost_found/features/profile/presentation/providers/profile_provider.dart';
 
-const _kAmber  = Color(0xFFD98A0E);
+const _kAmber  = Color(0xFFA06200); // R5(c) — was 0xFFD98A0E; AA-safe amber for text
 const _kBg     = Color(0xFFFBF7EC);
 const _kBorder = Color(0xFFE6DDC4);
 const _kInk500 = Color(0xFF7A6F5B);
@@ -104,7 +105,7 @@ class SettingsScreen extends ConsumerWidget {
                       radius: 28,
                       backgroundColor: _avatarColor(user.uid),
                       backgroundImage: user.avatarUrl != null
-                          ? NetworkImage(user.avatarUrl!)
+                          ? CachedNetworkImageProvider(user.avatarUrl!)
                           : null,
                       child: user.avatarUrl == null
                           ? Text(
@@ -347,15 +348,21 @@ class _NotificationsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: const Text(
-        'Notifications',
-        style: TextStyle(fontSize: 14, color: _kInk900),
+    // Wrapped in a transparent Material so the SwitchListTile paints its ink
+    // splashes on a Material ancestor below _Card's white DecoratedBox, rather
+    // than tripping Flutter's "background may be invisible" assertion.
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile(
+        title: const Text(
+          'Notifications',
+          style: TextStyle(fontSize: 14, color: _kInk900),
+        ),
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: _kAmber,
+        activeTrackColor: const Color(0x66D98A0E),
       ),
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: _kAmber,
-      activeTrackColor: const Color(0x66D98A0E),
     );
   }
 }
