@@ -175,7 +175,7 @@ Each feature follows this internal structure:
 - ❌ Hardcode strings in UI — use constants
 - ❌ Accept non-`@mail.kmutt.ac.th` emails anywhere
 - ❌ Add iOS or desktop platform code
-- ❌ Commit secrets, API keys, or `google-services.json` to a public repo
+- ❌ Commit real secrets, server API keys, OAuth client secrets, or service-account keys — ever. (`android/app/google-services.json` and `lib/config/firebase_options.dart` are tracked intentionally: they hold only public client identifiers, are allowlisted in `.gitleaks.toml`, and access control is enforced by `firestore.rules` / `storage.rules`.)
 - ❌ Use `StreamBuilder` for routing — GoRouter handles auth redirects
 - ❌ Write business logic in `presentation/` — use cases belong in `domain/`
 - ❌ Skip writing tests after implementing a WBS work package — see Testing Rules above
