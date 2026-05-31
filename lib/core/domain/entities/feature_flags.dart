@@ -16,7 +16,7 @@ class FeatureFlags {
   static const FeatureFlags defaults = FeatureFlags(
     secretQuestionEnabled: true,
     sensitiveItemEnabled: true,
-    securityOfficeContact: '02-470-9999',
+    securityOfficeContact: '02-470-9820',
     sensitiveCategories: ['credit_card', 'id_card', 'passport', 'key', 'document'],
   );
 

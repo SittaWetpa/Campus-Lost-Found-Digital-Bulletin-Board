@@ -1,0 +1,25 @@
+{
+  "parameters": {
+    "secret_question_enabled": {
+      "defaultValue": {
+        "useInAppDefault": true
+      },
+      "description": "Gates the Secret Question feature. Toggle to false to disable without a rebuild.",
+      "valueType": "BOOLEAN"
+    },
+    "sensitive_item_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "description": "Gates the Sensitive Item selector on the Post Form (WBS 2.14). Toggle to false to disable without a rebuild — see ROLLBACK_PLAN.md.",
+      "valueType": "BOOLEAN"
+    },
+    "security_office_contact": {
+      "defaultValue": {
+        "value": "02-470-9820"
+      },
+      "description": "Security Office phone number shown on sensitive-item posts and the Security Office contact button (WBS 2.14).",
+      "valueType": "STRING"
+    }
+  }
+}

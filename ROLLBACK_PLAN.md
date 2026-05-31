@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `secret_question_enabled` | Boolean | `true` | Hides Secret Question and Secret Answer fields on Founder Post form and Claim Request flow (WBS 2.10) |
 | `sensitive_item_enabled` | Boolean | `true` | Hides Sensitive Item selector on Post Form (WBS 2.14) |
-| `security_office_contact` | String | `02-470-9999` | Phone number shown on sensitive-item posts and Security Office contact button |
+| `security_office_contact` | String | `02-470-9820` | Phone number shown on sensitive-item posts and Security Office contact button |
 | `sensitive_categories` | String (JSON array) | `["credit_card","id_card","passport","key","document"]` | Item categories that trigger the sensitive-item flow |
 
 ---
@@ -70,7 +70,7 @@ Create the following parameters in Firebase Console → Remote Config → **Add 
 |---|---|---|
 | `secret_question_enabled` | Boolean | `true` |
 | `sensitive_item_enabled` | Boolean | `true` |
-| `security_office_contact` | String | `02-470-9999` |
+| `security_office_contact` | String | `02-470-9820` |
 | `sensitive_categories` | String | `["credit_card","id_card","passport","key","document"]` |
 
 Click **Publish changes**. No app release is needed for the initial setup.
